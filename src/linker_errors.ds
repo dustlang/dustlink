@@ -1,0 +1,16 @@
+// DustLink Error Codes
+
+forge LinkerErrors {
+    const ERR_OK: UInt32 = 0;
+    const ERR_FILE_NOT_FOUND: UInt32 = 1;
+    const ERR_INVALID_FORMAT: UInt32 = 2;
+    const ERR_INVALID_SECTION: UInt32 = 3;
+    const ERR_UNDEFINED_SYMBOL: UInt32 = 4;
+    const ERR_MULTIPLE_DEFINITION: UInt32 = 5;
+    const ERR_INVALID_RELOCATION: UInt32 = 6;
+    const ERR_OUT_OF_MEMORY: UInt32 = 7;
+    const ERR_INVALID_ADDRESS: UInt32 = 8;
+    const ERR_INVALID_ENTRY: UInt32 = 9;
+    const ERR_WRITE_FAILED: UInt32 = 10;
+    const ERR_INVALID_IMAGE: UInt32 = 11;
+}

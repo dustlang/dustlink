@@ -1,0 +1,211 @@
+// DustLink - Main Linker Module
+
+forge DustLink {
+    
+    const VERSION_MAJOR: UInt8 = 0;
+    const VERSION_MINOR: UInt8 = 1;
+    
+    proc K::link(input_files: UInt64, output_file: UInt64, format: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::link_with_options(input_files: UInt64, output_file: UInt64, format: UInt32, entry: UInt64, base: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::add_input_file(path: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::set_output(path: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::set_output_format(format: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::set_entry_point(addr: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::set_base_address(addr: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::add_search_path(path: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::add_library(name: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::run() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::get_error() -> UInt64 {
+        return 0;
+    }
+    
+    proc K::print_sections() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::print_symbols() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::print_relocations() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::strip_debug() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::create_map_file(path: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::verify_image() -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::link(input_files: UInt64, output_file: UInt64, format: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::link_with_options(input_files: UInt64, output_file: UInt64, format: UInt32, entry: UInt64, base: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::add_input_file(path: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::set_output(path: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::set_output_format(format: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::set_entry_point(addr: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::set_base_address(addr: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::add_search_path(path: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::add_library(name: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::run() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::get_error() -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::print_sections() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::print_symbols() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::print_relocations() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::strip_debug() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::create_map_file(path: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::verify_image() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::link(input_files: UInt64, output_file: UInt64, format: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::link_with_options(input_files: UInt64, output_file: UInt64, format: UInt32, entry: UInt64, base: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::add_input_file(path: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::set_output(path: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::set_output_format(format: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::set_entry_point(addr: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::set_base_address(addr: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::add_search_path(path: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::add_library(name: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::run() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::get_error() -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::print_sections() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::print_symbols() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::print_relocations() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::strip_debug() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::create_map_file(path: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::verify_image() -> UInt32 {
+        return 100;
+    }
+}

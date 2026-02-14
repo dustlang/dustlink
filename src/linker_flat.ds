@@ -1,0 +1,81 @@
+// Flat Binary Format (for boot sectors)
+
+forge FlatFormat {
+    
+    const MBR_SIZE: UInt32 = 512;
+    const MBR_SIGNATURE: UInt16 = 43660;
+    
+    const BOOT_LOADER_ADDRESS: UInt64 = 32768;
+    const KERNEL_LOAD_ADDRESS: UInt64 = 1048576;
+    
+    const MAX_BOOT_SIZE: UInt32 = 512;
+    const MAX_KERNEL_SIZE: UInt32 = 16777216;
+    
+    proc K::create_mbr_bootloader() -> UInt64 {
+        return 0;
+    }
+    
+    proc K::validate_mbr(data: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::set_boot_signature(data: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::create_flat_image(sections: UInt64, output: UInt64, size: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::align_to(value: UInt64, alignment: UInt64) -> UInt64 {
+        let remainder = value % alignment;
+        if remainder == 0 {
+            return value;
+        }
+        return value + (alignment - remainder);
+    }
+    
+    proc K::create_elf_image(sections: UInt64, entry: UInt64, output: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::create_mbr_bootloader() -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::validate_mbr(data: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::set_boot_signature(data: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::create_flat_image(sections: UInt64, output: UInt64, size: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::create_elf_image(sections: UInt64, entry: UInt64, output: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::create_mbr_bootloader() -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::validate_mbr(data: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::set_boot_signature(data: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::create_flat_image(sections: UInt64, output: UInt64, size: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::create_elf_image(sections: UInt64, entry: UInt64, output: UInt64) -> UInt32 {
+        return 100;
+    }
+}

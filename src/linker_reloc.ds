@@ -1,0 +1,56 @@
+// Relocation Processing
+
+forge LinkerReloc {
+    
+    const MAX_RELOCATIONS: UInt32 = 16384;
+    
+    const R_X86_64_NONE: UInt32 = 0;
+    const R_X86_64_64: UInt32 = 1;
+    const R_X86_64_PC32: UInt32 = 2;
+    const R_X86_64_32: UInt32 = 10;
+    const R_X86_64_32S: UInt32 = 11;
+    
+    proc K::add_relocation(section: UInt32, offset: UInt64, sym_idx: UInt32, reloc_type: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::apply_relocation(reloc: UInt64, data: UInt64, symbols: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::process_relocations(section: UInt64, relocs: UInt64, symbols: UInt64, data: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::resolve_reloc_address(reloc: UInt64, sym_addr: UInt64, base_addr: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::calculate_pcrel_offset(reloc: UInt64, sym_addr: UInt64, offset: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::add_relocation(section: UInt32, offset: UInt64, sym_idx: UInt32, reloc_type: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::apply_relocation(reloc: UInt64, data: UInt64, symbols: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::process_relocations(section: UInt64, relocs: UInt64, symbols: UInt64, data: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::add_relocation(section: UInt32, offset: UInt64, sym_idx: UInt32, reloc_type: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::apply_relocation(reloc: UInt64, data: UInt64, symbols: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::process_relocations(section: UInt64, relocs: UInt64, symbols: UInt64, data: UInt64) -> UInt32 {
+        return 100;
+    }
+}

@@ -1,0 +1,15 @@
+# DustLink - DPL Linker Workspace Manifest
+# Produces bootable binaries for x86-64
+
+[workspace]
+name = "dustlink"
+version = "0.1.0"
+description = "DustLink - DPL Linker for bootable binaries"
+
+[sector]
+name = "dustlink"
+path = "src"
+
+[target.x64-pc-none]
+linker = "ld"
+linker_flags = ["-nostdlib", "-static"]

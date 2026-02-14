@@ -1,0 +1,103 @@
+// ELF Binary Format Support
+
+forge ElfFormat {
+    
+    const EI_MAG0: UInt8 = 127;
+    const EI_MAG1: UInt8 = 69;
+    const EI_MAG2: UInt8 = 76;
+    const EI_MAG3: UInt8 = 70;
+    const EI_CLASS: UInt8 = 2;
+    const EI_DATA: UInt8 = 1;
+    const EI_VERSION: UInt8 = 1;
+    
+    const EM_X86_64: UInt16 = 62;
+    const EV_CURRENT: UInt8 = 1;
+    
+    const ET_REL: UInt16 = 1;
+    const ET_EXEC: UInt16 = 2;
+    const ET_DYN: UInt16 = 3;
+    
+    const ELFCLASS64: UInt8 = 2;
+    const ELFDATA2LSB: UInt8 = 1;
+    
+    const SHN_UNDEF: UInt16 = 0;
+    const SHN_ABS: UInt16 = 65521;
+    
+    const SHT_PROGBITS: UInt32 = 1;
+    const SHT_SYMTAB: UInt32 = 2;
+    const SHT_STRTAB: UInt32 = 3;
+    const SHT_NOBITS: UInt32 = 8;
+    
+    const SHF_ALLOC: UInt32 = 2;
+    const SHF_EXECINSTR: UInt32 = 4;
+    const SHF_WRITE: UInt32 = 1;
+    
+    const ELF64_ST_BIND: UInt32 = 240;
+    const ELF64_ST_TYPE: UInt32 = 15;
+    const STB_LOCAL: UInt8 = 0;
+    const STB_GLOBAL: UInt8 = 1;
+    const STB_WEAK: UInt8 = 2;
+    const STT_NOTYPE: UInt8 = 0;
+    const STT_OBJECT: UInt8 = 1;
+    const STT_FUNC: UInt8 = 2;
+    const STT_SECTION: UInt8 = 3;
+    const STT_FILE: UInt8 = 4;
+    
+    const R_X86_64_NONE: UInt32 = 0;
+    const R_X86_64_64: UInt32 = 1;
+    const R_X86_64_PC32: UInt32 = 2;
+    const R_X86_64_32: UInt32 = 10;
+    const R_X86_64_32S: UInt32 = 11;
+    
+    proc K::validate_elf_header(data: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::get_elf_class(data: UInt64) -> UInt8 {
+        return 2;
+    }
+    
+    proc K::get_elf_machine(data: UInt64) -> UInt16 {
+        return 62;
+    }
+    
+    proc K::get_elf_type(data: UInt64) -> UInt16 {
+        return 2;
+    }
+    
+    proc K::get_entry_point(data: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::get_section_count(data: UInt64) -> UInt16 {
+        return 0;
+    }
+    
+    proc K::get_program_header_count(data: UInt64) -> UInt16 {
+        return 0;
+    }
+    
+    proc K::get_section_header_offset(data: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::get_program_header_offset(data: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::validate_elf_header(data: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::get_elf_class(data: UInt64) -> UInt8 {
+        return 2;
+    }
+    
+    proc Phi::validate_elf_header(data: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc Phi::get_elf_class(data: UInt64) -> UInt8 {
+        return 2;
+    }
+}

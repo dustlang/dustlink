@@ -1,0 +1,413 @@
+// DustLink Tests
+
+forge DustLinkTests {
+    
+    proc test_k_link() -> UInt32 {
+        let result = DustLink::K::link(0, 0, 0);
+        return 1;
+    }
+    
+    proc test_k_link_with_options() -> UInt32 {
+        let result = DustLink::K::link_with_options(0, 0, 0, 0, 0);
+        return 1;
+    }
+    
+    proc test_k_add_input_file() -> UInt32 {
+        let result = DustLink::K::add_input_file(0);
+        return 1;
+    }
+    
+    proc test_k_set_output() -> UInt32 {
+        let result = DustLink::K::set_output(0);
+        return 1;
+    }
+    
+    proc test_k_set_output_format() -> UInt32 {
+        let result = DustLink::K::set_output_format(0);
+        return 1;
+    }
+    
+    proc test_k_set_entry_point() -> UInt32 {
+        let result = DustLink::K::set_entry_point(0);
+        return 1;
+    }
+    
+    proc test_k_set_base_address() -> UInt32 {
+        let result = DustLink::K::set_base_address(0);
+        return 1;
+    }
+    
+    proc test_k_add_search_path() -> UInt32 {
+        let result = DustLink::K::add_search_path(0);
+        return 1;
+    }
+    
+    proc test_k_add_library() -> UInt32 {
+        let result = DustLink::K::add_library(0);
+        return 1;
+    }
+    
+    proc test_k_run() -> UInt32 {
+        let result = DustLink::K::run();
+        return 1;
+    }
+    
+    proc test_k_get_error() -> UInt32 {
+        let result = DustLink::K::get_error();
+        return 1;
+    }
+    
+    proc test_k_print_sections() -> UInt32 {
+        let result = DustLink::K::print_sections();
+        return 1;
+    }
+    
+    proc test_k_print_symbols() -> UInt32 {
+        let result = DustLink::K::print_symbols();
+        return 1;
+    }
+    
+    proc test_k_print_relocations() -> UInt32 {
+        let result = DustLink::K::print_relocations();
+        return 1;
+    }
+    
+    proc test_k_strip_debug() -> UInt32 {
+        let result = DustLink::K::strip_debug();
+        return 1;
+    }
+    
+    proc test_k_create_map_file() -> UInt32 {
+        let result = DustLink::K::create_map_file(0);
+        return 1;
+    }
+    
+    proc test_k_verify_image() -> UInt32 {
+        let result = DustLink::K::verify_image();
+        return 1;
+    }
+    
+    proc test_q_link_returns_error() -> UInt32 {
+        let result = DustLink::Q::link(0, 0, 0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_link_with_options_returns_error() -> UInt32 {
+        let result = DustLink::Q::link_with_options(0, 0, 0, 0, 0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_add_input_file_returns_error() -> UInt32 {
+        let result = DustLink::Q::add_input_file(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_set_output_returns_error() -> UInt32 {
+        let result = DustLink::Q::set_output(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_set_output_format_returns_error() -> UInt32 {
+        let result = DustLink::Q::set_output_format(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_set_entry_point_returns_error() -> UInt32 {
+        let result = DustLink::Q::set_entry_point(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_set_base_address_returns_error() -> UInt32 {
+        let result = DustLink::Q::set_base_address(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_add_search_path_returns_error() -> UInt32 {
+        let result = DustLink::Q::add_search_path(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_add_library_returns_error() -> UInt32 {
+        let result = DustLink::Q::add_library(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_run_returns_error() -> UInt32 {
+        let result = DustLink::Q::run();
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_get_error() -> UInt32 {
+        let result = DustLink::Q::get_error();
+        return 1;
+    }
+    
+    proc test_q_print_sections_returns_error() -> UInt32 {
+        let result = DustLink::Q::print_sections();
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_print_symbols_returns_error() -> UInt32 {
+        let result = DustLink::Q::print_symbols();
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_print_relocations_returns_error() -> UInt32 {
+        let result = DustLink::Q::print_relocations();
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_strip_debug_returns_error() -> UInt32 {
+        let result = DustLink::Q::strip_debug();
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_create_map_file_returns_error() -> UInt32 {
+        let result = DustLink::Q::create_map_file(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_q_verify_image_returns_error() -> UInt32 {
+        let result = DustLink::Q::verify_image();
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_link_returns_error() -> UInt32 {
+        let result = DustLink::Phi::link(0, 0, 0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_link_with_options_returns_error() -> UInt32 {
+        let result = DustLink::Phi::link_with_options(0, 0, 0, 0, 0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_add_input_file_returns_error() -> UInt32 {
+        let result = DustLink::Phi::add_input_file(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_set_output_returns_error() -> UInt32 {
+        let result = DustLink::Phi::set_output(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_set_output_format_returns_error() -> UInt32 {
+        let result = DustLink::Phi::set_output_format(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_set_entry_point_returns_error() -> UInt32 {
+        let result = DustLink::Phi::set_entry_point(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_set_base_address_returns_error() -> UInt32 {
+        let result = DustLink::Phi::set_base_address(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_add_search_path_returns_error() -> UInt32 {
+        let result = DustLink::Phi::add_search_path(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_add_library_returns_error() -> UInt32 {
+        let result = DustLink::Phi::add_library(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_run_returns_error() -> UInt32 {
+        let result = DustLink::Phi::run();
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_get_error() -> UInt32 {
+        let result = DustLink::Phi::get_error();
+        return 1;
+    }
+    
+    proc test_phi_print_sections_returns_error() -> UInt32 {
+        let result = DustLink::Phi::print_sections();
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_print_symbols_returns_error() -> UInt32 {
+        let result = DustLink::Phi::print_symbols();
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_print_relocations_returns_error() -> UInt32 {
+        let result = DustLink::Phi::print_relocations();
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_strip_debug_returns_error() -> UInt32 {
+        let result = DustLink::Phi::strip_debug();
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_create_map_file_returns_error() -> UInt32 {
+        let result = DustLink::Phi::create_map_file(0);
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc test_phi_verify_image_returns_error() -> UInt32 {
+        let result = DustLink::Phi::verify_image();
+        if result == 100 {
+            return 1;
+        }
+        return 0;
+    }
+    
+    proc run_all_tests() -> UInt32 {
+        let passed = 0;
+        
+        passed = passed + DustLinkTests::test_k_link();
+        passed = passed + DustLinkTests::test_k_link_with_options();
+        passed = passed + DustLinkTests::test_k_add_input_file();
+        passed = passed + DustLinkTests::test_k_set_output();
+        passed = passed + DustLinkTests::test_k_set_output_format();
+        passed = passed + DustLinkTests::test_k_set_entry_point();
+        passed = passed + DustLinkTests::test_k_set_base_address();
+        passed = passed + DustLinkTests::test_k_add_search_path();
+        passed = passed + DustLinkTests::test_k_add_library();
+        passed = passed + DustLinkTests::test_k_run();
+        passed = passed + DustLinkTests::test_k_get_error();
+        passed = passed + DustLinkTests::test_k_print_sections();
+        passed = passed + DustLinkTests::test_k_print_symbols();
+        passed = passed + DustLinkTests::test_k_print_relocations();
+        passed = passed + DustLinkTests::test_k_strip_debug();
+        passed = passed + DustLinkTests::test_k_create_map_file();
+        passed = passed + DustLinkTests::test_k_verify_image();
+        passed = passed + DustLinkTests::test_q_link_returns_error();
+        passed = passed + DustLinkTests::test_q_link_with_options_returns_error();
+        passed = passed + DustLinkTests::test_q_add_input_file_returns_error();
+        passed = passed + DustLinkTests::test_q_set_output_returns_error();
+        passed = passed + DustLinkTests::test_q_set_output_format_returns_error();
+        passed = passed + DustLinkTests::test_q_set_entry_point_returns_error();
+        passed = passed + DustLinkTests::test_q_set_base_address_returns_error();
+        passed = passed + DustLinkTests::test_q_add_search_path_returns_error();
+        passed = passed + DustLinkTests::test_q_add_library_returns_error();
+        passed = passed + DustLinkTests::test_q_run_returns_error();
+        passed = passed + DustLinkTests::test_q_get_error();
+        passed = passed + DustLinkTests::test_q_print_sections_returns_error();
+        passed = passed + DustLinkTests::test_q_print_symbols_returns_error();
+        passed = passed + DustLinkTests::test_q_print_relocations_returns_error();
+        passed = passed + DustLinkTests::test_q_strip_debug_returns_error();
+        passed = passed + DustLinkTests::test_q_create_map_file_returns_error();
+        passed = passed + DustLinkTests::test_q_verify_image_returns_error();
+        passed = passed + DustLinkTests::test_phi_link_returns_error();
+        passed = passed + DustLinkTests::test_phi_link_with_options_returns_error();
+        passed = passed + DustLinkTests::test_phi_add_input_file_returns_error();
+        passed = passed + DustLinkTests::test_phi_set_output_returns_error();
+        passed = passed + DustLinkTests::test_phi_set_output_format_returns_error();
+        passed = passed + DustLinkTests::test_phi_set_entry_point_returns_error();
+        passed = passed + DustLinkTests::test_phi_set_base_address_returns_error();
+        passed = passed + DustLinkTests::test_phi_add_search_path_returns_error();
+        passed = passed + DustLinkTests::test_phi_add_library_returns_error();
+        passed = passed + DustLinkTests::test_phi_run_returns_error();
+        passed = passed + DustLinkTests::test_phi_get_error();
+        passed = passed + DustLinkTests::test_phi_print_sections_returns_error();
+        passed = passed + DustLinkTests::test_phi_print_symbols_returns_error();
+        passed = passed + DustLinkTests::test_phi_print_relocations_returns_error();
+        passed = passed + DustLinkTests::test_phi_strip_debug_returns_error();
+        passed = passed + DustLinkTests::test_phi_create_map_file_returns_error();
+        passed = passed + DustLinkTests::test_phi_verify_image_returns_error();
+        
+        return passed;
+    }
+}

@@ -1,0 +1,153 @@
+// Symbol Table Management
+
+forge LinkerSymbol {
+    
+    const MAX_SYMBOLS: UInt32 = 8192;
+    const MAX_SYMBOL_NAME: UInt32 = 128;
+    
+    const SYM_LOCAL: UInt8 = 0;
+    const SYM_GLOBAL: UInt8 = 1;
+    const SYM_WEAK: UInt8 = 2;
+    
+    const TYPE_NONE: UInt8 = 0;
+    const TYPE_OBJECT: UInt8 = 1;
+    const TYPE_FUNC: UInt8 = 2;
+    const TYPE_SECTION: UInt8 = 3;
+    const TYPE_FILE: UInt8 = 4;
+    
+    const BIND_LOCAL: UInt32 = 0;
+    const BIND_GLOBAL: UInt32 = 1;
+    const BIND_WEAK: UInt32 = 2;
+    
+    proc K::add_symbol(name: UInt64, value: UInt64, size: UInt32, sym_type: UInt8, bind: UInt8, section: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::find_symbol(name: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::get_symbol(name: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::get_symbol_count() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::resolve_symbol(name: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::define_symbol(name: UInt64, value: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::get_symbol_value(idx: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::get_symbol_section(idx: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::get_symbol_size(idx: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::is_defined(idx: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::resolve_undefined() -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::add_symbol(name: UInt64, value: UInt64, size: UInt32, sym_type: UInt8, bind: UInt8, section: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::find_symbol(name: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::get_symbol(name: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::get_symbol_count() -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::resolve_symbol(name: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::define_symbol(name: UInt64, value: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::get_symbol_value(idx: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::get_symbol_section(idx: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::get_symbol_size(idx: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::is_defined(idx: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::resolve_undefined() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::add_symbol(name: UInt64, value: UInt64, size: UInt32, sym_type: UInt8, bind: UInt8, section: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::find_symbol(name: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc Phi::get_symbol(name: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::get_symbol_count() -> UInt32 {
+        return 0;
+    }
+    
+    proc Phi::resolve_symbol(name: UInt64) -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::define_symbol(name: UInt64, value: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::get_symbol_value(idx: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::get_symbol_section(idx: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc Phi::get_symbol_size(idx: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc Phi::is_defined(idx: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc Phi::resolve_undefined() -> UInt32 {
+        return 100;
+    }
+}

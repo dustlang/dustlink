@@ -1,0 +1,170 @@
+// Final Image Creation
+
+forge LinkerImage {
+    
+    const FORMAT_FLAT: UInt32 = 0;
+    const FORMAT_ELF: UInt32 = 1;
+    const FORMAT_MBR: UInt32 = 2;
+    
+    const IMAGE_MAX_SIZE: UInt32 = 33554432;
+    
+    const DEFAULT_TEXT_ADDR: UInt64 = 65536;
+    const DEFAULT_DATA_ADDR: UInt64 = 1073741824;
+    const DEFAULT_ENTRY_ADDR: UInt64 = 1048576;
+    
+    proc K::create_image(format: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::set_image_format(format: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::set_image_entry(entry: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::set_image_base(base: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::add_section(section: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::calculate_image_size() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::allocate_image(size: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc K::write_image(output: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::finalize_image() -> UInt32 {
+        return 0;
+    }
+    
+    proc K::set_image_arch(arch: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::set_image_os(os: UInt32) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::create_boot_image(kernel: UInt64, kernel_size: UInt32, output: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc K::create_efi_image(output: UInt64) -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::create_image(format: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::set_image_format(format: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::set_image_entry(entry: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::set_image_base(base: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::add_section(section: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::calculate_image_size() -> UInt32 {
+        return 0;
+    }
+    
+    proc Q::allocate_image(size: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Q::write_image(output: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::finalize_image() -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::set_image_arch(arch: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::set_image_os(os: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::create_boot_image(kernel: UInt64, kernel_size: UInt32, output: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Q::create_efi_image(output: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::create_image(format: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::set_image_format(format: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::set_image_entry(entry: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::set_image_base(base: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::add_section(section: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::calculate_image_size() -> UInt32 {
+        return 0;
+    }
+    
+    proc Phi::allocate_image(size: UInt32) -> UInt64 {
+        return 0;
+    }
+    
+    proc Phi::write_image(output: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::finalize_image() -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::set_image_arch(arch: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::set_image_os(os: UInt32) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::create_boot_image(kernel: UInt64, kernel_size: UInt32, output: UInt64) -> UInt32 {
+        return 100;
+    }
+    
+    proc Phi::create_efi_image(output: UInt64) -> UInt32 {
+        return 100;
+    }
+}

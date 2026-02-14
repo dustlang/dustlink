@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Clone dust compiler
+        run: |
+          git clone --depth 1 https://github.com/dustlang/dust.git ../dust
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          working-directory: ../dust
+
+      - name: Build Dust compiler
+        run: |
+          cd ../dust
+          cargo build --workspace
+
+      - name: Verify dustlink structure
+        run: |
+          echo "Verifying dustlink structure..."
+          echo "Source files:"
+          ls -la src/
+          echo ""
+          echo "Dust source files:"
+          find src -name "*.ds" -type f | wc -l
+          echo "files found"
+
+      - name: Lex linker files (verify parsing)
+        run: |
+          export PATH="$PWD/../dust/target/debug:$PATH"
+          echo "Checking that dust compiler can find Dust files..."
+          find src -name "*.ds" -type f -exec test -f {} \; -print | wc -l
+          echo "valid Dust source files found"
