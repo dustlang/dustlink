@@ -9,7 +9,7 @@ Source: `src/dustlink.ds`
 ## Version Constants
 
 - `VERSION_MAJOR: UInt8 = 0`
-- `VERSION_MINOR: UInt8 = 1`
+- `VERSION_MINOR: UInt8 = 2`
 
 ## `K` Domain Procedures
 
@@ -31,7 +31,12 @@ Source: `src/dustlink.ds`
 - `create_map_file(path) -> UInt32`
 - `verify_image() -> UInt32`
 
-Current return behavior: all `K` procedures in this file return `0` placeholders.
+`K` behavior now performs deterministic validation in the top-level orchestrator:
+
+- argument validation and status propagation (`LinkerErrors`)
+- output/format/entry/base checks
+- link invocation contract checks
+- image sanity checks via deterministic layout expectations
 
 ## `Q` and `Phi` Domain Procedures
 

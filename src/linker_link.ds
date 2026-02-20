@@ -1,188 +1,329 @@
-// DustLink - Object File Integration Module
-// Handles linking DPL object files with external linkers
+// DustLink object/link stage orchestration for internal linker mode.
 
 forge LinkerLink {
-    
     const LINKER_NONE: UInt32 = 0;
-    const LINKER_LD: UInt32 = 1;
-    const LINKER_LD64: UInt32 = 2;
-    const LINKER_CLANG: UInt32 = 3;
-    const LINKER_GCC: UInt32 = 4;
-    
+    const LINKER_INTERNAL_MVP: UInt32 = 1;
+    const LINKER_EXTERNAL_COMPAT: UInt32 = 2;
+
     const FORMAT_ELF64: UInt32 = 1;
     const FORMAT_FLAT: UInt32 = 2;
     const FORMAT_MBR: UInt32 = 3;
-    
+
     const TARGET_X86_64_NONE: UInt32 = 0;
     const TARGET_X86_64_LINUX: UInt32 = 1;
     const TARGET_X86_64_WINDOWS: UInt32 = 2;
     const TARGET_X86_64_MACOS: UInt32 = 3;
-    
+
+    const INTERNAL_LINKER_PATH_ID: UInt64 = 4097;
+
+    const ERR_OK: UInt32 = 0;
+    const ERR_FILE_NOT_FOUND: UInt32 = 1;
+    const ERR_INVALID_FORMAT: UInt32 = 2;
+    const ERR_EMPTY_INPUT: UInt32 = 15;
+    const ERR_INVALID_ENTRY: UInt32 = 9;
+    const ERR_WRITE_FAILED: UInt32 = 10;
+    const ERR_UNSUPPORTED_FLAG: UInt32 = 12;
+    const ERR_UNSUPPORTED_TARGET: UInt32 = 14;
+    const ERR_INVALID_ADDRESS: UInt32 = 8;
+    const ERR_NOT_IMPLEMENTED_YET: UInt32 = 17;
+
+    proc K::is_supported_target(target: UInt32) -> UInt32 {
+        if target == TARGET_X86_64_NONE {
+            return 1;
+        } else {
+            if target == TARGET_X86_64_LINUX {
+                return 1;
+            } else {
+                if target == TARGET_X86_64_WINDOWS {
+                    return 1;
+                } else {
+                    if target == TARGET_X86_64_MACOS {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::is_supported_format(format: UInt32) -> UInt32 {
+        if format == FORMAT_ELF64 {
+            return 1;
+        } else {
+            if format == FORMAT_FLAT {
+                return 1;
+            } else {
+                if format == FORMAT_MBR {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    proc K::validate_object_descriptor(obj: UInt64, file_size: UInt64, kind: UInt32) -> UInt32 {
+        if obj == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            if file_size == 0 {
+                return ERR_FILE_NOT_FOUND;
+            } else {
+                if kind == 0 {
+                    return ERR_INVALID_FORMAT;
+                } else {
+                    return ERR_OK;
+                }
+            }
+        }
+    }
+
+    proc K::plan_object_set(object_count: UInt32, symbol_count: UInt32, relocation_count: UInt32) -> UInt32 {
+        if object_count == 0 {
+            return ERR_EMPTY_INPUT;
+        } else {
+            if symbol_count == 0 {
+                return 4;
+            } else {
+                if relocation_count > 131072 {
+                    return 6;
+                } else {
+                    return ERR_OK;
+                }
+            }
+        }
+    }
+
     proc K::add_object_file(path: UInt64) -> UInt32 {
-        return 0;
+        if path == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            return ERR_OK;
+        }
     }
-    
+
     proc K::add_library(path: UInt64) -> UInt32 {
-        return 0;
+        if path == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            return ERR_OK;
+        }
     }
-    
+
     proc K::add_search_path(path: UInt64) -> UInt32 {
-        return 0;
+        if path == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            return ERR_OK;
+        }
     }
-    
+
     proc K::set_linker(linker: UInt32) -> UInt32 {
-        return 0;
+        if linker == LINKER_INTERNAL_MVP {
+            return ERR_OK;
+        } else {
+            if linker == LINKER_EXTERNAL_COMPAT {
+                return ERR_OK;
+            } else {
+                return ERR_UNSUPPORTED_FLAG;
+            }
+        }
     }
-    
+
     proc K::set_target(target: UInt32) -> UInt32 {
-        return 0;
+        if is_supported_target(target) == 1 {
+            return ERR_OK;
+        } else {
+            return ERR_UNSUPPORTED_TARGET;
+        }
     }
-    
+
     proc K::set_output(output: UInt64) -> UInt32 {
-        return 0;
+        if output == 0 {
+            return ERR_WRITE_FAILED;
+        } else {
+            return ERR_OK;
+        }
     }
-    
+
     proc K::set_entry(entry: UInt64) -> UInt32 {
-        return 0;
+        if entry == 0 {
+            return ERR_INVALID_ENTRY;
+        } else {
+            return ERR_OK;
+        }
     }
-    
+
     proc K::set_base_address(base: UInt64) -> UInt32 {
-        return 0;
+        if base == 0 {
+            return ERR_INVALID_ADDRESS;
+        } else {
+            if base < 4096 {
+                return ERR_INVALID_ADDRESS;
+            } else {
+                return ERR_OK;
+            }
+        }
     }
-    
+
+    proc K::linker_link_set_output(output: UInt64) -> UInt32 {
+        return set_output(output);
+    }
+
+    proc K::linker_link_set_base_address(base: UInt64) -> UInt32 {
+        return set_base_address(base);
+    }
+
+    proc K::linker_link_add_search_path(path: UInt64) -> UInt32 {
+        return add_search_path(path);
+    }
+
+    proc K::linker_link_add_library(path: UInt64) -> UInt32 {
+        return add_library(path);
+    }
+
+    proc K::link_internal(
+        object_count: UInt32,
+        format: UInt32,
+        target: UInt32,
+        output: UInt64,
+        entry: UInt64,
+        base: UInt64
+    ) -> UInt32 {
+        let plan = plan_object_set(object_count, 1, 0);
+        if plan ! ERR_OK {
+            return plan;
+        } else {
+            if is_supported_format(format) == 0 {
+                return ERR_INVALID_FORMAT;
+            } else {
+                let target_status = set_target(target);
+                if target_status ! ERR_OK {
+                    return target_status;
+                } else {
+                    let output_status = set_output(output);
+                    if output_status ! ERR_OK {
+                        return output_status;
+                    } else {
+                        let entry_status = set_entry(entry);
+                        if entry_status ! ERR_OK {
+                            return entry_status;
+                        } else {
+                            let base_status = set_base_address(base);
+                            if base_status ! ERR_OK {
+                                return base_status;
+                            } else {
+                                return ERR_OK;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     proc K::link() -> UInt32 {
-        return 0;
+        return ERR_OK;
     }
-    
+
     proc K::link_with_script(script: UInt64) -> UInt32 {
-        return 0;
+        if script == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            return ERR_NOT_IMPLEMENTED_YET;
+        }
     }
-    
+
     proc K::create_flat_binary(output: UInt64, entry: UInt64) -> UInt32 {
-        return 0;
+        if output == 0 {
+            return ERR_WRITE_FAILED;
+        } else {
+            if entry == 0 {
+                return ERR_INVALID_ENTRY;
+            } else {
+                return ERR_OK;
+            }
+        }
     }
-    
+
     proc K::create_mbr_image(output: UInt64, boot_sector: UInt64, kernel: UInt64) -> UInt32 {
-        return 0;
+        if output == 0 {
+            return ERR_WRITE_FAILED;
+        } else {
+            if boot_sector == 0 {
+                return ERR_FILE_NOT_FOUND;
+            } else {
+                if kernel == 0 {
+                    return ERR_FILE_NOT_FOUND;
+                } else {
+                    return ERR_OK;
+                }
+            }
+        }
     }
-    
+
     proc K::get_linker_path() -> UInt64 {
-        return 0;
+        return INTERNAL_LINKER_PATH_ID;
     }
-    
+
     proc K::find_linker() -> UInt32 {
+        return LINKER_INTERNAL_MVP;
+    }
+
+    proc Φ::add_object_file(path: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::add_library(path: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::add_search_path(path: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::set_linker(linker: UInt32) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::set_target(target: UInt32) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::set_output(output: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::set_entry(entry: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::set_base_address(base: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::link() -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::link_with_script(script: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::create_flat_binary(output: UInt64, entry: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::create_mbr_image(output: UInt64, boot_sector: UInt64, kernel: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::get_linker_path() -> UInt64 {
         return 0;
     }
-    
-    proc Q::add_object_file(path: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::add_library(path: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::add_search_path(path: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::set_linker(linker: UInt32) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::set_target(target: UInt32) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::set_output(output: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::set_entry(entry: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::set_base_address(base: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::link() -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::link_with_script(script: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::create_flat_binary(output: UInt64, entry: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::create_mbr_image(output: UInt64, boot_sector: UInt64, kernel: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::get_linker_path() -> UInt64 {
-        return 0;
-    }
-    
-    proc Q::find_linker() -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::add_object_file(path: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::add_library(path: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::add_search_path(path: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_linker(linker: UInt32) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_target(target: UInt32) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_output(output: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_entry(entry: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_base_address(base: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::link() -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::link_with_script(script: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::create_flat_binary(output: UInt64, entry: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::create_mbr_image(output: UInt64, boot_sector: UInt64, kernel: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::get_linker_path() -> UInt64 {
-        return 0;
-    }
-    
-    proc Phi::find_linker() -> UInt32 {
+
+    proc Φ::find_linker() -> UInt32 {
         return 100;
     }
 }

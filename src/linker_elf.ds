@@ -1,7 +1,6 @@
-// ELF Binary Format Support
+// ELF64/System-V constants and parsing/validation helpers for DustLink.
 
 forge ElfFormat {
-    
     const EI_MAG0: UInt8 = 127;
     const EI_MAG1: UInt8 = 69;
     const EI_MAG2: UInt8 = 76;
@@ -9,29 +8,29 @@ forge ElfFormat {
     const EI_CLASS: UInt8 = 2;
     const EI_DATA: UInt8 = 1;
     const EI_VERSION: UInt8 = 1;
-    
+
     const EM_X86_64: UInt16 = 62;
     const EV_CURRENT: UInt8 = 1;
-    
+
     const ET_REL: UInt16 = 1;
     const ET_EXEC: UInt16 = 2;
     const ET_DYN: UInt16 = 3;
-    
+
     const ELFCLASS64: UInt8 = 2;
     const ELFDATA2LSB: UInt8 = 1;
-    
+
     const SHN_UNDEF: UInt16 = 0;
     const SHN_ABS: UInt16 = 65521;
-    
+
     const SHT_PROGBITS: UInt32 = 1;
     const SHT_SYMTAB: UInt32 = 2;
     const SHT_STRTAB: UInt32 = 3;
     const SHT_NOBITS: UInt32 = 8;
-    
+
     const SHF_ALLOC: UInt32 = 2;
     const SHF_EXECINSTR: UInt32 = 4;
     const SHF_WRITE: UInt32 = 1;
-    
+
     const ELF64_ST_BIND: UInt32 = 240;
     const ELF64_ST_TYPE: UInt32 = 15;
     const STB_LOCAL: UInt8 = 0;
@@ -42,62 +41,421 @@ forge ElfFormat {
     const STT_FUNC: UInt8 = 2;
     const STT_SECTION: UInt8 = 3;
     const STT_FILE: UInt8 = 4;
-    
+
     const R_X86_64_NONE: UInt32 = 0;
     const R_X86_64_64: UInt32 = 1;
     const R_X86_64_PC32: UInt32 = 2;
     const R_X86_64_32: UInt32 = 10;
     const R_X86_64_32S: UInt32 = 11;
-    
+
+    const ELF64_HEADER_SIZE: UInt32 = 64;
+    const ELF64_SECTION_HEADER_SIZE: UInt32 = 64;
+    const ELF64_SYMBOL_SIZE: UInt32 = 24;
+    const ELF64_RELOCATION_SIZE: UInt32 = 24;
+    const MAX_SECTIONS: UInt32 = 4096;
+    const MAX_SYMBOLS: UInt32 = 131072;
+    const MAX_RELOCATIONS: UInt32 = 131072;
+
+    proc K::u16_from_le(b0: UInt8, b1: UInt8) -> UInt16 {
+        return b0 + (b1 * 256);
+    }
+
+    proc K::u32_from_le(b0: UInt8, b1: UInt8, b2: UInt8, b3: UInt8) -> UInt32 {
+        let lo16 = u16_from_le(b0, b1);
+        let hi16 = u16_from_le(b2, b3);
+        return lo16 + (hi16 * 65536);
+    }
+
+    proc K::u64_from_le(
+        b0: UInt8,
+        b1: UInt8,
+        b2: UInt8,
+        b3: UInt8,
+        b4: UInt8,
+        b5: UInt8,
+        b6: UInt8,
+        b7: UInt8
+    ) -> UInt64 {
+        let lo32 = u32_from_le(b0, b1, b2, b3);
+        let hi32 = u32_from_le(b4, b5, b6, b7);
+        return lo32 + (hi32 * 4294967296);
+    }
+
+    proc K::validate_elf_identity(
+        m0: UInt8,
+        m1: UInt8,
+        m2: UInt8,
+        m3: UInt8,
+        klass: UInt8,
+        endian: UInt8,
+        version: UInt8
+    ) -> UInt32 {
+        if m0 ! EI_MAG0 {
+            return 2;
+        } else {
+            if m1 ! EI_MAG1 {
+                return 2;
+            } else {
+                if m2 ! EI_MAG2 {
+                    return 2;
+                } else {
+                    if m3 ! EI_MAG3 {
+                        return 2;
+                    } else {
+                        if klass ! ELFCLASS64 {
+                            return 2;
+                        } else {
+                            if endian ! ELFDATA2LSB {
+                                return 2;
+                            } else {
+                                if version ! EI_VERSION {
+                                    return 2;
+                                } else {
+                                    return 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::parse_elf_ident_bytes(
+        m0: UInt8,
+        m1: UInt8,
+        m2: UInt8,
+        m3: UInt8,
+        klass: UInt8,
+        endian: UInt8,
+        version: UInt8
+    ) -> UInt32 {
+        return validate_elf_identity(m0, m1, m2, m3, klass, endian, version);
+    }
+
+    proc K::validate_machine(machine: UInt16) -> UInt32 {
+        if machine == EM_X86_64 {
+            return 0;
+        } else {
+            return 14;
+        }
+    }
+
+    proc K::validate_type(elf_type: UInt16) -> UInt32 {
+        if elf_type == ET_REL {
+            return 0;
+        } else {
+            if elf_type == ET_EXEC {
+                return 0;
+            } else {
+                if elf_type == ET_DYN {
+                    return 0;
+                } else {
+                    return 2;
+                }
+            }
+        }
+    }
+
+    proc K::validate_relocation_type(reloc_type: UInt32) -> UInt32 {
+        if reloc_type == R_X86_64_NONE {
+            return 0;
+        } else {
+            if reloc_type == R_X86_64_64 {
+                return 0;
+            } else {
+                if reloc_type == R_X86_64_PC32 {
+                    return 0;
+                } else {
+                    if reloc_type == R_X86_64_32 {
+                        return 0;
+                    } else {
+                        if reloc_type == R_X86_64_32S {
+                            return 0;
+                        } else {
+                            return 6;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::parse_elf_header_fields(
+        file_size: UInt64,
+        elf_type: UInt16,
+        machine: UInt16,
+        shoff: UInt64,
+        shentsize: UInt16,
+        shnum: UInt16,
+        sym_count: UInt32,
+        reloc_count: UInt32
+    ) -> UInt32 {
+        if file_size < ELF64_HEADER_SIZE {
+            return 2;
+        } else {
+            let type_status = validate_type(elf_type);
+            if type_status ! 0 {
+                return type_status;
+            } else {
+                let machine_status = validate_machine(machine);
+                if machine_status ! 0 {
+                    return machine_status;
+                } else {
+                    if shentsize ! ELF64_SECTION_HEADER_SIZE {
+                        return 2;
+                    } else {
+                        if shnum == 0 {
+                            return 3;
+                        } else {
+                            if shnum > MAX_SECTIONS {
+                                return 3;
+                            } else {
+                                if shoff < ELF64_HEADER_SIZE {
+                                    return 2;
+                                } else {
+                                    if shoff >= file_size {
+                                        return 2;
+                                    } else {
+                                        if sym_count > MAX_SYMBOLS {
+                                            return 4;
+                                        } else {
+                                            if reloc_count > MAX_RELOCATIONS {
+                                                return 6;
+                                            } else {
+                                                return 0;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::section_span_is_valid(offset: UInt64, size: UInt64, file_size: UInt64) -> UInt32 {
+        if offset > file_size {
+            return 0;
+        } else {
+            if size > file_size {
+                return 0;
+            } else {
+                if offset + size > file_size {
+                    return 0;
+                } else {
+                    return 1;
+                }
+            }
+        }
+    }
+
+    proc K::parse_section_header_fields(
+        section_type: UInt32,
+        flags: UInt64,
+        offset: UInt64,
+        size: UInt64,
+        align: UInt64,
+        entsize: UInt64,
+        file_size: UInt64
+    ) -> UInt32 {
+        if section_type == 0 {
+            return 0;
+        } else {
+            if section_type == SHT_PROGBITS {
+                if section_span_is_valid(offset, size, file_size) == 0 {
+                    return 3;
+                } else {
+                    if align == 0 {
+                        return 3;
+                    } else {
+                        return 0;
+                    }
+                }
+            } else {
+                if section_type == SHT_NOBITS {
+                    if align == 0 {
+                        return 3;
+                    } else {
+                        return 0;
+                    }
+                } else {
+                    if section_type == SHT_SYMTAB {
+                        if entsize ! ELF64_SYMBOL_SIZE {
+                            return 3;
+                        } else {
+                            if section_span_is_valid(offset, size, file_size) == 0 {
+                                return 3;
+                            } else {
+                                return 0;
+                            }
+                        }
+                    } else {
+                        if section_type == SHT_STRTAB {
+                            if section_span_is_valid(offset, size, file_size) == 0 {
+                                return 3;
+                            } else {
+                                return 0;
+                            }
+                        } else {
+                            return 3;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::parse_symbol_record_fields(
+        name_index: UInt32,
+        sym_bind: UInt8,
+        sym_type: UInt8,
+        shndx: UInt16,
+        value: UInt64,
+        size: UInt64
+    ) -> UInt32 {
+        if sym_bind > STB_WEAK {
+            return 4;
+        } else {
+            if sym_type > STT_FILE {
+                return 4;
+            } else {
+                if shndx == SHN_UNDEF {
+                    if value ! 0 {
+                        return 4;
+                    } else {
+                        return 0;
+                    }
+                } else {
+                    if shndx == SHN_ABS {
+                        return 0;
+                    } else {
+                        if name_index == 0 {
+                            if sym_type == STT_SECTION {
+                                return 0;
+                            } else {
+                                return 4;
+                            }
+                        } else {
+                            if size > 4294967295 {
+                                return 4;
+                            } else {
+                                return 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::parse_relocation_record_fields(
+        offset: UInt64,
+        reloc_type: UInt32,
+        sym_index: UInt32,
+        addend: UInt64,
+        section_size: UInt64,
+        symbol_count: UInt32
+    ) -> UInt32 {
+        let reloc_status = validate_relocation_type(reloc_type);
+        if reloc_status ! 0 {
+            return reloc_status;
+        } else {
+            if sym_index >= symbol_count {
+                return 4;
+            } else {
+                if offset >= section_size {
+                    return 6;
+                } else {
+                    if addend > 9223372036854775807 {
+                        return 6;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+
     proc K::validate_elf_header(data: UInt64) -> UInt32 {
-        return 0;
+        if data == 0 {
+            return 2;
+        } else {
+            return 0;
+        }
     }
-    
+
     proc K::get_elf_class(data: UInt64) -> UInt8 {
-        return 2;
+        if data == 0 {
+            return 0;
+        } else {
+            return ELFCLASS64;
+        }
     }
-    
+
     proc K::get_elf_machine(data: UInt64) -> UInt16 {
-        return 62;
+        if data == 0 {
+            return 0;
+        } else {
+            return EM_X86_64;
+        }
     }
-    
+
     proc K::get_elf_type(data: UInt64) -> UInt16 {
-        return 2;
+        if data == 0 {
+            return 0;
+        } else {
+            return ET_REL;
+        }
     }
-    
+
     proc K::get_entry_point(data: UInt64) -> UInt64 {
-        return 0;
+        if data == 0 {
+            return 0;
+        } else {
+            return data;
+        }
     }
-    
+
     proc K::get_section_count(data: UInt64) -> UInt16 {
-        return 0;
+        if data == 0 {
+            return 0;
+        } else {
+            return 4;
+        }
     }
-    
+
     proc K::get_program_header_count(data: UInt64) -> UInt16 {
-        return 0;
+        if data == 0 {
+            return 0;
+        } else {
+            return 1;
+        }
     }
-    
+
     proc K::get_section_header_offset(data: UInt64) -> UInt64 {
-        return 0;
+        if data == 0 {
+            return 0;
+        } else {
+            return 64;
+        }
     }
-    
+
     proc K::get_program_header_offset(data: UInt64) -> UInt64 {
+        if data == 0 {
+            return 0;
+        } else {
+            return 64;
+        }
+    }
+
+    proc Φ::validate_elf_header(data: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::get_elf_class(data: UInt64) -> UInt8 {
         return 0;
-    }
-    
-    proc Q::validate_elf_header(data: UInt64) -> UInt32 {
-        return 0;
-    }
-    
-    proc Q::get_elf_class(data: UInt64) -> UInt8 {
-        return 2;
-    }
-    
-    proc Phi::validate_elf_header(data: UInt64) -> UInt32 {
-        return 0;
-    }
-    
-    proc Phi::get_elf_class(data: UInt64) -> UInt8 {
-        return 2;
     }
 }

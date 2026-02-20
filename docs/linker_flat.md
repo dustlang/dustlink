@@ -9,7 +9,7 @@ Source: `src/linker_flat.ds`
 ## Constants
 
 - `MBR_SIZE = 512`
-- `MBR_SIGNATURE = 43660` (`0xAA55`)
+- `MBR_SIGNATURE = 43605` (`0xAA55`)
 - `BOOT_LOADER_ADDRESS = 32768`
 - `KERNEL_LOAD_ADDRESS = 1048576`
 - `MAX_BOOT_SIZE = 512`
@@ -23,13 +23,14 @@ Source: `src/linker_flat.ds`
 - `create_flat_image(sections, output, size) -> UInt32`
 - `align_to(value, alignment) -> UInt64`
 - `create_elf_image(sections, entry, output) -> UInt32`
+- `calculate_binary_size(text_size, rodata_size, data_size, bss_size) -> UInt32`
 
-`align_to` contains real arithmetic behavior:
+`K` domain behavior includes deterministic validation and helper arithmetic:
 
 - returns `value` when already aligned
 - otherwise rounds up to next `alignment` boundary
-
-Other `K` procedures return placeholder `0`.
+- validates null/size constraints for image creation paths
+- returns typed `LinkerErrors` statuses
 
 ## `Q` and `Phi`
 

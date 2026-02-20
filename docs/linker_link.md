@@ -9,10 +9,8 @@ Source: `src/linker_link.ds`
 ## Linker Constants
 
 - `LINKER_NONE = 0`
-- `LINKER_LD = 1`
-- `LINKER_LD64 = 2`
-- `LINKER_CLANG = 3`
-- `LINKER_GCC = 4`
+- `LINKER_INTERNAL_MVP = 1`
+- `LINKER_EXTERNAL_COMPAT = 2`
 
 ## Output Format Constants
 
@@ -43,8 +41,12 @@ Source: `src/linker_link.ds`
 - `create_mbr_image(output, boot_sector, kernel) -> UInt32`
 - `get_linker_path() -> UInt64`
 - `find_linker() -> UInt32`
+- `is_supported_target(target) -> UInt32`
+- `is_supported_format(format) -> UInt32`
 
-Current `K` returns are placeholders (`0`).
+`K` domain now performs deterministic input/target/format validation and returns `LinkerErrors` status codes.
+
+`find_linker()` currently resolves to `LINKER_INTERNAL_MVP`.
 
 ## `Q` and `Phi`
 

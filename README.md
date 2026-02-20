@@ -1,113 +1,62 @@
 # DustLink
 
-DPL Linker for creating bootable x86-64 binaries.
+`dustlink` is the Dust Programming Language linker project.
 
-## Overview
+## Scope
 
-DustLink is a linker written in the Dust Programming Language (DPL) that produces bootable binaries for x86-64 systems. It supports multiple output formats including:
+- Platform-agnostic linker architecture (not XDV-specific).
+- ELF/System-V-oriented MVP core in Dust source (`.ds`).
+- Compatibility flag profile for gcc/ld/lld-style invocation semantics.
 
-- **Flat binary** - For boot sectors (MBR)
-- **ELF64** - Executable and Linkable Format
-- **MBR boot image** - 512-byte bootable sectors
+## Current Implementation Split
 
-## Features
+- `src/*.ds`: internal linker MVP logic written in Dust.
+- `src/main.rs`: current production CLI wrapper path used by existing build pipelines.
 
-- ELF64 format support
-- Flat binary format for boot sectors
-- Relocation processing (x86-64 relocations)
-- Section management (.text, .data, .rodata, .bss)
-- Symbol table management
-- Boot image creation for VirtualBox/QEMU
-- Multiple output formats
+The active migration direction is wrapper mode to internal Dust linker execution.
 
-## Architecture
+## Dust MVP Status
 
-This implementation follows the K-Domain only approach (classical x86-64 hardware), with Q/Φ domains stubbed to return ERR_DOMAIN_NOT_AVAILABLE (100).
+Implemented in Dust modules:
 
-## Source Files
+- CLI flag normalization and validation (`linker_cli.ds`)
+- Error model (`linker_errors.ds`)
+- ELF identity/type/machine checks (`linker_elf.ds`)
+- Section/layout helpers (`linker_sections.ds`)
+- Symbol rules (`linker_symbol.ds`)
+- Relocation validation/math (`linker_reloc.ds`)
+- Image planning/validation (`linker_image.ds`)
+- Link stage target/format validation (`linker_link.ds`)
+- Top-level orchestrator (`dustlink.ds`)
 
-```
-src/
-├── linker_errors.ds      # Error codes
-├── linker_elf.ds        # ELF binary format
-├── linker_flat.ds       # Flat binary format
-├── linker_reloc.ds      # Relocation processing
-├── linker_sections.ds   # Section management
-├── linker_symbol.ds     # Symbol table
-├── linker_image.ds      # Final image creation
-└── dustlink.ds          # Main linker module
-```
+## Supported MVP Targets and Formats
 
-## Supported Formats
+- Targets: `x86_64` profile families (none/linux/windows/macos target IDs).
+- Output formats: ELF64, flat binary, MBR image IDs.
+- Relocations: `R_X86_64_NONE`, `R_X86_64_64`, `R_X86_64_PC32`, `R_X86_64_32`, `R_X86_64_32S`.
 
-### ELF64
-- x86-64 machine type
-- Executable and relocatable types
-- Section headers and program headers
-- Symbol and relocation tables
+## Compatibility Flags (MVP Canonical Surface)
 
-### Flat Binary
-- Raw memory image
-- MBR boot sector (512 bytes)
-- Kernel flat image
-- Configurable load addresses
+- Output: `-o`, `--output`
+- Entry: `-e`, `--entry`
+- Map: `-Map`
+- Image base: `--image-base`
+- Text address: `-Ttext`
+- Output format: `--oformat`
+- Library path/library: `-L`, `-l`
+- Strip: `-s`, `--strip-debug`
+- Garbage collect sections: `--gc-sections`
+- Multiple definition policy: `--allow-multiple-definition`
+- Groups: `--start-group`, `--end-group`
+- Utility: `--help`, `--version`
 
-### Boot Image
-- 512-byte MBR with 0x55AA signature
-- Bootloader + kernel in one image
-- Suitable for VirtualBox/QEMU
+## Domain Policy
 
-## Memory Layout
+- `K`: active MVP behavior.
+- `Q` and `Phi`: domain-unavailable returns (`100`) for operational procedures.
 
-```
-0x00000 - 0xFFFFF    : Real mode (BIOS area)
-0x07C00 - 0x07DFF    : Boot sector load address
-0x07E00 - 0x9FFFF    : Boot stack/data
-0x100000              : Kernel load address (1MB)
-```
-
-## Usage
-
-DustLink takes object files from the DPL compiler and produces a linked binary:
-
-```dust
-// Example linker invocation
-DustLink::K::link(input_files, output_file, FORMAT_ELF);
-DustLink::K::set_entry_point(1048576);
-DustLink::K::run();
-```
-
-## Domain Support
-
-| Domain | Status |
-|--------|--------|
-| K      | Full implementation |
-| Q      | Stubbed (returns ERR_DOMAIN_NOT_AVAILABLE) |
-| Φ      | Stubbed (returns ERR_DOMAIN_NOT_AVAILABLE) |
-
-## Error Codes
-
-- 0: Success
-- 1: ERR_FILE_NOT_FOUND
-- 2: ERR_INVALID_FORMAT
-- 3: ERR_INVALID_SECTION
-- 4: ERR_UNDEFINED_SYMBOL
-- 5: ERR_MULTIPLE_DEFINITION
-- 6: ERR_INVALID_RELOCATION
-- 7: ERR_OUT_OF_MEMORY
-- 8: ERR_INVALID_ADDRESS
-- 9: ERR_INVALID_ENTRY
-- 10: ERR_WRITE_FAILED
-- 100: ERR_DOMAIN_NOT_AVAILABLE
-
-## Building
-
-This project uses the DPL build system. Verify source files compile:
+## Build Check
 
 ```bash
 dust check src/
 ```
-
-## Version
-
-0.1.0

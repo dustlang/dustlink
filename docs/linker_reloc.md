@@ -9,6 +9,7 @@ Source: `src/linker_reloc.ds`
 ## Constants
 
 - `MAX_RELOCATIONS = 16384`
+- `MAX_SECTION_INDEX = 64`
 - `R_X86_64_NONE = 0`
 - `R_X86_64_64 = 1`
 - `R_X86_64_PC32 = 2`
@@ -22,8 +23,9 @@ Source: `src/linker_reloc.ds`
 - `process_relocations(section, relocs, symbols, data) -> UInt32`
 - `resolve_reloc_address(reloc, sym_addr, base_addr) -> UInt64`
 - `calculate_pcrel_offset(reloc, sym_addr, offset) -> UInt64`
+- `is_supported_reloc(reloc_type) -> UInt32`
 
-Current implementation returns placeholders in this file.
+`K` domain now validates relocation type/index inputs and provides deterministic relocation address helpers.
 
 ## `Q` and `Phi`
 

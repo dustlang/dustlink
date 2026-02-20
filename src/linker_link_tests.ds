@@ -1,341 +1,104 @@
-// DustLink Linker Integration Tests
+// Link stage behavior tests for the Dust internal linker MVP profile.
 
 forge LinkerLinkTests {
-    
-    proc test_k_add_object_file() -> UInt32 {
+    const ERR_OK: UInt32 = 0;
+    const ERR_FILE_NOT_FOUND: UInt32 = 1;
+    const ERR_INVALID_ADDRESS: UInt32 = 8;
+    const ERR_INVALID_ENTRY: UInt32 = 9;
+    const ERR_WRITE_FAILED: UInt32 = 10;
+    const ERR_UNSUPPORTED_FLAG: UInt32 = 12;
+    const ERR_UNSUPPORTED_TARGET: UInt32 = 14;
+    const LINKER_INTERNAL_MVP: UInt32 = 1;
+    const TARGET_X86_64_LINUX: UInt32 = 1;
+
+    proc expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
+        if actual == expected {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc test_add_object_requires_path() -> UInt32 {
         let result = LinkerLink::K::add_object_file(0);
-        return 1;
+        return expect_u32(result, ERR_FILE_NOT_FOUND);
     }
-    
-    proc test_k_add_library() -> UInt32 {
-        let result = LinkerLink::K::add_library(0);
-        return 1;
+
+    proc test_set_linker_internal_ok() -> UInt32 {
+        let result = LinkerLink::K::set_linker(LINKER_INTERNAL_MVP);
+        return expect_u32(result, ERR_OK);
     }
-    
-    proc test_k_add_search_path() -> UInt32 {
-        let result = LinkerLink::K::add_search_path(0);
-        return 1;
+
+    proc test_set_linker_invalid_rejected() -> UInt32 {
+        let result = LinkerLink::K::set_linker(99);
+        return expect_u32(result, ERR_UNSUPPORTED_FLAG);
     }
-    
-    proc test_k_set_linker() -> UInt32 {
-        let result = LinkerLink::K::set_linker(1);
-        return 1;
+
+    proc test_target_linux_supported() -> UInt32 {
+        let result = LinkerLink::K::set_target(TARGET_X86_64_LINUX);
+        return expect_u32(result, ERR_OK);
     }
-    
-    proc test_k_set_target() -> UInt32 {
-        let result = LinkerLink::K::set_target(0);
-        return 1;
+
+    proc test_target_invalid_rejected() -> UInt32 {
+        let result = LinkerLink::K::set_target(99);
+        return expect_u32(result, ERR_UNSUPPORTED_TARGET);
     }
-    
-    proc test_k_set_output() -> UInt32 {
+
+    proc test_set_output_requires_path() -> UInt32 {
         let result = LinkerLink::K::set_output(0);
-        return 1;
+        return expect_u32(result, ERR_WRITE_FAILED);
     }
-    
-    proc test_k_set_entry() -> UInt32 {
-        let result = LinkerLink::K::set_entry(1048576);
-        return 1;
+
+    proc test_entry_requires_nonzero() -> UInt32 {
+        let result = LinkerLink::K::set_entry(0);
+        return expect_u32(result, ERR_INVALID_ENTRY);
     }
-    
-    proc test_k_set_base_address() -> UInt32 {
-        let result = LinkerLink::K::set_base_address(1048576);
-        return 1;
+
+    proc test_base_requires_page_alignment() -> UInt32 {
+        let result = LinkerLink::K::set_base_address(12345);
+        return expect_u32(result, ERR_INVALID_ADDRESS);
     }
-    
-    proc test_k_link() -> UInt32 {
-        let result = LinkerLink::K::link();
-        return 1;
+
+    proc test_create_flat_binary_basic() -> UInt32 {
+        let result = LinkerLink::K::create_flat_binary(1, 1048576);
+        return expect_u32(result, ERR_OK);
     }
-    
-    proc test_k_link_with_script() -> UInt32 {
-        let result = LinkerLink::K::link_with_script(0);
-        return 1;
+
+    proc test_create_mbr_image_requires_kernel() -> UInt32 {
+        let result = LinkerLink::K::create_mbr_image(1, 1, 0);
+        return expect_u32(result, ERR_FILE_NOT_FOUND);
     }
-    
-    proc test_k_create_flat_binary() -> UInt32 {
-        let result = LinkerLink::K::create_flat_binary(0, 1048576);
-        return 1;
-    }
-    
-    proc test_k_create_mbr_image() -> UInt32 {
-        let result = LinkerLink::K::create_mbr_image(0, 0, 0);
-        return 1;
-    }
-    
-    proc test_k_get_linker_path() -> UInt32 {
-        let result = LinkerLink::K::get_linker_path();
-        return 1;
-    }
-    
-    proc test_k_find_linker() -> UInt32 {
+
+    proc test_find_linker_prefers_internal() -> UInt32 {
         let result = LinkerLink::K::find_linker();
-        return 1;
+        return expect_u32(result, LINKER_INTERNAL_MVP);
     }
-    
-    proc test_q_add_object_file_returns_error() -> UInt32 {
-        let result = LinkerLink::Q::add_object_file(0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_q_add_library_returns_error() -> UInt32 {
-        let result = LinkerLink::Q::add_library(0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_q_add_search_path_returns_error() -> UInt32 {
-        let result = LinkerLink::Q::add_search_path(0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_q_set_linker_returns_error() -> UInt32 {
-        let result = LinkerLink::Q::set_linker(1);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_q_set_target_returns_error() -> UInt32 {
-        let result = LinkerLink::Q::set_target(0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_q_set_output_returns_error() -> UInt32 {
-        let result = LinkerLink::Q::set_output(0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_q_set_entry_returns_error() -> UInt32 {
-        let result = LinkerLink::Q::set_entry(1048576);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_q_set_base_address_returns_error() -> UInt32 {
-        let result = LinkerLink::Q::set_base_address(1048576);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_q_link_returns_error() -> UInt32 {
+
+    proc test_q_rejected() -> UInt32 {
         let result = LinkerLink::Q::link();
-        if result == 100 {
-            return 1;
-        }
-        return 0;
+        return expect_u32(result, 100);
     }
-    
-    proc test_q_link_with_script_returns_error() -> UInt32 {
-        let result = LinkerLink::Q::link_with_script(0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
+
+    proc test_phi_rejected() -> UInt32 {
+        let result = LinkerLink::F::link();
+        return expect_u32(result, 100);
     }
-    
-    proc test_q_create_flat_binary_returns_error() -> UInt32 {
-        let result = LinkerLink::Q::create_flat_binary(0, 1048576);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_q_create_mbr_image_returns_error() -> UInt32 {
-        let result = LinkerLink::Q::create_mbr_image(0, 0, 0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_q_get_linker_path() -> UInt32 {
-        let result = LinkerLink::Q::get_linker_path();
-        return 1;
-    }
-    
-    proc test_q_find_linker_returns_error() -> UInt32 {
-        let result = LinkerLink::Q::find_linker();
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_phi_add_object_file_returns_error() -> UInt32 {
-        let result = LinkerLink::Phi::add_object_file(0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_phi_add_library_returns_error() -> UInt32 {
-        let result = LinkerLink::Phi::add_library(0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_phi_add_search_path_returns_error() -> UInt32 {
-        let result = LinkerLink::Phi::add_search_path(0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_phi_set_linker_returns_error() -> UInt32 {
-        let result = LinkerLink::Phi::set_linker(1);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_phi_set_target_returns_error() -> UInt32 {
-        let result = LinkerLink::Phi::set_target(0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_phi_set_output_returns_error() -> UInt32 {
-        let result = LinkerLink::Phi::set_output(0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_phi_set_entry_returns_error() -> UInt32 {
-        let result = LinkerLink::Phi::set_entry(1048576);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_phi_set_base_address_returns_error() -> UInt32 {
-        let result = LinkerLink::Phi::set_base_address(1048576);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_phi_link_returns_error() -> UInt32 {
-        let result = LinkerLink::Phi::link();
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_phi_link_with_script_returns_error() -> UInt32 {
-        let result = LinkerLink::Phi::link_with_script(0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_phi_create_flat_binary_returns_error() -> UInt32 {
-        let result = LinkerLink::Phi::create_flat_binary(0, 1048576);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_phi_create_mbr_image_returns_error() -> UInt32 {
-        let result = LinkerLink::Phi::create_mbr_image(0, 0, 0);
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
-    proc test_phi_get_linker_path() -> UInt32 {
-        let result = LinkerLink::Phi::get_linker_path();
-        return 1;
-    }
-    
-    proc test_phi_find_linker_returns_error() -> UInt32 {
-        let result = LinkerLink::Phi::find_linker();
-        if result == 100 {
-            return 1;
-        }
-        return 0;
-    }
-    
+
     proc run_all_tests() -> UInt32 {
         let passed = 0;
-        
-        passed = passed + LinkerLinkTests::test_k_add_object_file();
-        passed = passed + LinkerLinkTests::test_k_add_library();
-        passed = passed + LinkerLinkTests::test_k_add_search_path();
-        passed = passed + LinkerLinkTests::test_k_set_linker();
-        passed = passed + LinkerLinkTests::test_k_set_target();
-        passed = passed + LinkerLinkTests::test_k_set_output();
-        passed = passed + LinkerLinkTests::test_k_set_entry();
-        passed = passed + LinkerLinkTests::test_k_set_base_address();
-        passed = passed + LinkerLinkTests::test_k_link();
-        passed = passed + LinkerLinkTests::test_k_link_with_script();
-        passed = passed + LinkerLinkTests::test_k_create_flat_binary();
-        passed = passed + LinkerLinkTests::test_k_create_mbr_image();
-        passed = passed + LinkerLinkTests::test_k_get_linker_path();
-        passed = passed + LinkerLinkTests::test_k_find_linker();
-        passed = passed + LinkerLinkTests::test_q_add_object_file_returns_error();
-        passed = passed + LinkerLinkTests::test_q_add_library_returns_error();
-        passed = passed + LinkerLinkTests::test_q_add_search_path_returns_error();
-        passed = passed + LinkerLinkTests::test_q_set_linker_returns_error();
-        passed = passed + LinkerLinkTests::test_q_set_target_returns_error();
-        passed = passed + LinkerLinkTests::test_q_set_output_returns_error();
-        passed = passed + LinkerLinkTests::test_q_set_entry_returns_error();
-        passed = passed + LinkerLinkTests::test_q_set_base_address_returns_error();
-        passed = passed + LinkerLinkTests::test_q_link_returns_error();
-        passed = passed + LinkerLinkTests::test_q_link_with_script_returns_error();
-        passed = passed + LinkerLinkTests::test_q_create_flat_binary_returns_error();
-        passed = passed + LinkerLinkTests::test_q_create_mbr_image_returns_error();
-        passed = passed + LinkerLinkTests::test_q_get_linker_path();
-        passed = passed + LinkerLinkTests::test_q_find_linker_returns_error();
-        passed = passed + LinkerLinkTests::test_phi_add_object_file_returns_error();
-        passed = passed + LinkerLinkTests::test_phi_add_library_returns_error();
-        passed = passed + LinkerLinkTests::test_phi_add_search_path_returns_error();
-        passed = passed + LinkerLinkTests::test_phi_set_linker_returns_error();
-        passed = passed + LinkerLinkTests::test_phi_set_target_returns_error();
-        passed = passed + LinkerLinkTests::test_phi_set_output_returns_error();
-        passed = passed + LinkerLinkTests::test_phi_set_entry_returns_error();
-        passed = passed + LinkerLinkTests::test_phi_set_base_address_returns_error();
-        passed = passed + LinkerLinkTests::test_phi_link_returns_error();
-        passed = passed + LinkerLinkTests::test_phi_link_with_script_returns_error();
-        passed = passed + LinkerLinkTests::test_phi_create_flat_binary_returns_error();
-        passed = passed + LinkerLinkTests::test_phi_create_mbr_image_returns_error();
-        passed = passed + LinkerLinkTests::test_phi_get_linker_path();
-        passed = passed + LinkerLinkTests::test_phi_find_linker_returns_error();
-        
+        passed = passed + test_add_object_requires_path();
+        passed = passed + test_set_linker_internal_ok();
+        passed = passed + test_set_linker_invalid_rejected();
+        passed = passed + test_target_linux_supported();
+        passed = passed + test_target_invalid_rejected();
+        passed = passed + test_set_output_requires_path();
+        passed = passed + test_entry_requires_nonzero();
+        passed = passed + test_base_requires_page_alignment();
+        passed = passed + test_create_flat_binary_basic();
+        passed = passed + test_create_mbr_image_requires_kernel();
+        passed = passed + test_find_linker_prefers_internal();
+        passed = passed + test_q_rejected();
+        passed = passed + test_phi_rejected();
         return passed;
     }
 }

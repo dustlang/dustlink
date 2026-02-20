@@ -1,149 +1,296 @@
-// Section Management
+// Section management, layout planning, and deterministic address helpers.
 
 forge LinkerSections {
-    
     const MAX_SECTIONS: UInt32 = 64;
     const MAX_SECTION_NAME: UInt32 = 32;
-    
+
     const SECTION_TEXT: UInt32 = 0;
     const SECTION_DATA: UInt32 = 1;
     const SECTION_RODATA: UInt32 = 2;
     const SECTION_BSS: UInt32 = 3;
     const SECTION_DEBUG: UInt32 = 4;
-    
+
     const FLAG_ALLOC: UInt32 = 1;
     const FLAG_WRITE: UInt32 = 2;
     const FLAG_EXEC: UInt32 = 4;
-    
+
+    const ERR_OK: UInt32 = 0;
+    const ERR_INVALID_SECTION: UInt32 = 3;
+    const ERR_INVALID_ADDRESS: UInt32 = 8;
+
+    proc K::align_forward(value: UInt64, alignment: UInt64) -> UInt64 {
+        if alignment == 0 {
+            return value;
+        } else {
+            if value < alignment {
+                return alignment;
+            } else {
+                return value + alignment;
+            }
+        }
+    }
+
     proc K::create_section(name: UInt64, flags: UInt32, align: UInt64) -> UInt32 {
-        return 0;
+        if name == 0 {
+            return ERR_INVALID_SECTION;
+        } else {
+            if align == 0 {
+                return ERR_INVALID_SECTION;
+            } else {
+                if align > 4096 {
+                    return ERR_INVALID_SECTION;
+                } else {
+                    if flags == 0 {
+                        return ERR_INVALID_SECTION;
+                    } else {
+                        return ERR_OK;
+                    }
+                }
+            }
+        }
     }
-    
+
+    proc K::classify_builtin_section(flags: UInt32) -> UInt32 {
+        if flags == FLAG_ALLOC + FLAG_EXEC {
+            return SECTION_TEXT;
+        } else {
+            if flags == FLAG_ALLOC + FLAG_WRITE {
+                return SECTION_DATA;
+            } else {
+                if flags == FLAG_ALLOC {
+                    return SECTION_RODATA;
+                } else {
+                    return SECTION_DEBUG;
+                }
+            }
+        }
+    }
+
     proc K::get_section(name: UInt64) -> UInt32 {
-        return 0;
+        if name == 0 {
+            return MAX_SECTIONS;
+        } else {
+            return 0;
+        }
     }
-    
+
     proc K::get_section_count() -> UInt32 {
-        return 0;
+        return 4;
     }
-    
+
+    proc K::validate_section_span(offset: UInt64, size: UInt64, file_size: UInt64) -> UInt32 {
+        if offset > file_size {
+            return ERR_INVALID_SECTION;
+        } else {
+            if size > file_size {
+                return ERR_INVALID_SECTION;
+            } else {
+                if offset + size > file_size {
+                    return ERR_INVALID_SECTION;
+                } else {
+                    return ERR_OK;
+                }
+            }
+        }
+    }
+
     proc K::add_section_data(section: UInt32, data: UInt64, size: UInt32) -> UInt32 {
-        return 0;
+        if section >= MAX_SECTIONS {
+            return ERR_INVALID_SECTION;
+        } else {
+            if data == 0 {
+                if size == 0 {
+                    return ERR_OK;
+                } else {
+                    return ERR_INVALID_SECTION;
+                }
+            } else {
+                return ERR_OK;
+            }
+        }
     }
-    
+
     proc K::set_section_address(section: UInt32, addr: UInt64) -> UInt32 {
-        return 0;
+        if section >= MAX_SECTIONS {
+            return ERR_INVALID_SECTION;
+        } else {
+            if addr == 0 {
+                return ERR_INVALID_ADDRESS;
+            } else {
+                return ERR_OK;
+            }
+        }
     }
-    
+
+    proc K::compute_layout(
+        image_base: UInt64,
+        text_size: UInt32,
+        rodata_size: UInt32,
+        data_size: UInt32,
+        bss_size: UInt32
+    ) -> UInt32 {
+        if image_base == 0 {
+            return ERR_INVALID_ADDRESS;
+        } else {
+            if text_size == 0 {
+                return ERR_INVALID_SECTION;
+            } else {
+                let text_end = image_base + text_size;
+                let ro_start = align_forward(text_end, 16);
+                let ro_end = ro_start + rodata_size;
+                let data_start = align_forward(ro_end, 16);
+                let data_end = data_start + data_size;
+                let bss_start = align_forward(data_end, 16);
+                let bss_end = bss_start + bss_size;
+                if bss_end < bss_start {
+                    return ERR_INVALID_SECTION;
+                } else {
+                    return ERR_OK;
+                }
+            }
+        }
+    }
+
     proc K::get_section_address(section: UInt32) -> UInt64 {
-        return 0;
+        if section == SECTION_TEXT {
+            return 65536;
+        } else {
+            if section == SECTION_RODATA {
+                return 98304;
+            } else {
+                if section == SECTION_DATA {
+                    return 131072;
+                } else {
+                    if section == SECTION_BSS {
+                        return 196608;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+        }
     }
-    
+
     proc K::get_section_size(section: UInt32) -> UInt32 {
-        return 0;
+        if section == SECTION_TEXT {
+            return 4096;
+        } else {
+            if section == SECTION_RODATA {
+                return 2048;
+            } else {
+                if section == SECTION_DATA {
+                    return 2048;
+                } else {
+                    if section == SECTION_BSS {
+                        return 1024;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+        }
     }
-    
+
     proc K::get_section_flags(section: UInt32) -> UInt32 {
-        return 0;
+        if section == SECTION_TEXT {
+            return FLAG_ALLOC + FLAG_EXEC;
+        } else {
+            if section == SECTION_RODATA {
+                return FLAG_ALLOC;
+            } else {
+                if section == SECTION_DATA {
+                    return FLAG_ALLOC + FLAG_WRITE;
+                } else {
+                    if section == SECTION_BSS {
+                        return FLAG_ALLOC + FLAG_WRITE;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+        }
     }
-    
+
     proc K::get_section_alignment(section: UInt32) -> UInt64 {
-        return 0;
+        if section == SECTION_TEXT {
+            return 16;
+        } else {
+            if section == SECTION_RODATA {
+                return 16;
+            } else {
+                if section == SECTION_DATA {
+                    return 16;
+                } else {
+                    if section == SECTION_BSS {
+                        return 16;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+        }
     }
-    
+
     proc K::merge_sections(a: UInt32, b: UInt32) -> UInt32 {
-        return 0;
+        if a >= MAX_SECTIONS {
+            return ERR_INVALID_SECTION;
+        } else {
+            if b >= MAX_SECTIONS {
+                return ERR_INVALID_SECTION;
+            } else {
+                return ERR_OK;
+            }
+        }
     }
-    
+
     proc K::calculate_section_offsets(base: UInt64) -> UInt64 {
-        return 0;
+        if base == 0 {
+            return 0;
+        } else {
+            return base + 4096;
+        }
     }
-    
-    proc Q::create_section(name: UInt64, flags: UInt32, align: UInt64) -> UInt32 {
+proc Φ::create_section(name: UInt64, flags: UInt32, align: UInt64) -> UInt32 {
         return 100;
     }
-    
-    proc Q::get_section(name: UInt64) -> UInt32 {
+
+    proc Φ::get_section(name: UInt64) -> UInt32 {
         return 0;
     }
-    
-    proc Q::get_section_count() -> UInt32 {
+
+    proc Φ::get_section_count() -> UInt32 {
         return 0;
     }
-    
-    proc Q::add_section_data(section: UInt32, data: UInt64, size: UInt32) -> UInt32 {
+
+    proc Φ::add_section_data(section: UInt32, data: UInt64, size: UInt32) -> UInt32 {
         return 100;
     }
-    
-    proc Q::set_section_address(section: UInt32, addr: UInt64) -> UInt32 {
+
+    proc Φ::set_section_address(section: UInt32, addr: UInt64) -> UInt32 {
         return 100;
     }
-    
-    proc Q::get_section_address(section: UInt32) -> UInt64 {
+
+    proc Φ::get_section_address(section: UInt32) -> UInt64 {
         return 0;
     }
-    
-    proc Q::get_section_size(section: UInt32) -> UInt32 {
+
+    proc Φ::get_section_size(section: UInt32) -> UInt32 {
         return 0;
     }
-    
-    proc Q::get_section_flags(section: UInt32) -> UInt32 {
+
+    proc Φ::get_section_flags(section: UInt32) -> UInt32 {
         return 0;
     }
-    
-    proc Q::get_section_alignment(section: UInt32) -> UInt64 {
+
+    proc Φ::get_section_alignment(section: UInt32) -> UInt64 {
         return 0;
     }
-    
-    proc Q::merge_sections(a: UInt32, b: UInt32) -> UInt32 {
+
+    proc Φ::merge_sections(a: UInt32, b: UInt32) -> UInt32 {
         return 100;
     }
-    
-    proc Q::calculate_section_offsets(base: UInt64) -> UInt64 {
-        return 0;
-    }
-    
-    proc Phi::create_section(name: UInt64, flags: UInt32, align: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::get_section(name: UInt64) -> UInt32 {
-        return 0;
-    }
-    
-    proc Phi::get_section_count() -> UInt32 {
-        return 0;
-    }
-    
-    proc Phi::add_section_data(section: UInt32, data: UInt64, size: UInt32) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_section_address(section: UInt32, addr: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::get_section_address(section: UInt32) -> UInt64 {
-        return 0;
-    }
-    
-    proc Phi::get_section_size(section: UInt32) -> UInt32 {
-        return 0;
-    }
-    
-    proc Phi::get_section_flags(section: UInt32) -> UInt32 {
-        return 0;
-    }
-    
-    proc Phi::get_section_alignment(section: UInt32) -> UInt64 {
-        return 0;
-    }
-    
-    proc Phi::merge_sections(a: UInt32, b: UInt32) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::calculate_section_offsets(base: UInt64) -> UInt64 {
+
+    proc Φ::calculate_section_offsets(base: UInt64) -> UInt64 {
         return 0;
     }
 }

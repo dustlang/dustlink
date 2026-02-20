@@ -1,0 +1,305 @@
+// DustLink CLI compatibility profile.
+// Canonical option IDs are intentionally linker-agnostic and map to gcc/ld/lld spellings.
+
+forge LinkerCli {
+    const FLAG_NONE: UInt32 = 0;
+    const FLAG_OUTPUT: UInt32 = 1;
+    const FLAG_ENTRY: UInt32 = 2;
+    const FLAG_MAP: UInt32 = 3;
+    const FLAG_MACHINE: UInt32 = 4;
+    const FLAG_IMAGE_BASE: UInt32 = 5;
+    const FLAG_TEXT_ADDRESS: UInt32 = 6;
+    const FLAG_OFORMAT: UInt32 = 7;
+    const FLAG_NOSTDLIB: UInt32 = 8;
+    const FLAG_LIBRARY_PATH: UInt32 = 9;
+    const FLAG_LIBRARY: UInt32 = 10;
+    const FLAG_STRIP_DEBUG: UInt32 = 11;
+    const FLAG_GC_SECTIONS: UInt32 = 12;
+    const FLAG_ALLOW_MULTIPLE_DEFINITION: UInt32 = 13;
+    const FLAG_START_GROUP: UInt32 = 14;
+    const FLAG_END_GROUP: UInt32 = 15;
+    const FLAG_HELP: UInt32 = 16;
+    const FLAG_VERSION: UInt32 = 17;
+
+    // Alias IDs representing multiple spellings encountered in gcc/lld workflows.
+    const ALIAS_SHORT_O: UInt32 = 1001;
+    const ALIAS_LONG_OUTPUT: UInt32 = 1002;
+    const ALIAS_SHORT_E: UInt32 = 1003;
+    const ALIAS_LONG_ENTRY: UInt32 = 1004;
+    const ALIAS_SHORT_MAP: UInt32 = 1005;
+    const ALIAS_LONG_IMAGE_BASE: UInt32 = 1006;
+    const ALIAS_SHORT_TTEXT: UInt32 = 1007;
+    const ALIAS_LONG_OFORMAT: UInt32 = 1008;
+    const ALIAS_SHORT_L: UInt32 = 1009;
+    const ALIAS_SHORT_l: UInt32 = 1010;
+    const ALIAS_SHORT_S: UInt32 = 1011;
+    const ALIAS_LONG_STRIP_DEBUG: UInt32 = 1012;
+    const ALIAS_LONG_GC_SECTIONS: UInt32 = 1013;
+    const ALIAS_LONG_ALLOW_MULTIPLE_DEFINITION: UInt32 = 1014;
+    const ALIAS_LONG_HELP: UInt32 = 1015;
+    const ALIAS_LONG_VERSION: UInt32 = 1016;
+
+    const MACHINE_X86_64_ELF: UInt32 = 1;
+    const MACHINE_X86_64_PE: UInt32 = 2;
+    const MACHINE_X86_64_MACHO: UInt32 = 3;
+
+    const OFORMAT_ELF64: UInt32 = 1;
+    const OFORMAT_BINARY: UInt32 = 2;
+    const OFORMAT_MBR: UInt32 = 3;
+
+    proc K::normalize_flag(flag: UInt32) -> UInt32 {
+        if flag == ALIAS_SHORT_O {
+            return FLAG_OUTPUT;
+        } else {
+            if flag == ALIAS_LONG_OUTPUT {
+                return FLAG_OUTPUT;
+            } else {
+                if flag == ALIAS_SHORT_E {
+                    return FLAG_ENTRY;
+                } else {
+                    if flag == ALIAS_LONG_ENTRY {
+                        return FLAG_ENTRY;
+                    } else {
+                        if flag == ALIAS_SHORT_MAP {
+                            return FLAG_MAP;
+                        } else {
+                            if flag == ALIAS_LONG_IMAGE_BASE {
+                                return FLAG_IMAGE_BASE;
+                            } else {
+                                if flag == ALIAS_SHORT_TTEXT {
+                                    return FLAG_TEXT_ADDRESS;
+                                } else {
+                                    if flag == ALIAS_LONG_OFORMAT {
+                                        return FLAG_OFORMAT;
+                                    } else {
+                                        if flag == ALIAS_SHORT_L {
+                                            return FLAG_LIBRARY_PATH;
+                                        } else {
+                                            if flag == ALIAS_SHORT_l {
+                                                return FLAG_LIBRARY;
+                                            } else {
+                                                if flag == ALIAS_SHORT_S {
+                                                    return FLAG_STRIP_DEBUG;
+                                                } else {
+                                                    if flag == ALIAS_LONG_STRIP_DEBUG {
+                                                        return FLAG_STRIP_DEBUG;
+                                                    } else {
+                                                        if flag == ALIAS_LONG_GC_SECTIONS {
+                                                            return FLAG_GC_SECTIONS;
+                                                        } else {
+                                                            if flag == ALIAS_LONG_ALLOW_MULTIPLE_DEFINITION {
+                                                                return FLAG_ALLOW_MULTIPLE_DEFINITION;
+                                                            } else {
+                                                                if flag == ALIAS_LONG_HELP {
+                                                                    return FLAG_HELP;
+                                                                } else {
+                                                                    if flag == ALIAS_LONG_VERSION {
+                                                                        return FLAG_VERSION;
+                                                                    } else {
+                                                                        return flag;
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::flag_requires_value(flag: UInt32) -> UInt32 {
+        let canonical = normalize_flag(flag);
+        if canonical == FLAG_OUTPUT {
+            return 1;
+        } else {
+            if canonical == FLAG_ENTRY {
+                return 1;
+            } else {
+                if canonical == FLAG_MAP {
+                    return 1;
+                } else {
+                    if canonical == FLAG_MACHINE {
+                        return 1;
+                    } else {
+                        if canonical == FLAG_IMAGE_BASE {
+                            return 1;
+                        } else {
+                            if canonical == FLAG_TEXT_ADDRESS {
+                                return 1;
+                            } else {
+                                if canonical == FLAG_OFORMAT {
+                                    return 1;
+                                } else {
+                                    if canonical == FLAG_LIBRARY_PATH {
+                                        return 1;
+                                    } else {
+                                        if canonical == FLAG_LIBRARY {
+                                            return 1;
+                                        } else {
+                                            return 0;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::is_supported_flag(flag: UInt32) -> UInt32 {
+        let canonical = normalize_flag(flag);
+        if canonical == FLAG_OUTPUT {
+            return 1;
+        } else {
+            if canonical == FLAG_ENTRY {
+                return 1;
+            } else {
+                if canonical == FLAG_MAP {
+                    return 1;
+                } else {
+                    if canonical == FLAG_MACHINE {
+                        return 1;
+                    } else {
+                        if canonical == FLAG_IMAGE_BASE {
+                            return 1;
+                        } else {
+                            if canonical == FLAG_TEXT_ADDRESS {
+                                return 1;
+                            } else {
+                                if canonical == FLAG_OFORMAT {
+                                    return 1;
+                                } else {
+                                    if canonical == FLAG_NOSTDLIB {
+                                        return 1;
+                                    } else {
+                                        if canonical == FLAG_LIBRARY_PATH {
+                                            return 1;
+                                        } else {
+                                            if canonical == FLAG_LIBRARY {
+                                                return 1;
+                                            } else {
+                                                if canonical == FLAG_STRIP_DEBUG {
+                                                    return 1;
+                                                } else {
+                                                    if canonical == FLAG_GC_SECTIONS {
+                                                        return 1;
+                                                    } else {
+                                                        if canonical == FLAG_ALLOW_MULTIPLE_DEFINITION {
+                                                            return 1;
+                                                        } else {
+                                                            if canonical == FLAG_START_GROUP {
+                                                                return 1;
+                                                            } else {
+                                                                if canonical == FLAG_END_GROUP {
+                                                                    return 1;
+                                                                } else {
+                                                                    if canonical == FLAG_HELP {
+                                                                        return 1;
+                                                                    } else {
+                                                                        if canonical == FLAG_VERSION {
+                                                                            return 1;
+                                                                        } else {
+                                                                            return 0;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::validate_argument(flag: UInt32, has_value: UInt32) -> UInt32 {
+        if is_supported_flag(flag) == 0 {
+            return 12;
+        } else {
+            if flag_requires_value(flag) == 1 {
+                if has_value == 0 {
+                    return 13;
+                } else {
+                    return 0;
+                }
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::normalize_machine(machine: UInt32) -> UInt32 {
+        if machine == 0 {
+            return MACHINE_X86_64_ELF;
+        } else {
+            return machine;
+        }
+    }
+
+    proc K::machine_supported(machine: UInt32) -> UInt32 {
+        let normalized = normalize_machine(machine);
+        if normalized == MACHINE_X86_64_ELF {
+            return 1;
+        } else {
+            if normalized == MACHINE_X86_64_PE {
+                return 1;
+            } else {
+                if normalized == MACHINE_X86_64_MACHO {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    proc K::normalize_oformat(format: UInt32) -> UInt32 {
+        if format == 0 {
+            return OFORMAT_ELF64;
+        } else {
+            return format;
+        }
+    }
+
+    proc K::oformat_supported(format: UInt32) -> UInt32 {
+        let normalized = normalize_oformat(format);
+        if normalized == OFORMAT_ELF64 {
+            return 1;
+        } else {
+            if normalized == OFORMAT_BINARY {
+                return 1;
+            } else {
+                if normalized == OFORMAT_MBR {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    proc Φ::normalize_flag(flag: UInt32) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::is_supported_flag(flag: UInt32) -> UInt32 {
+        return 0;
+    }
+}

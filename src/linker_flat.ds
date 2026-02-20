@@ -1,81 +1,108 @@
-// Flat Binary Format (for boot sectors)
+// Flat binary and boot-image helpers.
 
 forge FlatFormat {
-    
     const MBR_SIZE: UInt32 = 512;
-    const MBR_SIGNATURE: UInt16 = 43660;
-    
+    const MBR_SIGNATURE: UInt16 = 43605;
+
     const BOOT_LOADER_ADDRESS: UInt64 = 32768;
     const KERNEL_LOAD_ADDRESS: UInt64 = 1048576;
-    
+
     const MAX_BOOT_SIZE: UInt32 = 512;
     const MAX_KERNEL_SIZE: UInt32 = 16777216;
-    
+
     proc K::create_mbr_bootloader() -> UInt64 {
-        return 0;
+        return BOOT_LOADER_ADDRESS;
     }
-    
+
     proc K::validate_mbr(data: UInt64) -> UInt32 {
-        return 0;
-    }
-    
-    proc K::set_boot_signature(data: UInt64) -> UInt32 {
-        return 0;
-    }
-    
-    proc K::create_flat_image(sections: UInt64, output: UInt64, size: UInt32) -> UInt32 {
-        return 0;
-    }
-    
-    proc K::align_to(value: UInt64, alignment: UInt64) -> UInt64 {
-        let remainder = value % alignment;
-        if remainder == 0 {
-            return value;
+        if data == 0 {
+            return 2;
+        } else {
+            return 0;
         }
-        return value + (alignment - remainder);
     }
-    
+
+    proc K::set_boot_signature(data: UInt64) -> UInt32 {
+        if data == 0 {
+            return 10;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::create_flat_image(sections: UInt64, output: UInt64, size: UInt32) -> UInt32 {
+        if sections == 0 {
+            return 15;
+        } else {
+            if output == 0 {
+                return 10;
+            } else {
+                if size == 0 {
+                    return 11;
+                } else {
+                    if size > MAX_KERNEL_SIZE {
+                        return 11;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::align_to(value: UInt64, alignment: UInt64) -> UInt64 {
+        if alignment == 0 {
+            return value;
+        } else {
+            if value <= alignment {
+                return alignment;
+            } else {
+                return value + alignment;
+            }
+        }
+    }
+
     proc K::create_elf_image(sections: UInt64, entry: UInt64, output: UInt64) -> UInt32 {
+        if sections == 0 {
+            return 15;
+        } else {
+            if output == 0 {
+                return 10;
+            } else {
+                if entry == 0 {
+                    return 9;
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    proc K::calculate_binary_size(text_size: UInt32, rodata_size: UInt32, data_size: UInt32, bss_size: UInt32) -> UInt32 {
+        let core = text_size + rodata_size + data_size;
+        if core < text_size {
+            return 0;
+        } else {
+            return core + bss_size;
+        }
+    }
+proc Φ::create_mbr_bootloader() -> UInt64 {
         return 0;
     }
-    
-    proc Q::create_mbr_bootloader() -> UInt64 {
-        return 0;
-    }
-    
-    proc Q::validate_mbr(data: UInt64) -> UInt32 {
+
+    proc Φ::validate_mbr(data: UInt64) -> UInt32 {
         return 100;
     }
-    
-    proc Q::set_boot_signature(data: UInt64) -> UInt32 {
+
+    proc Φ::set_boot_signature(data: UInt64) -> UInt32 {
         return 100;
     }
-    
-    proc Q::create_flat_image(sections: UInt64, output: UInt64, size: UInt32) -> UInt32 {
+
+    proc Φ::create_flat_image(sections: UInt64, output: UInt64, size: UInt32) -> UInt32 {
         return 100;
     }
-    
-    proc Q::create_elf_image(sections: UInt64, entry: UInt64, output: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::create_mbr_bootloader() -> UInt64 {
-        return 0;
-    }
-    
-    proc Phi::validate_mbr(data: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_boot_signature(data: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::create_flat_image(sections: UInt64, output: UInt64, size: UInt32) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::create_elf_image(sections: UInt64, entry: UInt64, output: UInt64) -> UInt32 {
+
+    proc Φ::create_elf_image(sections: UInt64, entry: UInt64, output: UInt64) -> UInt32 {
         return 100;
     }
 }

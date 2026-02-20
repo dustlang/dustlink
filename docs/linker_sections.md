@@ -25,6 +25,7 @@ Source: `src/linker_sections.ds`
 ## `K` Domain Procedures
 
 - `create_section(name, flags, align) -> UInt32`
+- `classify_builtin_section(flags) -> UInt32`
 - `get_section(name) -> UInt32`
 - `get_section_count() -> UInt32`
 - `add_section_data(section, data, size) -> UInt32`
@@ -36,7 +37,7 @@ Source: `src/linker_sections.ds`
 - `merge_sections(a, b) -> UInt32`
 - `calculate_section_offsets(base) -> UInt64`
 
-Current behavior is placeholder returns (`0`).
+`K` behavior now validates section identifiers, addresses, and alignments, and provides deterministic default layout values for core sections.
 
 ## `Q` and `Phi`
 

@@ -16,6 +16,17 @@ Source: `src/linker_errors.ds`
 - `ERR_INVALID_ENTRY = 9`
 - `ERR_WRITE_FAILED = 10`
 - `ERR_INVALID_IMAGE = 11`
+- `ERR_UNSUPPORTED_FLAG = 12`
+- `ERR_MISSING_FLAG_VALUE = 13`
+- `ERR_UNSUPPORTED_TARGET = 14`
+- `ERR_EMPTY_INPUT = 15`
+- `ERR_CONFLICTING_OPTIONS = 16`
+- `ERR_NOT_IMPLEMENTED_YET = 17`
+
+## Helpers
+
+- `K::is_error(code) -> UInt32`
+- `K::is_success(code) -> UInt32`
 
 ## Domain Availability Convention
 

@@ -29,9 +29,10 @@ Source: `src/linker_symbol.ds`
 - `get_symbol_section(idx) -> UInt32`
 - `get_symbol_size(idx) -> UInt32`
 - `is_defined(idx) -> UInt32`
-- `resolve_undefined() -> UInt32`
+- `resolve_undefined(undefined_count, weak_fallbacks) -> UInt32`
+- `merge_binding(lhs, rhs) -> UInt32`
 
-Current behavior is placeholder returns (`0`).
+`K` behavior now provides deterministic symbol validation and conflict-resolution helpers for MVP link planning.
 
 ## `Q` and `Phi`
 

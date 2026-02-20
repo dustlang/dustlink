@@ -18,7 +18,11 @@ Source: `src/linker_elf.ds`
 
 ## `K` Domain Procedures
 
+- `validate_elf_identity(m0, m1, m2, m3, klass, endian, version) -> UInt32`
 - `validate_elf_header(data) -> UInt32`
+- `validate_machine(machine) -> UInt32`
+- `validate_type(elf_type) -> UInt32`
+- `validate_relocation_type(reloc_type) -> UInt32`
 - `get_elf_class(data) -> UInt8`
 - `get_elf_machine(data) -> UInt16`
 - `get_elf_type(data) -> UInt16`
@@ -28,7 +32,7 @@ Source: `src/linker_elf.ds`
 - `get_section_header_offset(data) -> UInt64`
 - `get_program_header_offset(data) -> UInt64`
 
-Current return behavior in this file is placeholder-oriented (for example class/machine/type helpers return fixed values, most others return `0`).
+The MVP implementation now validates ELF identity, machine type, file type, and relocation type using System-V ELF64 constants. Getter helpers remain deterministic descriptor-based defaults.
 
 ## `Q` and `Phi`
 

@@ -1,211 +1,311 @@
-// DustLink - Main Linker Module
+// DustLink top-level linker orchestration for the internal Dust pipeline.
 
 forge DustLink {
-    
     const VERSION_MAJOR: UInt8 = 0;
-    const VERSION_MINOR: UInt8 = 1;
-    
+    const VERSION_MINOR: UInt8 = 3;
+
+    const FORMAT_ELF64: UInt32 = 1;
+    const FORMAT_FLAT: UInt32 = 2;
+    const FORMAT_MBR: UInt32 = 3;
+
+    const TARGET_X86_64_NONE: UInt32 = 0;
+
+    const ERR_OK: UInt32 = 0;
+    const ERR_FILE_NOT_FOUND: UInt32 = 1;
+    const ERR_INVALID_FORMAT: UInt32 = 2;
+    const ERR_INVALID_ADDRESS: UInt32 = 8;
+    const ERR_INVALID_ENTRY: UInt32 = 9;
+    const ERR_WRITE_FAILED: UInt32 = 10;
+    const ERR_INVALID_IMAGE: UInt32 = 11;
+    const ERR_EMPTY_INPUT: UInt32 = 15;
+
+    proc K::is_error(code: UInt32) -> UInt32 {
+        if code == ERR_OK {
+            return 0;
+        } else {
+            return 1;
+        }
+    }
+
+    proc K::format_supported(format: UInt32) -> UInt32 {
+        if format == FORMAT_ELF64 {
+            return 1;
+        } else {
+            if format == FORMAT_FLAT {
+                return 1;
+            } else {
+                if format == FORMAT_MBR {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    proc K::route_phase2_pipeline(
+        object_count: UInt32,
+        output_file: UInt64,
+        format: UInt32,
+        entry: UInt64,
+        base: UInt64
+    ) -> UInt32 {
+        if object_count == 0 {
+            return ERR_EMPTY_INPUT;
+        } else {
+            let link_status = link_internal(
+                object_count,
+                format,
+                TARGET_X86_64_NONE,
+                output_file,
+                entry,
+                base
+            );
+            if link_status ! ERR_OK {
+                return link_status;
+            } else {
+                if format == FORMAT_FLAT {
+                    return compose_flat_image_plan(
+                        base,
+                        entry,
+                        4096,
+                        2048,
+                        2048,
+                        1024
+                    );
+                } else {
+                    if format == FORMAT_ELF64 {
+                        return compose_elf_image_plan(
+                            base,
+                            entry,
+                            4096,
+                            2048,
+                            2048,
+                            1024
+                        );
+                    } else {
+                        if format == FORMAT_MBR {
+                            return create_boot_image(1, 4096, output_file);
+                        } else {
+                            return ERR_INVALID_FORMAT;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     proc K::link(input_files: UInt64, output_file: UInt64, format: UInt32) -> UInt32 {
-        return 0;
+        if input_files == 0 {
+            return ERR_EMPTY_INPUT;
+        } else {
+            let format_status = set_output_format(format);
+            if is_error(format_status) == 1 {
+                return format_status;
+            } else {
+                let output_status = set_output(output_file);
+                if is_error(output_status) == 1 {
+                    return output_status;
+                } else {
+                    return route_phase2_pipeline(1, output_file, format, 1048576, 65536);
+                }
+            }
+        }
     }
-    
+
     proc K::link_with_options(input_files: UInt64, output_file: UInt64, format: UInt32, entry: UInt64, base: UInt64) -> UInt32 {
-        return 0;
+        if input_files == 0 {
+            return ERR_EMPTY_INPUT;
+        } else {
+            let output_status = set_output(output_file);
+            if is_error(output_status) == 1 {
+                return output_status;
+            } else {
+                let format_status = set_output_format(format);
+                if is_error(format_status) == 1 {
+                    return format_status;
+                } else {
+                    let entry_status = set_entry_point(entry);
+                    if is_error(entry_status) == 1 {
+                        return entry_status;
+                    } else {
+                        let base_status = set_base_address(base);
+                        if is_error(base_status) == 1 {
+                            return base_status;
+                        } else {
+                            return route_phase2_pipeline(1, output_file, format, entry, base);
+                        }
+                    }
+                }
+            }
+        }
     }
-    
+
     proc K::add_input_file(path: UInt64) -> UInt32 {
-        return 0;
+        if path == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            return add_object_file(path);
+        }
     }
-    
+
     proc K::set_output(path: UInt64) -> UInt32 {
-        return 0;
+        if path == 0 {
+            return ERR_WRITE_FAILED;
+        } else {
+            return linker_link_set_output(path);
+        }
     }
-    
+
     proc K::set_output_format(format: UInt32) -> UInt32 {
-        return 0;
+        if format_supported(format) == 0 {
+            return ERR_INVALID_FORMAT;
+        } else {
+            return ERR_OK;
+        }
     }
-    
+
     proc K::set_entry_point(addr: UInt64) -> UInt32 {
-        return 0;
+        if addr == 0 {
+            return ERR_INVALID_ENTRY;
+        } else {
+            return set_entry(addr);
+        }
     }
-    
+
     proc K::set_base_address(addr: UInt64) -> UInt32 {
-        return 0;
+        if addr == 0 {
+            return ERR_INVALID_ADDRESS;
+        } else {
+            if addr < 4096 {
+                return ERR_INVALID_ADDRESS;
+            } else {
+            return linker_link_set_base_address(addr);
+            }
+        }
     }
-    
+
     proc K::add_search_path(path: UInt64) -> UInt32 {
-        return 0;
+        if path == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            return linker_link_add_search_path(path);
+        }
     }
-    
+
     proc K::add_library(name: UInt64) -> UInt32 {
-        return 0;
+        if name == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            return linker_link_add_library(name);
+        }
     }
-    
+
     proc K::run() -> UInt32 {
-        return 0;
+        return ERR_OK;
     }
-    
+
     proc K::get_error() -> UInt64 {
-        return 0;
+        return ERR_OK;
     }
-    
+
     proc K::print_sections() -> UInt32 {
-        return 0;
+        return ERR_OK;
     }
-    
+
     proc K::print_symbols() -> UInt32 {
-        return 0;
+        return ERR_OK;
     }
-    
+
     proc K::print_relocations() -> UInt32 {
-        return 0;
+        return ERR_OK;
     }
-    
+
     proc K::strip_debug() -> UInt32 {
-        return 0;
+        return ERR_OK;
     }
-    
+
     proc K::create_map_file(path: UInt64) -> UInt32 {
-        return 0;
+        if path == 0 {
+            return ERR_WRITE_FAILED;
+        } else {
+            return ERR_OK;
+        }
     }
-    
+
     proc K::verify_image() -> UInt32 {
+        let size = calculate_image_size();
+        if size == 0 {
+            return ERR_INVALID_IMAGE;
+        } else {
+            return ERR_OK;
+        }
+    }
+proc Φ::link(input_files: UInt64, output_file: UInt64, format: UInt32) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::link_with_options(input_files: UInt64, output_file: UInt64, format: UInt32, entry: UInt64, base: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::add_input_file(path: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::set_output(path: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::set_output_format(format: UInt32) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::set_entry_point(addr: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::set_base_address(addr: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::add_search_path(path: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::add_library(name: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::run() -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::get_error() -> UInt64 {
         return 0;
     }
-    
-    proc Q::link(input_files: UInt64, output_file: UInt64, format: UInt32) -> UInt32 {
+
+    proc Φ::print_sections() -> UInt32 {
         return 100;
     }
-    
-    proc Q::link_with_options(input_files: UInt64, output_file: UInt64, format: UInt32, entry: UInt64, base: UInt64) -> UInt32 {
+
+    proc Φ::print_symbols() -> UInt32 {
         return 100;
     }
-    
-    proc Q::add_input_file(path: UInt64) -> UInt32 {
+
+    proc Φ::print_relocations() -> UInt32 {
         return 100;
     }
-    
-    proc Q::set_output(path: UInt64) -> UInt32 {
+
+    proc Φ::strip_debug() -> UInt32 {
         return 100;
     }
-    
-    proc Q::set_output_format(format: UInt32) -> UInt32 {
+
+    proc Φ::create_map_file(path: UInt64) -> UInt32 {
         return 100;
     }
-    
-    proc Q::set_entry_point(addr: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::set_base_address(addr: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::add_search_path(path: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::add_library(name: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::run() -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::get_error() -> UInt64 {
-        return 0;
-    }
-    
-    proc Q::print_sections() -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::print_symbols() -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::print_relocations() -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::strip_debug() -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::create_map_file(path: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::verify_image() -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::link(input_files: UInt64, output_file: UInt64, format: UInt32) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::link_with_options(input_files: UInt64, output_file: UInt64, format: UInt32, entry: UInt64, base: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::add_input_file(path: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_output(path: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_output_format(format: UInt32) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_entry_point(addr: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_base_address(addr: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::add_search_path(path: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::add_library(name: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::run() -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::get_error() -> UInt64 {
-        return 0;
-    }
-    
-    proc Phi::print_sections() -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::print_symbols() -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::print_relocations() -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::strip_debug() -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::create_map_file(path: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::verify_image() -> UInt32 {
+
+    proc Φ::verify_image() -> UInt32 {
         return 100;
     }
 }

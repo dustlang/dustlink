@@ -56,3 +56,25 @@ When resolved backend executable name is `rust-lld` or `rust-lld.exe`:
 ```
 
 - If any flavor flag is already present, no injection occurs.
+
+## Internal Dust MVP CLI Profile
+
+Source: `src/linker_cli.ds`
+
+The internal Dust linker profile currently recognizes canonical/alias families for:
+
+- output (`-o`, `--output`)
+- entry (`-e`, `--entry`)
+- map (`-Map`)
+- machine (`-m` class via canonical IDs)
+- image base (`--image-base`)
+- text address (`-Ttext`)
+- oformat (`--oformat`)
+- library path/library (`-L`, `-l`)
+- strip (`-s`, `--strip-debug`)
+- section GC (`--gc-sections`)
+- multiple definition policy (`--allow-multiple-definition`)
+- group flags (`--start-group`, `--end-group`)
+- utility flags (`--help`, `--version`)
+
+`linker_cli.ds` normalizes aliases to canonical flag IDs and returns typed linker errors for unsupported flags and missing values.

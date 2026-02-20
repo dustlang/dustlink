@@ -8,9 +8,9 @@ Source: `src/linker_image.ds`
 
 ## Format Constants
 
-- `FORMAT_FLAT = 0`
-- `FORMAT_ELF = 1`
-- `FORMAT_MBR = 2`
+- `FORMAT_FLAT = 1`
+- `FORMAT_ELF = 2`
+- `FORMAT_MBR = 3`
 
 ## Image Constants
 
@@ -18,6 +18,7 @@ Source: `src/linker_image.ds`
 - `DEFAULT_TEXT_ADDR = 65536`
 - `DEFAULT_DATA_ADDR = 1073741824`
 - `DEFAULT_ENTRY_ADDR = 1048576`
+- `DEFAULT_IMAGE_BUFFER = 4194304`
 
 ## `K` Domain Procedures
 
@@ -34,8 +35,10 @@ Source: `src/linker_image.ds`
 - `set_image_os(os) -> UInt32`
 - `create_boot_image(kernel, kernel_size, output) -> UInt32`
 - `create_efi_image(output) -> UInt32`
+- `format_supported(format) -> UInt32`
 
-Current `K` behavior in this file is placeholder returns.
+`K` domain now validates format, base/entry constraints, image sizing, and basic output constraints.
+`create_efi_image` currently returns `ERR_NOT_IMPLEMENTED_YET` after output validation.
 
 ## `Q` and `Phi`
 

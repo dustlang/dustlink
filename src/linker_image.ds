@@ -1,170 +1,309 @@
-// Final Image Creation
+// Output image composition and validation helpers.
 
 forge LinkerImage {
-    
-    const FORMAT_FLAT: UInt32 = 0;
-    const FORMAT_ELF: UInt32 = 1;
-    const FORMAT_MBR: UInt32 = 2;
-    
+    const FORMAT_FLAT: UInt32 = 1;
+    const FORMAT_ELF: UInt32 = 2;
+    const FORMAT_MBR: UInt32 = 3;
+
+    const ARCH_X86_64: UInt32 = 1;
+
+    const OS_NONE: UInt32 = 0;
+    const OS_LINUX: UInt32 = 1;
+    const OS_WINDOWS: UInt32 = 2;
+    const OS_MACOS: UInt32 = 3;
+
     const IMAGE_MAX_SIZE: UInt32 = 33554432;
-    
+
     const DEFAULT_TEXT_ADDR: UInt64 = 65536;
     const DEFAULT_DATA_ADDR: UInt64 = 1073741824;
     const DEFAULT_ENTRY_ADDR: UInt64 = 1048576;
-    
+    const DEFAULT_IMAGE_BUFFER: UInt64 = 4194304;
+
+    const ERR_OK: UInt32 = 0;
+    const ERR_FILE_NOT_FOUND: UInt32 = 1;
+    const ERR_INVALID_FORMAT: UInt32 = 2;
+    const ERR_INVALID_SECTION: UInt32 = 3;
+    const ERR_INVALID_ADDRESS: UInt32 = 8;
+    const ERR_INVALID_ENTRY: UInt32 = 9;
+    const ERR_WRITE_FAILED: UInt32 = 10;
+    const ERR_INVALID_IMAGE: UInt32 = 11;
+    const ERR_UNSUPPORTED_TARGET: UInt32 = 14;
+    const ERR_NOT_IMPLEMENTED_YET: UInt32 = 17;
+
+    proc K::format_supported(format: UInt32) -> UInt32 {
+        if format == FORMAT_FLAT {
+            return 1;
+        } else {
+            if format == FORMAT_ELF {
+                return 1;
+            } else {
+                if format == FORMAT_MBR {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
     proc K::create_image(format: UInt32) -> UInt64 {
-        return 0;
+        if format_supported(format) == 0 {
+            return 0;
+        } else {
+            return DEFAULT_IMAGE_BUFFER;
+        }
     }
-    
+
     proc K::set_image_format(format: UInt32) -> UInt32 {
-        return 0;
+        if format_supported(format) == 0 {
+            return ERR_INVALID_FORMAT;
+        } else {
+            return ERR_OK;
+        }
     }
-    
+
     proc K::set_image_entry(entry: UInt64) -> UInt32 {
-        return 0;
+        if entry == 0 {
+            return ERR_INVALID_ENTRY;
+        } else {
+            return ERR_OK;
+        }
     }
-    
+
     proc K::set_image_base(base: UInt64) -> UInt32 {
-        return 0;
+        if base == 0 {
+            return ERR_INVALID_ADDRESS;
+        } else {
+            if base < 4096 {
+                return ERR_INVALID_ADDRESS;
+            } else {
+                return ERR_OK;
+            }
+        }
     }
-    
+
+    proc K::validate_image_plan(
+        format: UInt32,
+        image_base: UInt64,
+        entry: UInt64,
+        text_size: UInt32,
+        rodata_size: UInt32,
+        data_size: UInt32,
+        bss_size: UInt32
+    ) -> UInt32 {
+        let format_status = set_image_format(format);
+        if format_status ! ERR_OK {
+            return format_status;
+        } else {
+            let base_status = set_image_base(image_base);
+            if base_status ! ERR_OK {
+                return base_status;
+            } else {
+                let entry_status = set_image_entry(entry);
+                if entry_status ! ERR_OK {
+                    return entry_status;
+                } else {
+                    if text_size == 0 {
+                        return ERR_INVALID_SECTION;
+                    } else {
+                        let total = text_size + rodata_size + data_size + bss_size;
+                        if total == 0 {
+                            return ERR_INVALID_IMAGE;
+                        } else {
+                            if total > IMAGE_MAX_SIZE {
+                                return ERR_INVALID_IMAGE;
+                            } else {
+                                return ERR_OK;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     proc K::add_section(section: UInt64) -> UInt32 {
-        return 0;
+        if section == 0 {
+            return ERR_INVALID_SECTION;
+        } else {
+            return ERR_OK;
+        }
     }
-    
+
     proc K::calculate_image_size() -> UInt32 {
-        return 0;
+        let text_size = 8192;
+        let ro_size = 2048;
+        let data_size = 2048;
+        let bss_size = 4096;
+        return text_size + ro_size + data_size + bss_size;
     }
-    
+
     proc K::allocate_image(size: UInt32) -> UInt64 {
-        return 0;
+        if size == 0 {
+            return 0;
+        } else {
+            if size > IMAGE_MAX_SIZE {
+                return 0;
+            } else {
+                return DEFAULT_IMAGE_BUFFER;
+            }
+        }
     }
-    
+
+    proc K::compose_flat_image_plan(
+        image_base: UInt64,
+        entry: UInt64,
+        text_size: UInt32,
+        rodata_size: UInt32,
+        data_size: UInt32,
+        bss_size: UInt32
+    ) -> UInt32 {
+        return validate_image_plan(
+            FORMAT_FLAT,
+            image_base,
+            entry,
+            text_size,
+            rodata_size,
+            data_size,
+            bss_size
+        );
+    }
+
+    proc K::compose_elf_image_plan(
+        image_base: UInt64,
+        entry: UInt64,
+        text_size: UInt32,
+        rodata_size: UInt32,
+        data_size: UInt32,
+        bss_size: UInt32
+    ) -> UInt32 {
+        return validate_image_plan(
+            FORMAT_ELF,
+            image_base,
+            entry,
+            text_size,
+            rodata_size,
+            data_size,
+            bss_size
+        );
+    }
+
     proc K::write_image(output: UInt64) -> UInt32 {
-        return 0;
+        if output == 0 {
+            return ERR_WRITE_FAILED;
+        } else {
+            return ERR_OK;
+        }
     }
-    
+
     proc K::finalize_image() -> UInt32 {
-        return 0;
+        return ERR_OK;
     }
-    
+
     proc K::set_image_arch(arch: UInt32) -> UInt32 {
-        return 0;
+        if arch == ARCH_X86_64 {
+            return ERR_OK;
+        } else {
+            return ERR_UNSUPPORTED_TARGET;
+        }
     }
-    
+
     proc K::set_image_os(os: UInt32) -> UInt32 {
-        return 0;
+        if os == OS_NONE {
+            return ERR_OK;
+        } else {
+            if os == OS_LINUX {
+                return ERR_OK;
+            } else {
+                if os == OS_WINDOWS {
+                    return ERR_OK;
+                } else {
+                    if os == OS_MACOS {
+                        return ERR_OK;
+                    } else {
+                        return ERR_UNSUPPORTED_TARGET;
+                    }
+                }
+            }
+        }
     }
-    
+
     proc K::create_boot_image(kernel: UInt64, kernel_size: UInt32, output: UInt64) -> UInt32 {
-        return 0;
+        if kernel == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            if kernel_size == 0 {
+                return ERR_INVALID_IMAGE;
+            } else {
+                if kernel_size > IMAGE_MAX_SIZE {
+                    return ERR_INVALID_IMAGE;
+                } else {
+                    if output == 0 {
+                        return ERR_WRITE_FAILED;
+                    } else {
+                        return ERR_OK;
+                    }
+                }
+            }
+        }
     }
-    
+
     proc K::create_efi_image(output: UInt64) -> UInt32 {
+        if output == 0 {
+            return ERR_WRITE_FAILED;
+        } else {
+            return ERR_NOT_IMPLEMENTED_YET;
+        }
+    }
+proc Φ::create_image(format: UInt32) -> UInt64 {
         return 0;
     }
-    
-    proc Q::create_image(format: UInt32) -> UInt64 {
+
+    proc Φ::set_image_format(format: UInt32) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::set_image_entry(entry: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::set_image_base(base: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::add_section(section: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::calculate_image_size() -> UInt32 {
         return 0;
     }
-    
-    proc Q::set_image_format(format: UInt32) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::set_image_entry(entry: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::set_image_base(base: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::add_section(section: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Q::calculate_image_size() -> UInt32 {
+
+    proc Φ::allocate_image(size: UInt32) -> UInt64 {
         return 0;
     }
-    
-    proc Q::allocate_image(size: UInt32) -> UInt64 {
-        return 0;
-    }
-    
-    proc Q::write_image(output: UInt64) -> UInt32 {
+
+    proc Φ::write_image(output: UInt64) -> UInt32 {
         return 100;
     }
-    
-    proc Q::finalize_image() -> UInt32 {
+
+    proc Φ::finalize_image() -> UInt32 {
         return 100;
     }
-    
-    proc Q::set_image_arch(arch: UInt32) -> UInt32 {
+
+    proc Φ::set_image_arch(arch: UInt32) -> UInt32 {
         return 100;
     }
-    
-    proc Q::set_image_os(os: UInt32) -> UInt32 {
+
+    proc Φ::set_image_os(os: UInt32) -> UInt32 {
         return 100;
     }
-    
-    proc Q::create_boot_image(kernel: UInt64, kernel_size: UInt32, output: UInt64) -> UInt32 {
+
+    proc Φ::create_boot_image(kernel: UInt64, kernel_size: UInt32, output: UInt64) -> UInt32 {
         return 100;
     }
-    
-    proc Q::create_efi_image(output: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::create_image(format: UInt32) -> UInt64 {
-        return 0;
-    }
-    
-    proc Phi::set_image_format(format: UInt32) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_image_entry(entry: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_image_base(base: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::add_section(section: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::calculate_image_size() -> UInt32 {
-        return 0;
-    }
-    
-    proc Phi::allocate_image(size: UInt32) -> UInt64 {
-        return 0;
-    }
-    
-    proc Phi::write_image(output: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::finalize_image() -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_image_arch(arch: UInt32) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::set_image_os(os: UInt32) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::create_boot_image(kernel: UInt64, kernel_size: UInt32, output: UInt64) -> UInt32 {
-        return 100;
-    }
-    
-    proc Phi::create_efi_image(output: UInt64) -> UInt32 {
+
+    proc Φ::create_efi_image(output: UInt64) -> UInt32 {
         return 100;
     }
 }

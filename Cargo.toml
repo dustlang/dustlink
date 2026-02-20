@@ -5,4 +5,4 @@ edition = "2021"
 
 [[bin]]
 name = "dustlink"
-path = "src/main.rs"
+path = "src/main_legacy.rs"
