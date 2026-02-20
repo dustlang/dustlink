@@ -4,6 +4,7 @@
 
 - `src/dustlink_tests.ds`
 - `src/linker_link_tests.ds`
+- `src/linker_host_cli_tests.ds`
 
 ## Test Structure
 
@@ -21,14 +22,23 @@ Both files define forge-based test procedures with this pattern:
 - `Q` and `Phi` domain error-path expectations (`100`)
 - Linker-link integration surface coverage (`set_linker`, `set_target`, `create_flat_binary`, `find_linker`, etc.)
 
+## Recent Integration Checks
+
+- Dust host executable build succeeds from `src/main.ds`.
+- PE and Mach-O writer paths emit valid file magics (`MZ`, `CFFAEDFE`).
+- COFF object ingestion path links into PE output.
+- Script path (`-T/--script`) applies basic directives and can override output format.
+- `-Map` output creation works on split form (`-Map file.map`).
+
 ## Current Limitations
 
 - Tests still focus on deterministic status behavior and MVP arithmetic helpers.
 - They do not yet validate full object parsing, relocation patching on byte buffers, section packing, or emitted file bytes.
-- Rust CLI behavior in `src/main.rs` is not covered by Rust integration tests in this package.
+- Cross-platform host-link attempt ordering is not yet validated by integration tests.
 
 ## Suggested Next Additions
 
-- Add Rust integration tests for backend resolution and `--print-backend`.
-- Add Dust tests for non-placeholder `K` implementations as linker logic is filled in.
-- Add fixture-based link outputs for ELF/flat/MBR byte-level verification.
+- Add integration tests for compiler host-link attempt ordering (`dustlink` preference and `lld`/`rust-lld` bootstrap path for `dustlink.exe`).
+- Add fixture suites for Mach-O input objects and mixed archive member sets.
+- Add script parser compliance tests beyond the current directive subset.
+- Add byte-level fixture checks for PE/Mach-O headers and relocation patch results.

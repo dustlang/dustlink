@@ -11,7 +11,7 @@ forge DustLinkTests {
     const CLI_ALIAS_SHORT_O: UInt32 = 1001;
     const CLI_FLAG_OUTPUT: UInt32 = 1;
 
-    proc expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
+    proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
         if actual == expected {
             return 1;
         } else {
@@ -19,80 +19,81 @@ forge DustLinkTests {
         }
     }
 
-    proc test_link_requires_input() -> UInt32 {
+    proc K::test_link_requires_input() -> UInt32 {
         let result = DustLink::K::link(0, 1, 1);
         return expect_u32(result, ERR_EMPTY_INPUT);
     }
 
-    proc test_link_requires_output() -> UInt32 {
+    proc K::test_link_requires_output() -> UInt32 {
         let result = DustLink::K::link(1, 0, 1);
         return expect_u32(result, ERR_WRITE_FAILED);
     }
 
-    proc test_link_accepts_basic_mvp_case() -> UInt32 {
+    proc K::test_link_accepts_basic_mvp_case() -> UInt32 {
         let result = DustLink::K::link(1, 1, 1);
         return expect_u32(result, ERR_OK);
     }
 
-    proc test_invalid_output_format_rejected() -> UInt32 {
+    proc K::test_invalid_output_format_rejected() -> UInt32 {
         let result = DustLink::K::set_output_format(99);
         return expect_u32(result, ERR_INVALID_FORMAT);
     }
 
-    proc test_entry_validation() -> UInt32 {
+    proc K::test_entry_validation() -> UInt32 {
         let result = DustLink::K::set_entry_point(0);
         return expect_u32(result, ERR_INVALID_ENTRY);
     }
 
-    proc test_base_alignment_validation() -> UInt32 {
+    proc K::test_base_alignment_validation() -> UInt32 {
         let result = DustLink::K::set_base_address(12345);
         return expect_u32(result, ERR_INVALID_ADDRESS);
     }
 
-    proc test_map_file_requires_path() -> UInt32 {
+    proc K::test_map_file_requires_path() -> UInt32 {
         let result = DustLink::K::create_map_file(0);
         return expect_u32(result, ERR_WRITE_FAILED);
     }
 
-    proc test_verify_image_default_layout() -> UInt32 {
+    proc K::test_verify_image_default_layout() -> UInt32 {
         let result = DustLink::K::verify_image();
         return expect_u32(result, ERR_OK);
     }
 
-    proc test_cli_alias_normalization() -> UInt32 {
+    proc K::test_cli_alias_normalization() -> UInt32 {
         let normalized = LinkerCli::K::normalize_flag(CLI_ALIAS_SHORT_O);
         return expect_u32(normalized, CLI_FLAG_OUTPUT);
     }
 
-    proc test_cli_missing_flag_value_error() -> UInt32 {
+    proc K::test_cli_missing_flag_value_error() -> UInt32 {
         let result = LinkerCli::K::validate_argument(CLI_FLAG_OUTPUT, 0);
         return expect_u32(result, ERR_MISSING_FLAG_VALUE);
     }
 
-    proc test_q_domain_rejected() -> UInt32 {
+    proc K::test_q_domain_rejected() -> UInt32 {
         let result = DustLink::Q::link(1, 1, 1);
         return expect_u32(result, 100);
     }
 
-    proc test_phi_domain_rejected() -> UInt32 {
-        let result = DustLink::F::link(1, 1, 1);
+    proc K::test_phi_domain_rejected() -> UInt32 {
+        let result = DustLink::Φ::link(1, 1, 1);
         return expect_u32(result, 100);
     }
 
-    proc run_all_tests() -> UInt32 {
-        let passed = 0;
-        passed = passed + test_link_requires_input();
-        passed = passed + test_link_requires_output();
-        passed = passed + test_link_accepts_basic_mvp_case();
-        passed = passed + test_invalid_output_format_rejected();
-        passed = passed + test_entry_validation();
-        passed = passed + test_base_alignment_validation();
-        passed = passed + test_map_file_requires_path();
-        passed = passed + test_verify_image_default_layout();
-        passed = passed + test_cli_alias_normalization();
-        passed = passed + test_cli_missing_flag_value_error();
-        passed = passed + test_q_domain_rejected();
-        passed = passed + test_phi_domain_rejected();
+    proc K::run_all_tests() -> UInt32 {
+        let passed =
+            test_link_requires_input()
+            + test_link_requires_output()
+            + test_link_accepts_basic_mvp_case()
+            + test_invalid_output_format_rejected()
+            + test_entry_validation()
+            + test_base_alignment_validation()
+            + test_map_file_requires_path()
+            + test_verify_image_default_layout()
+            + test_cli_alias_normalization()
+            + test_cli_missing_flag_value_error()
+            + test_q_domain_rejected()
+            + test_phi_domain_rejected();
         return passed;
     }
 }
+

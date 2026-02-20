@@ -1,0 +1,191 @@
+// Archive (.a) ingestion and deterministic -L/-l resolution.
+
+forge LinkerArchive {
+    const ERR_OK: UInt32 = 0;
+    const ERR_FILE_NOT_FOUND: UInt32 = 1;
+    const ERR_INVALID_FORMAT: UInt32 = 2;
+    const ERR_NOT_IMPLEMENTED_YET: UInt32 = 17;
+
+    proc K::is_archive_path(path: UInt64) -> UInt32 {
+        if LinkerFs::K::str_ends_with(path, ".a") == 1 {
+            return 1;
+        } else {
+            if LinkerFs::K::str_ends_with(path, ".lib") == 1 {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::archive_member_count(path: UInt64) -> UInt32 {
+        return host_archive_member_count(path);
+    }
+
+    proc K::archive_member_kind(path: UInt64, index: UInt32) -> UInt32 {
+        return host_archive_member_object_kind(path, index);
+    }
+
+    proc K::archive_extract_member_object(path: UInt64, index: UInt32) -> UInt64 {
+        return host_archive_extract_member_object(path, index);
+    }
+
+    proc K::validate_archive(path: UInt64) -> UInt32 {
+        let file_status = LinkerFs::K::validate_input_file(path);
+        if file_status ! ERR_OK {
+            return file_status;
+        } else {
+            if is_archive_path(path) == 0 {
+                return ERR_INVALID_FORMAT;
+            } else {
+                let magic_ok = host_archive_validate_magic(path);
+                if magic_ok == 1 {
+                    return ERR_OK;
+                } else {
+                    return ERR_INVALID_FORMAT;
+                }
+            }
+        }
+    }
+
+    proc K::ingest_object_file(path: UInt64) -> UInt32 {
+        let object_kind = host_linker_probe_object_format(path);
+        if object_kind == 1 {
+            return ElfFormat::K::ingest_object_file(path);
+        } else {
+            if object_kind == 2 {
+                return host_linker_ingest_coff_object(path);
+            } else {
+                if object_kind == 3 {
+                    return host_linker_ingest_macho_object(path);
+                } else {
+                    return ERR_INVALID_FORMAT;
+                }
+            }
+        }
+    }
+
+    proc K::ingest_archive_members(path: UInt64, index: UInt32, total: UInt32) -> UInt32 {
+        if index >= total {
+            return ERR_OK;
+        } else {
+            let member_kind = archive_member_kind(path, index);
+            if member_kind ! 0 {
+                let obj_path = archive_extract_member_object(path, index);
+                if obj_path == 0 {
+                    return ERR_INVALID_FORMAT;
+                } else {
+                    let ingest_status = ingest_object_file(obj_path);
+                    if ingest_status ! ERR_OK {
+                        return ingest_status;
+                    } else {
+                        return ingest_archive_members(path, index + 1, total);
+                    }
+                }
+            } else {
+                return ingest_archive_members(path, index + 1, total);
+            }
+        }
+    }
+
+    proc K::ingest_archive(path: UInt64) -> UInt32 {
+        let status = validate_archive(path);
+        if status ! ERR_OK {
+            return status;
+        } else {
+            let member_count = archive_member_count(path);
+            if member_count == 0 {
+                return ERR_INVALID_FORMAT;
+            } else {
+                let register_status = host_linker_register_archive(path);
+                if register_status ! ERR_OK {
+                    return register_status;
+                } else {
+                    return ingest_archive_members(path, 0, member_count);
+                }
+            }
+        }
+    }
+
+    proc K::candidate_unix_lib_name(name: UInt64) -> UInt64 {
+        let prefixed = LinkerFs::K::str_concat("lib", name);
+        return LinkerFs::K::str_concat(prefixed, ".a");
+    }
+
+    proc K::candidate_unix_plain_name(name: UInt64) -> UInt64 {
+        return LinkerFs::K::str_concat(name, ".a");
+    }
+
+    proc K::candidate_windows_plain_name(name: UInt64) -> UInt64 {
+        return LinkerFs::K::str_concat(name, ".lib");
+    }
+
+    proc K::candidate_windows_lib_name(name: UInt64) -> UInt64 {
+        let prefixed = LinkerFs::K::str_concat("lib", name);
+        return LinkerFs::K::str_concat(prefixed, ".lib");
+    }
+
+    proc K::resolve_library_in_path(search_path: UInt64, name: UInt64) -> UInt64 {
+        let unix_with_prefix = LinkerFs::K::path_join(search_path, candidate_unix_lib_name(name));
+        if LinkerFs::K::path_exists(unix_with_prefix) == 1 {
+            if LinkerFs::K::path_is_file(unix_with_prefix) == 1 {
+                return unix_with_prefix;
+            }
+        }
+
+        let unix_plain = LinkerFs::K::path_join(search_path, candidate_unix_plain_name(name));
+        if LinkerFs::K::path_exists(unix_plain) == 1 {
+            if LinkerFs::K::path_is_file(unix_plain) == 1 {
+                return unix_plain;
+            }
+        }
+
+        let windows_plain = LinkerFs::K::path_join(search_path, candidate_windows_plain_name(name));
+        if LinkerFs::K::path_exists(windows_plain) == 1 {
+            if LinkerFs::K::path_is_file(windows_plain) == 1 {
+                return windows_plain;
+            }
+        }
+
+        let windows_with_prefix = LinkerFs::K::path_join(search_path, candidate_windows_lib_name(name));
+        if LinkerFs::K::path_exists(windows_with_prefix) == 1 {
+            if LinkerFs::K::path_is_file(windows_with_prefix) == 1 {
+                return windows_with_prefix;
+            }
+        }
+
+        return 0;
+    }
+
+    proc K::resolve_library_with_search_paths(
+        name: UInt64,
+        path_index: UInt32,
+        path_count: UInt32
+    ) -> UInt64 {
+        if path_index >= path_count {
+            return 0;
+        } else {
+            let search_path = host_linker_get_search_path(path_index);
+            let found = resolve_library_in_path(search_path, name);
+            if found ! 0 {
+                return found;
+            } else {
+                return resolve_library_with_search_paths(name, path_index + 1, path_count);
+            }
+        }
+    }
+
+    proc K::resolve_and_ingest_library(name: UInt64) -> UInt32 {
+        if name == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            let path_count = host_linker_search_path_count();
+            let archive = resolve_library_with_search_paths(name, 0, path_count);
+            if archive == 0 {
+                return ERR_FILE_NOT_FOUND;
+            } else {
+                return ingest_archive(archive);
+            }
+        }
+    }
+}

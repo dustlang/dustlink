@@ -46,6 +46,8 @@ forge LinkerCli {
     const OFORMAT_ELF64: UInt32 = 1;
     const OFORMAT_BINARY: UInt32 = 2;
     const OFORMAT_MBR: UInt32 = 3;
+    const OFORMAT_PE64: UInt32 = 4;
+    const OFORMAT_MACHO64: UInt32 = 5;
 
     proc K::normalize_flag(flag: UInt32) -> UInt32 {
         if flag == ALIAS_SHORT_O {
@@ -289,7 +291,15 @@ forge LinkerCli {
                 if normalized == OFORMAT_MBR {
                     return 1;
                 } else {
-                    return 0;
+                    if normalized == OFORMAT_PE64 {
+                        return 1;
+                    } else {
+                        if normalized == OFORMAT_MACHO64 {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    }
                 }
             }
         }
@@ -303,3 +313,4 @@ forge LinkerCli {
         return 0;
     }
 }
+

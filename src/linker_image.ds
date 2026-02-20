@@ -1,9 +1,11 @@
 // Output image composition and validation helpers.
 
 forge LinkerImage {
-    const FORMAT_FLAT: UInt32 = 1;
-    const FORMAT_ELF: UInt32 = 2;
+    const FORMAT_ELF: UInt32 = 1;
+    const FORMAT_FLAT: UInt32 = 2;
     const FORMAT_MBR: UInt32 = 3;
+    const FORMAT_PE: UInt32 = 4;
+    const FORMAT_MACHO: UInt32 = 5;
 
     const ARCH_X86_64: UInt32 = 1;
 
@@ -40,7 +42,15 @@ forge LinkerImage {
                 if format == FORMAT_MBR {
                     return 1;
                 } else {
-                    return 0;
+                    if format == FORMAT_PE {
+                        return 1;
+                    } else {
+                        if format == FORMAT_MACHO {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    }
                 }
             }
         }
@@ -50,7 +60,7 @@ forge LinkerImage {
         if format_supported(format) == 0 {
             return 0;
         } else {
-            return DEFAULT_IMAGE_BUFFER;
+            return host_linker_create_image_buffer(format);
         }
     }
 
@@ -58,7 +68,7 @@ forge LinkerImage {
         if format_supported(format) == 0 {
             return ERR_INVALID_FORMAT;
         } else {
-            return ERR_OK;
+            return host_linker_set_output_format(format);
         }
     }
 
@@ -66,7 +76,7 @@ forge LinkerImage {
         if entry == 0 {
             return ERR_INVALID_ENTRY;
         } else {
-            return ERR_OK;
+            return host_linker_set_entry(entry);
         }
     }
 
@@ -77,7 +87,7 @@ forge LinkerImage {
             if base < 4096 {
                 return ERR_INVALID_ADDRESS;
             } else {
-                return ERR_OK;
+                return host_linker_set_image_base(base);
             }
         }
     }
@@ -106,14 +116,24 @@ forge LinkerImage {
                     if text_size == 0 {
                         return ERR_INVALID_SECTION;
                     } else {
-                        let total = text_size + rodata_size + data_size + bss_size;
-                        if total == 0 {
+                        let total_a = text_size + rodata_size;
+                        if total_a < text_size {
                             return ERR_INVALID_IMAGE;
                         } else {
-                            if total > IMAGE_MAX_SIZE {
+                            let total_b = total_a + data_size;
+                            if total_b < total_a {
                                 return ERR_INVALID_IMAGE;
                             } else {
-                                return ERR_OK;
+                                let total = total_b + bss_size;
+                                if total < total_b {
+                                    return ERR_INVALID_IMAGE;
+                                } else {
+                                    if total > IMAGE_MAX_SIZE {
+                                        return ERR_INVALID_IMAGE;
+                                    } else {
+                                        return ERR_OK;
+                                    }
+                                }
                             }
                         }
                     }
@@ -126,16 +146,12 @@ forge LinkerImage {
         if section == 0 {
             return ERR_INVALID_SECTION;
         } else {
-            return ERR_OK;
+            return host_linker_add_output_section(section);
         }
     }
 
     proc K::calculate_image_size() -> UInt32 {
-        let text_size = 8192;
-        let ro_size = 2048;
-        let data_size = 2048;
-        let bss_size = 4096;
-        return text_size + ro_size + data_size + bss_size;
+        return host_linker_calculate_image_size();
     }
 
     proc K::allocate_image(size: UInt32) -> UInt64 {
@@ -145,7 +161,7 @@ forge LinkerImage {
             if size > IMAGE_MAX_SIZE {
                 return 0;
             } else {
-                return DEFAULT_IMAGE_BUFFER;
+                return host_linker_allocate_image(size);
             }
         }
     }
@@ -188,21 +204,92 @@ forge LinkerImage {
         );
     }
 
+    proc K::emit_output_sections(output: UInt64, section_index: UInt32, section_count: UInt32) -> UInt32 {
+        if section_index >= section_count {
+            return ERR_OK;
+        } else {
+            let emit_status = host_linker_emit_output_section(output, section_index);
+            if emit_status ! ERR_OK {
+                return emit_status;
+            } else {
+                return emit_output_sections(output, section_index + 1, section_count);
+            }
+        }
+    }
+
+    proc K::write_flat_output(output: UInt64) -> UInt32 {
+        let output_status = LinkerFs::K::validate_output_file(output);
+        if output_status ! ERR_OK {
+            return output_status;
+        } else {
+            let section_count = host_linker_output_section_count();
+            let section_status = emit_output_sections(output, 0, section_count);
+            if section_status ! ERR_OK {
+                return section_status;
+            } else {
+                return host_linker_write_flat_binary(output);
+            }
+        }
+    }
+
+    proc K::write_elf_output(output: UInt64, entry: UInt64, image_base: UInt64) -> UInt32 {
+        let output_status = LinkerFs::K::validate_output_file(output);
+        if output_status ! ERR_OK {
+            return output_status;
+        } else {
+            let header_status = host_linker_write_elf_headers(output, entry, image_base);
+            if header_status ! ERR_OK {
+                return header_status;
+            } else {
+                let section_count = host_linker_output_section_count();
+                let section_status = emit_output_sections(output, 0, section_count);
+                if section_status ! ERR_OK {
+                    return section_status;
+                } else {
+                    return host_linker_finalize_elf(output);
+                }
+            }
+        }
+    }
+
     proc K::write_image(output: UInt64) -> UInt32 {
         if output == 0 {
             return ERR_WRITE_FAILED;
         } else {
-            return ERR_OK;
+            let format = host_linker_get_output_format();
+            if format == FORMAT_FLAT {
+                return write_flat_output(output);
+            } else {
+                if format == FORMAT_ELF {
+                    let entry = host_linker_get_entry();
+                    let image_base = host_linker_get_image_base();
+                    return write_elf_output(output, entry, image_base);
+                } else {
+                    if format == FORMAT_MBR {
+                        return host_linker_write_mbr_image(output);
+                    } else {
+                        if format == FORMAT_PE {
+                            return host_linker_write_pe_image(output);
+                        } else {
+                            if format == FORMAT_MACHO {
+                                return host_linker_write_macho_image(output);
+                            } else {
+                                return ERR_INVALID_FORMAT;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
     proc K::finalize_image() -> UInt32 {
-        return ERR_OK;
+        return host_linker_finalize_image();
     }
 
     proc K::set_image_arch(arch: UInt32) -> UInt32 {
         if arch == ARCH_X86_64 {
-            return ERR_OK;
+            return host_linker_set_arch(arch);
         } else {
             return ERR_UNSUPPORTED_TARGET;
         }
@@ -210,16 +297,16 @@ forge LinkerImage {
 
     proc K::set_image_os(os: UInt32) -> UInt32 {
         if os == OS_NONE {
-            return ERR_OK;
+            return host_linker_set_os(os);
         } else {
             if os == OS_LINUX {
-                return ERR_OK;
+                return host_linker_set_os(os);
             } else {
                 if os == OS_WINDOWS {
-                    return ERR_OK;
+                    return host_linker_set_os(os);
                 } else {
                     if os == OS_MACOS {
-                        return ERR_OK;
+                        return host_linker_set_os(os);
                     } else {
                         return ERR_UNSUPPORTED_TARGET;
                     }
@@ -241,7 +328,7 @@ forge LinkerImage {
                     if output == 0 {
                         return ERR_WRITE_FAILED;
                     } else {
-                        return ERR_OK;
+                        return host_linker_write_mbr_boot_image(output, kernel, kernel_size);
                     }
                 }
             }
@@ -252,58 +339,36 @@ forge LinkerImage {
         if output == 0 {
             return ERR_WRITE_FAILED;
         } else {
-            return ERR_NOT_IMPLEMENTED_YET;
+            return host_linker_write_efi_image(output);
         }
     }
-proc Φ::create_image(format: UInt32) -> UInt64 {
-        return 0;
+
+    proc K::emit_map_rows(path: UInt64, row_index: UInt32, row_count: UInt32) -> UInt32 {
+        if row_index >= row_count {
+            return ERR_OK;
+        } else {
+            let row = host_linker_format_map_row(row_index);
+            let write_status = LinkerFs::K::append_line(path, row);
+            if write_status ! ERR_OK {
+                return ERR_WRITE_FAILED;
+            } else {
+                return emit_map_rows(path, row_index + 1, row_count);
+            }
+        }
     }
 
-    proc Φ::set_image_format(format: UInt32) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::set_image_entry(entry: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::set_image_base(base: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::add_section(section: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::calculate_image_size() -> UInt32 {
-        return 0;
-    }
-
-    proc Φ::allocate_image(size: UInt32) -> UInt64 {
-        return 0;
-    }
-
-    proc Φ::write_image(output: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::finalize_image() -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::set_image_arch(arch: UInt32) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::set_image_os(os: UInt32) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::create_boot_image(kernel: UInt64, kernel_size: UInt32, output: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::create_efi_image(output: UInt64) -> UInt32 {
-        return 100;
+    proc K::write_map_file(path: UInt64) -> UInt32 {
+        let output_status = LinkerFs::K::validate_output_file(path);
+        if output_status ! ERR_OK {
+            return output_status;
+        } else {
+            let clear_status = LinkerFs::K::clear_file(path);
+            if clear_status ! ERR_OK {
+                return ERR_WRITE_FAILED;
+            } else {
+                let row_count = host_linker_map_row_count();
+                return emit_map_rows(path, 0, row_count);
+            }
+        }
     }
 }

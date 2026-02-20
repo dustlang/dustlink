@@ -1,0 +1,85 @@
+// Filesystem and host-bridge operations for DustLink.
+// These calls are linker-generic and provide byte-level IO for object/archive parsing
+// and output image emission.
+
+forge LinkerFs {
+    const ERR_OK: UInt32 = 0;
+    const ERR_FILE_NOT_FOUND: UInt32 = 1;
+    const ERR_WRITE_FAILED: UInt32 = 10;
+
+    proc K::path_exists(path: UInt64) -> UInt32 {
+        return host_path_exists(path);
+    }
+
+    proc K::path_is_file(path: UInt64) -> UInt32 {
+        return host_path_is_file(path);
+    }
+
+    proc K::path_join(base: UInt64, leaf: UInt64) -> UInt64 {
+        return host_path_join(base, leaf);
+    }
+
+    proc K::str_concat(lhs: UInt64, rhs: UInt64) -> UInt64 {
+        return host_str_concat(lhs, rhs);
+    }
+
+    proc K::str_eq(lhs: UInt64, rhs: UInt64) -> UInt32 {
+        return host_str_eq(lhs, rhs);
+    }
+
+    proc K::str_ends_with(text: UInt64, suffix: UInt64) -> UInt32 {
+        return host_str_ends_with(text, suffix);
+    }
+
+    proc K::hash_name(text: UInt64) -> UInt64 {
+        return host_str_hash64(text);
+    }
+
+    proc K::file_size(path: UInt64) -> UInt64 {
+        return host_fs_file_size(path);
+    }
+
+    proc K::read_u8(path: UInt64, offset: UInt64) -> UInt8 {
+        return host_fs_read_u8(path, offset);
+    }
+
+    proc K::write_u8(path: UInt64, offset: UInt64, value: UInt8) -> UInt32 {
+        return host_fs_write_u8(path, offset, value);
+    }
+
+    proc K::clear_file(path: UInt64) -> UInt32 {
+        return host_fs_truncate(path, 0);
+    }
+
+    proc K::set_file_size(path: UInt64, size: UInt64) -> UInt32 {
+        return host_fs_truncate(path, size);
+    }
+
+    proc K::append_line(path: UInt64, line: UInt64) -> UInt32 {
+        return host_fs_append_line(path, line);
+    }
+
+    proc K::validate_input_file(path: UInt64) -> UInt32 {
+        if path == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            if path_exists(path) == 0 {
+                return ERR_FILE_NOT_FOUND;
+            } else {
+                if path_is_file(path) == 0 {
+                    return ERR_FILE_NOT_FOUND;
+                } else {
+                    return ERR_OK;
+                }
+            }
+        }
+    }
+
+    proc K::validate_output_file(path: UInt64) -> UInt32 {
+        if path == 0 {
+            return ERR_WRITE_FAILED;
+        } else {
+            return ERR_OK;
+        }
+    }
+}

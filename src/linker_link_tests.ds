@@ -11,7 +11,7 @@ forge LinkerLinkTests {
     const LINKER_INTERNAL_MVP: UInt32 = 1;
     const TARGET_X86_64_LINUX: UInt32 = 1;
 
-    proc expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
+    proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
         if actual == expected {
             return 1;
         } else {
@@ -19,86 +19,87 @@ forge LinkerLinkTests {
         }
     }
 
-    proc test_add_object_requires_path() -> UInt32 {
+    proc K::test_add_object_requires_path() -> UInt32 {
         let result = LinkerLink::K::add_object_file(0);
         return expect_u32(result, ERR_FILE_NOT_FOUND);
     }
 
-    proc test_set_linker_internal_ok() -> UInt32 {
+    proc K::test_set_linker_internal_ok() -> UInt32 {
         let result = LinkerLink::K::set_linker(LINKER_INTERNAL_MVP);
         return expect_u32(result, ERR_OK);
     }
 
-    proc test_set_linker_invalid_rejected() -> UInt32 {
+    proc K::test_set_linker_invalid_rejected() -> UInt32 {
         let result = LinkerLink::K::set_linker(99);
         return expect_u32(result, ERR_UNSUPPORTED_FLAG);
     }
 
-    proc test_target_linux_supported() -> UInt32 {
+    proc K::test_target_linux_supported() -> UInt32 {
         let result = LinkerLink::K::set_target(TARGET_X86_64_LINUX);
         return expect_u32(result, ERR_OK);
     }
 
-    proc test_target_invalid_rejected() -> UInt32 {
+    proc K::test_target_invalid_rejected() -> UInt32 {
         let result = LinkerLink::K::set_target(99);
         return expect_u32(result, ERR_UNSUPPORTED_TARGET);
     }
 
-    proc test_set_output_requires_path() -> UInt32 {
+    proc K::test_set_output_requires_path() -> UInt32 {
         let result = LinkerLink::K::set_output(0);
         return expect_u32(result, ERR_WRITE_FAILED);
     }
 
-    proc test_entry_requires_nonzero() -> UInt32 {
+    proc K::test_entry_requires_nonzero() -> UInt32 {
         let result = LinkerLink::K::set_entry(0);
         return expect_u32(result, ERR_INVALID_ENTRY);
     }
 
-    proc test_base_requires_page_alignment() -> UInt32 {
+    proc K::test_base_requires_page_alignment() -> UInt32 {
         let result = LinkerLink::K::set_base_address(12345);
         return expect_u32(result, ERR_INVALID_ADDRESS);
     }
 
-    proc test_create_flat_binary_basic() -> UInt32 {
+    proc K::test_create_flat_binary_basic() -> UInt32 {
         let result = LinkerLink::K::create_flat_binary(1, 1048576);
         return expect_u32(result, ERR_OK);
     }
 
-    proc test_create_mbr_image_requires_kernel() -> UInt32 {
+    proc K::test_create_mbr_image_requires_kernel() -> UInt32 {
         let result = LinkerLink::K::create_mbr_image(1, 1, 0);
         return expect_u32(result, ERR_FILE_NOT_FOUND);
     }
 
-    proc test_find_linker_prefers_internal() -> UInt32 {
+    proc K::test_find_linker_prefers_internal() -> UInt32 {
         let result = LinkerLink::K::find_linker();
         return expect_u32(result, LINKER_INTERNAL_MVP);
     }
 
-    proc test_q_rejected() -> UInt32 {
+    proc K::test_q_rejected() -> UInt32 {
         let result = LinkerLink::Q::link();
         return expect_u32(result, 100);
     }
 
-    proc test_phi_rejected() -> UInt32 {
-        let result = LinkerLink::F::link();
+    proc K::test_phi_rejected() -> UInt32 {
+        let result = LinkerLink::Φ::link();
         return expect_u32(result, 100);
     }
 
-    proc run_all_tests() -> UInt32 {
-        let passed = 0;
-        passed = passed + test_add_object_requires_path();
-        passed = passed + test_set_linker_internal_ok();
-        passed = passed + test_set_linker_invalid_rejected();
-        passed = passed + test_target_linux_supported();
-        passed = passed + test_target_invalid_rejected();
-        passed = passed + test_set_output_requires_path();
-        passed = passed + test_entry_requires_nonzero();
-        passed = passed + test_base_requires_page_alignment();
-        passed = passed + test_create_flat_binary_basic();
-        passed = passed + test_create_mbr_image_requires_kernel();
-        passed = passed + test_find_linker_prefers_internal();
-        passed = passed + test_q_rejected();
-        passed = passed + test_phi_rejected();
+    proc K::run_all_tests() -> UInt32 {
+        let passed =
+            test_add_object_requires_path()
+            + test_set_linker_internal_ok()
+            + test_set_linker_invalid_rejected()
+            + test_target_linux_supported()
+            + test_target_invalid_rejected()
+            + test_set_output_requires_path()
+            + test_entry_requires_nonzero()
+            + test_base_requires_page_alignment()
+            + test_create_flat_binary_basic()
+            + test_create_mbr_image_requires_kernel()
+            + test_find_linker_prefers_internal()
+            + test_q_rejected()
+            + test_phi_rejected();
         return passed;
     }
 }
+

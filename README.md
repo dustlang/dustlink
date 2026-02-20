@@ -1,62 +1,80 @@
 # DustLink
 
-`dustlink` is the Dust Programming Language linker project.
+`dustlink` is the Dust Programming Language internal linker project.
 
 ## Scope
 
 - Platform-agnostic linker architecture (not XDV-specific).
-- ELF/System-V-oriented MVP core in Dust source (`.ds`).
-- Compatibility flag profile for gcc/ld/lld-style invocation semantics.
+- Dust source (`.ds`) linker pipeline.
+- Host runtime implementation for object ingestion and file emission.
+- Compatibility-oriented CLI surface for gcc/ld/lld workflows.
 
-## Current Implementation Split
+## Internal Linker Policy
 
-- `src/*.ds`: internal linker MVP logic written in Dust.
-- `src/main.rs`: current production CLI wrapper path used by existing build pipelines.
+`dustlink` is not a backend pass-through wrapper.  
+`src/main.ds` routes directly into Dust linker modules.
 
-The active migration direction is wrapper mode to internal Dust linker execution.
+## Current Capability Snapshot
 
-## Dust MVP Status
+- Object ingestion:
+  - ELF64 relocatable objects
+  - COFF x86_64 objects
+  - Mach-O 64-bit x86_64 objects
+- Archive ingestion:
+  - `.a` and `.lib` search/ingest via `-L/-l` and `--library-path/--library`
+  - deterministic search path order
+- Output writers:
+  - ELF executable (minimal)
+  - flat binary
+  - MBR image
+  - PE executable (minimal)
+  - Mach-O executable (minimal)
+- Script application:
+  - `-T <script>` / `--script <script>`
+  - basic directives: `ENTRY`, `OUTPUT_FORMAT`, `SEARCH_DIR`, `INPUT`, `GROUP`
 
-Implemented in Dust modules:
+## Supported Targets and Relocations
 
-- CLI flag normalization and validation (`linker_cli.ds`)
-- Error model (`linker_errors.ds`)
-- ELF identity/type/machine checks (`linker_elf.ds`)
-- Section/layout helpers (`linker_sections.ds`)
-- Symbol rules (`linker_symbol.ds`)
-- Relocation validation/math (`linker_reloc.ds`)
-- Image planning/validation (`linker_image.ds`)
-- Link stage target/format validation (`linker_link.ds`)
-- Top-level orchestrator (`dustlink.ds`)
+- Target IDs: `x86_64` families (`none/linux/windows/macos` IDs).
+- Core relocation set: `R_X86_64_NONE`, `R_X86_64_64`, `R_X86_64_PC32`, `R_X86_64_32`, `R_X86_64_32S`.
 
-## Supported MVP Targets and Formats
+## CLI Compatibility Surface
 
-- Targets: `x86_64` profile families (none/linux/windows/macos target IDs).
-- Output formats: ELF64, flat binary, MBR image IDs.
-- Relocations: `R_X86_64_NONE`, `R_X86_64_64`, `R_X86_64_PC32`, `R_X86_64_32`, `R_X86_64_32S`.
+Primary options:
 
-## Compatibility Flags (MVP Canonical Surface)
+- `-o`, `--output`
+- `-e`, `--entry`, `--entry-point`
+- `--image-base`
+- `-Ttext`
+- `-T`, `--script`
+- `--oformat` (`elf64`, `binary`, `mbr`, `pe`, `macho64` plus aliases)
+- `-L`, `--library-path`
+- `-l`, `--library`
+- `-Map`, `--Map`, `--map-file`
+- `-s`, `--strip-debug`
+- `--gc-sections`
+- `--allow-multiple-definition`
+- `--start-group`, `--end-group`
+- `--help`, `--version`
 
-- Output: `-o`, `--output`
-- Entry: `-e`, `--entry`
-- Map: `-Map`
-- Image base: `--image-base`
-- Text address: `-Ttext`
-- Output format: `--oformat`
-- Library path/library: `-L`, `-l`
-- Strip: `-s`, `--strip-debug`
-- Garbage collect sections: `--gc-sections`
-- Multiple definition policy: `--allow-multiple-definition`
-- Groups: `--start-group`, `--end-group`
-- Utility: `--help`, `--version`
+Accepted compatibility flags (currently consumed/no-op) include common lld flags like `--build-id`, `--threads=*`, `--target=*`, and related variants.
 
-## Domain Policy
+## Build
 
-- `K`: active MVP behavior.
-- `Q` and `Phi`: domain-unavailable returns (`100`) for operational procedures.
-
-## Build Check
+Check:
 
 ```bash
 dust check src/
 ```
+
+Build:
+
+```bash
+dust build src --out target/dust/dustlink
+```
+
+## Status
+
+`dustlink` has advanced beyond initial ELF-only MVP behavior, but it is not yet full lld parity across every flag and script semantic.
+
+See `changelog.md` for detailed change history.

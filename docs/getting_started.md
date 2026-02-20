@@ -2,24 +2,24 @@
 
 ## Prerequisites
 
-- Rust toolchain with `cargo`.
-- One linker backend available:
-  - `ld.lld` in `PATH`, or
-  - `rust-lld` in `PATH`, or
-  - `rust-lld` in Rust sysroot.
+- Dust compiler (`dust`) built and available.
+- For host executable linking in current compiler stage, have one of:
+  - `dustlink` in `PATH` (preferred for non-bootstrap builds),
+  - `lld` support via compiler driver (`clang`/`cc` with `-fuse-ld=lld`),
+  - `rust-lld`.
 
 ## Build
 
 From `dustlink/`:
 
 ```bash
-cargo build --release
+dust build src --out target/dust/dustlink
 ```
 
 Binary output (Windows):
 
 ```text
-target\release\dustlink.exe
+target\dust\dustlink.exe
 ```
 
 ## Basic Usage
@@ -36,26 +36,28 @@ Show version:
 dustlink --version
 ```
 
-Print the resolved backend path:
-
-```bash
-dustlink --print-backend
-```
-
-Pass normal linker flags through to backend:
+Link objects to ELF:
 
 ```bash
 dustlink -o kernel.bin --entry 0x100000 obj1.o obj2.o
 ```
 
-## Setting an Explicit Backend
+Link to PE:
 
 ```bash
-# command name looked up in PATH
-set DUSTLINK_BACKEND=ld.lld
-
-# or absolute path
-set DUSTLINK_BACKEND=C:\LLVM\bin\ld.lld.exe
+dustlink --oformat=pe -o kernel.exe obj1.o obj2.o
 ```
 
-If `DUSTLINK_BACKEND` is set and cannot be resolved, `dustlink` exits with an error.
+Apply a linker script:
+
+```bash
+dustlink -T link.ld -o kernel.bin obj1.o obj2.o
+```
+
+Emit map file:
+
+```bash
+dustlink -Map kernel.map -o kernel.bin obj1.o obj2.o
+```
+
+`dustlink` is internal-linker mode and does not forward to external linker backends.

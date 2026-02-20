@@ -1,0 +1,73 @@
+// Host CLI dispatch tests for DustLink migration path.
+
+forge LinkerHostCliTests {
+    const ERR_OK: UInt32 = 0;
+    const ERR_MISSING_FLAG_VALUE: UInt32 = 13;
+    const ERR_EMPTY_INPUT: UInt32 = 15;
+    const FORMAT_ELF64: UInt32 = 1;
+    const FORMAT_BINARY: UInt32 = 2;
+    const FORMAT_MBR: UInt32 = 3;
+
+    proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
+        if actual == expected {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::test_run_default_requires_input() -> UInt32 {
+        let status = LinkerHostCli::K::run_default_link(1);
+        return expect_u32(status, ERR_EMPTY_INPUT);
+    }
+
+    proc K::test_output_flag_requires_value() -> UInt32 {
+        let status = LinkerHostCli::K::run_with_output_flag(2);
+        return expect_u32(status, ERR_MISSING_FLAG_VALUE);
+    }
+
+    proc K::test_oformat_flag_requires_value() -> UInt32 {
+        let status = LinkerHostCli::K::run_with_oformat_flag(2);
+        return expect_u32(status, ERR_MISSING_FLAG_VALUE);
+    }
+
+    proc K::test_entry_flag_requires_value() -> UInt32 {
+        let status = LinkerHostCli::K::run_with_entry_flag(2);
+        return expect_u32(status, ERR_MISSING_FLAG_VALUE);
+    }
+
+    proc K::test_image_base_flag_requires_value() -> UInt32 {
+        let status = LinkerHostCli::K::run_with_image_base_flag(2);
+        return expect_u32(status, ERR_MISSING_FLAG_VALUE);
+    }
+
+    proc K::test_oformat_elf64_constant() -> UInt32 {
+        return expect_u32(FORMAT_ELF64, 1);
+    }
+
+    proc K::test_oformat_binary_constant() -> UInt32 {
+        return expect_u32(FORMAT_BINARY, 2);
+    }
+
+    proc K::test_oformat_mbr_constant() -> UInt32 {
+        return expect_u32(FORMAT_MBR, 3);
+    }
+
+    proc K::test_ok_constant() -> UInt32 {
+        return expect_u32(ERR_OK, 0);
+    }
+
+    proc K::run_all_tests() -> UInt32 {
+        let passed =
+            test_run_default_requires_input()
+            + test_output_flag_requires_value()
+            + test_oformat_flag_requires_value()
+            + test_entry_flag_requires_value()
+            + test_image_base_flag_requires_value()
+            + test_oformat_elf64_constant()
+            + test_oformat_binary_constant()
+            + test_oformat_mbr_constant()
+            + test_ok_constant();
+        return passed;
+    }
+}

@@ -54,10 +54,12 @@ forge FlatFormat {
         if alignment == 0 {
             return value;
         } else {
-            if value <= alignment {
-                return alignment;
+            let quotient = value / alignment;
+            let remainder = value - (quotient * alignment);
+            if remainder == 0 {
+                return value;
             } else {
-                return value + alignment;
+                return value + (alignment - remainder);
             }
         }
     }
@@ -79,11 +81,21 @@ forge FlatFormat {
     }
 
     proc K::calculate_binary_size(text_size: UInt32, rodata_size: UInt32, data_size: UInt32, bss_size: UInt32) -> UInt32 {
-        let core = text_size + rodata_size + data_size;
-        if core < text_size {
+        let text_and_ro = text_size + rodata_size;
+        if text_and_ro < text_size {
             return 0;
         } else {
-            return core + bss_size;
+            let core = text_and_ro + data_size;
+            if core < text_and_ro {
+                return 0;
+            } else {
+                let total = core + bss_size;
+                if total < core {
+                    return 0;
+                } else {
+                    return total;
+                }
+            }
         }
     }
 proc Φ::create_mbr_bootloader() -> UInt64 {
@@ -106,3 +118,4 @@ proc Φ::create_mbr_bootloader() -> UInt64 {
         return 100;
     }
 }
+

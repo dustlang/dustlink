@@ -25,7 +25,9 @@ forge ElfFormat {
     const SHT_PROGBITS: UInt32 = 1;
     const SHT_SYMTAB: UInt32 = 2;
     const SHT_STRTAB: UInt32 = 3;
+    const SHT_RELA: UInt32 = 4;
     const SHT_NOBITS: UInt32 = 8;
+    const SHT_REL: UInt32 = 9;
 
     const SHF_ALLOC: UInt32 = 2;
     const SHF_EXECINSTR: UInt32 = 4;
@@ -243,7 +245,8 @@ forge ElfFormat {
             if size > file_size {
                 return 0;
             } else {
-                if offset + size > file_size {
+                let max_offset = file_size - size;
+                if offset > max_offset {
                     return 0;
                 } else {
                     return 1;
@@ -300,7 +303,31 @@ forge ElfFormat {
                                 return 0;
                             }
                         } else {
-                            return 3;
+                            if section_type == SHT_RELA {
+                                if entsize ! ELF64_RELOCATION_SIZE {
+                                    return 3;
+                                } else {
+                                    if section_span_is_valid(offset, size, file_size) == 0 {
+                                        return 3;
+                                    } else {
+                                        return 0;
+                                    }
+                                }
+                            } else {
+                                if section_type == SHT_REL {
+                                    if entsize == 0 {
+                                        return 3;
+                                    } else {
+                                        if section_span_is_valid(offset, size, file_size) == 0 {
+                                            return 3;
+                                        } else {
+                                            return 0;
+                                        }
+                                    }
+                                } else {
+                                    return 3;
+                                }
+                            }
                         }
                     }
                 }
@@ -373,6 +400,373 @@ forge ElfFormat {
                         return 6;
                     } else {
                         return 0;
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::read_u8_file(path: UInt64, offset: UInt64) -> UInt8 {
+        return LinkerFs::K::read_u8(path, offset);
+    }
+
+    proc K::read_u16_file(path: UInt64, offset: UInt64) -> UInt16 {
+        let b0 = read_u8_file(path, offset);
+        let b1 = read_u8_file(path, offset + 1);
+        return u16_from_le(b0, b1);
+    }
+
+    proc K::read_u32_file(path: UInt64, offset: UInt64) -> UInt32 {
+        let b0 = read_u8_file(path, offset);
+        let b1 = read_u8_file(path, offset + 1);
+        let b2 = read_u8_file(path, offset + 2);
+        let b3 = read_u8_file(path, offset + 3);
+        return u32_from_le(b0, b1, b2, b3);
+    }
+
+    proc K::read_u64_file(path: UInt64, offset: UInt64) -> UInt64 {
+        let b0 = read_u8_file(path, offset);
+        let b1 = read_u8_file(path, offset + 1);
+        let b2 = read_u8_file(path, offset + 2);
+        let b3 = read_u8_file(path, offset + 3);
+        let b4 = read_u8_file(path, offset + 4);
+        let b5 = read_u8_file(path, offset + 5);
+        let b6 = read_u8_file(path, offset + 6);
+        let b7 = read_u8_file(path, offset + 7);
+        return u64_from_le(b0, b1, b2, b3, b4, b5, b6, b7);
+    }
+
+    proc K::section_header_base(shoff: UInt64, shentsize: UInt16, index: UInt16) -> UInt64 {
+        return shoff + (index * shentsize);
+    }
+
+    proc K::section_type(path: UInt64, shoff: UInt64, shentsize: UInt16, index: UInt16) -> UInt32 {
+        return read_u32_file(path, section_header_base(shoff, shentsize, index) + 4);
+    }
+
+    proc K::section_flags(path: UInt64, shoff: UInt64, shentsize: UInt16, index: UInt16) -> UInt64 {
+        return read_u64_file(path, section_header_base(shoff, shentsize, index) + 8);
+    }
+
+    proc K::section_offset(path: UInt64, shoff: UInt64, shentsize: UInt16, index: UInt16) -> UInt64 {
+        return read_u64_file(path, section_header_base(shoff, shentsize, index) + 24);
+    }
+
+    proc K::section_size(path: UInt64, shoff: UInt64, shentsize: UInt16, index: UInt16) -> UInt64 {
+        return read_u64_file(path, section_header_base(shoff, shentsize, index) + 32);
+    }
+
+    proc K::section_link(path: UInt64, shoff: UInt64, shentsize: UInt16, index: UInt16) -> UInt32 {
+        return read_u32_file(path, section_header_base(shoff, shentsize, index) + 40);
+    }
+
+    proc K::section_info(path: UInt64, shoff: UInt64, shentsize: UInt16, index: UInt16) -> UInt32 {
+        return read_u32_file(path, section_header_base(shoff, shentsize, index) + 44);
+    }
+
+    proc K::section_align(path: UInt64, shoff: UInt64, shentsize: UInt16, index: UInt16) -> UInt64 {
+        return read_u64_file(path, section_header_base(shoff, shentsize, index) + 48);
+    }
+
+    proc K::section_entsize(path: UInt64, shoff: UInt64, shentsize: UInt16, index: UInt16) -> UInt64 {
+        return read_u64_file(path, section_header_base(shoff, shentsize, index) + 56);
+    }
+
+    proc K::symbol_record_count(sym_size: UInt64, sym_entsize: UInt64) -> UInt32 {
+        if sym_entsize == 0 {
+            return 0;
+        } else {
+            return sym_size / sym_entsize;
+        }
+    }
+
+    proc K::decode_r_info_sym(r_info: UInt64) -> UInt32 {
+        return r_info / 4294967296;
+    }
+
+    proc K::decode_r_info_type(r_info: UInt64) -> UInt32 {
+        let sym = decode_r_info_sym(r_info);
+        return r_info - (sym * 4294967296);
+    }
+
+    proc K::ingest_symbol_records(
+        path: UInt64,
+        sym_off: UInt64,
+        sym_entsize: UInt64,
+        sym_count: UInt32,
+        index: UInt32,
+        strtab_section: UInt32
+    ) -> UInt32 {
+        if index >= sym_count {
+            return 0;
+        } else {
+            let rec_off = sym_off + (index * sym_entsize);
+            let st_name = read_u32_file(path, rec_off + 0);
+            let st_info = read_u8_file(path, rec_off + 4);
+            let st_shndx = read_u16_file(path, rec_off + 6);
+            let st_value = read_u64_file(path, rec_off + 8);
+            let st_size = read_u64_file(path, rec_off + 16);
+
+            let sym_bind = st_info / 16;
+            let sym_type = st_info - (sym_bind * 16);
+            let validate_status = parse_symbol_record_fields(
+                st_name,
+                sym_bind,
+                sym_type,
+                st_shndx,
+                st_value,
+                st_size
+            );
+            if validate_status ! 0 {
+                return validate_status;
+            } else {
+                let register_status = host_linker_object_add_symbol(
+                    st_name,
+                    sym_bind,
+                    sym_type,
+                    st_shndx,
+                    st_value,
+                    st_size,
+                    strtab_section
+                );
+                if register_status ! 0 {
+                    return register_status;
+                } else {
+                    return ingest_symbol_records(
+                        path,
+                        sym_off,
+                        sym_entsize,
+                        sym_count,
+                        index + 1,
+                        strtab_section
+                    );
+                }
+            }
+        }
+    }
+
+    proc K::ingest_relocation_records(
+        path: UInt64,
+        reloc_off: UInt64,
+        reloc_entsize: UInt64,
+        reloc_count: UInt32,
+        index: UInt32,
+        target_section: UInt32,
+        target_section_size: UInt64,
+        symbol_count: UInt32
+    ) -> UInt32 {
+        if index >= reloc_count {
+            return 0;
+        } else {
+            let rec_off = reloc_off + (index * reloc_entsize);
+            let r_offset = read_u64_file(path, rec_off + 0);
+            let r_info = read_u64_file(path, rec_off + 8);
+            let r_addend = read_u64_file(path, rec_off + 16);
+
+            let sym_index = decode_r_info_sym(r_info);
+            let reloc_type = decode_r_info_type(r_info);
+            let validate_status = parse_relocation_record_fields(
+                r_offset,
+                reloc_type,
+                sym_index,
+                r_addend,
+                target_section_size,
+                symbol_count
+            );
+            if validate_status ! 0 {
+                return validate_status;
+            } else {
+                let register_status = host_linker_object_add_relocation(
+                    target_section,
+                    r_offset,
+                    reloc_type,
+                    sym_index,
+                    r_addend
+                );
+                if register_status ! 0 {
+                    return register_status;
+                } else {
+                    return ingest_relocation_records(
+                        path,
+                        reloc_off,
+                        reloc_entsize,
+                        reloc_count,
+                        index + 1,
+                        target_section,
+                        target_section_size,
+                        symbol_count
+                    );
+                }
+            }
+        }
+    }
+
+    proc K::ingest_section_records(
+        path: UInt64,
+        file_size: UInt64,
+        shoff: UInt64,
+        shentsize: UInt16,
+        shnum: UInt16,
+        index: UInt16
+    ) -> UInt32 {
+        if index >= shnum {
+            return 0;
+        } else {
+            let sec_type = section_type(path, shoff, shentsize, index);
+            let sec_flags = section_flags(path, shoff, shentsize, index);
+            let sec_offset = section_offset(path, shoff, shentsize, index);
+            let sec_size = section_size(path, shoff, shentsize, index);
+            let sec_link = section_link(path, shoff, shentsize, index);
+            let sec_info = section_info(path, shoff, shentsize, index);
+            let sec_align = section_align(path, shoff, shentsize, index);
+            let sec_entsize = section_entsize(path, shoff, shentsize, index);
+
+            let section_status = parse_section_header_fields(
+                sec_type,
+                sec_flags,
+                sec_offset,
+                sec_size,
+                sec_align,
+                sec_entsize,
+                file_size
+            );
+            if section_status ! 0 {
+                return section_status;
+            } else {
+                let register_status = host_linker_object_add_section(
+                    index,
+                    sec_type,
+                    sec_flags,
+                    sec_offset,
+                    sec_size,
+                    sec_link,
+                    sec_info,
+                    sec_align,
+                    sec_entsize
+                );
+                if register_status ! 0 {
+                    return register_status;
+                } else {
+                    if sec_type == SHT_SYMTAB {
+                        let sym_count = symbol_record_count(sec_size, sec_entsize);
+                        let symbols_status = ingest_symbol_records(
+                            path,
+                            sec_offset,
+                            sec_entsize,
+                            sym_count,
+                            0,
+                            sec_link
+                        );
+                        if symbols_status ! 0 {
+                            return symbols_status;
+                        }
+                    } else {
+                        if sec_type == SHT_RELA {
+                            let symbol_table_size = section_size(path, shoff, shentsize, sec_link);
+                            let symbol_table_entsize = section_entsize(path, shoff, shentsize, sec_link);
+                            let symbol_count = symbol_record_count(symbol_table_size, symbol_table_entsize);
+                            let target_size = section_size(path, shoff, shentsize, sec_info);
+                            let reloc_count = symbol_record_count(sec_size, sec_entsize);
+                            let reloc_status = ingest_relocation_records(
+                                path,
+                                sec_offset,
+                                sec_entsize,
+                                reloc_count,
+                                0,
+                                sec_info,
+                                target_size,
+                                symbol_count
+                            );
+                            if reloc_status ! 0 {
+                                return reloc_status;
+                            }
+                        } else {
+                            if sec_type == SHT_REL {
+                                let symbol_table_size_rel = section_size(path, shoff, shentsize, sec_link);
+                                let symbol_table_entsize_rel = section_entsize(path, shoff, shentsize, sec_link);
+                                let symbol_count_rel = symbol_record_count(symbol_table_size_rel, symbol_table_entsize_rel);
+                                let target_size_rel = section_size(path, shoff, shentsize, sec_info);
+                                let reloc_count_rel = symbol_record_count(sec_size, sec_entsize);
+                                let reloc_status_rel = ingest_relocation_records(
+                                    path,
+                                    sec_offset,
+                                    sec_entsize,
+                                    reloc_count_rel,
+                                    0,
+                                    sec_info,
+                                    target_size_rel,
+                                    symbol_count_rel
+                                );
+                                if reloc_status_rel ! 0 {
+                                    return reloc_status_rel;
+                                }
+                            }
+                        }
+                    }
+
+                    return ingest_section_records(path, file_size, shoff, shentsize, shnum, index + 1);
+                }
+            }
+        }
+    }
+
+    proc K::ingest_object_file(path: UInt64) -> UInt32 {
+        let file_status = LinkerFs::K::validate_input_file(path);
+        if file_status ! 0 {
+            return file_status;
+        } else {
+            let file_size = LinkerFs::K::file_size(path);
+            if file_size < ELF64_HEADER_SIZE {
+                return 2;
+            } else {
+                let m0 = read_u8_file(path, 0);
+                let m1 = read_u8_file(path, 1);
+                let m2 = read_u8_file(path, 2);
+                let m3 = read_u8_file(path, 3);
+                let klass = read_u8_file(path, 4);
+                let endian = read_u8_file(path, 5);
+                let version = read_u8_file(path, 6);
+                let ident_status = parse_elf_ident_bytes(m0, m1, m2, m3, klass, endian, version);
+                if ident_status ! 0 {
+                    return ident_status;
+                } else {
+                    let elf_type = read_u16_file(path, 16);
+                    let machine = read_u16_file(path, 18);
+                    let shoff = read_u64_file(path, 40);
+                    let shentsize = read_u16_file(path, 58);
+                    let shnum = read_u16_file(path, 60);
+
+                    let header_status = parse_elf_header_fields(
+                        file_size,
+                        elf_type,
+                        machine,
+                        shoff,
+                        shentsize,
+                        shnum,
+                        0,
+                        0
+                    );
+                    if header_status ! 0 {
+                        return header_status;
+                    } else {
+                        let begin_status = host_linker_object_begin(path, file_size, elf_type, machine);
+                        if begin_status ! 0 {
+                            return begin_status;
+                        } else {
+                            let section_status = ingest_section_records(
+                                path,
+                                file_size,
+                                shoff,
+                                shentsize,
+                                shnum,
+                                0
+                            );
+                            if section_status ! 0 {
+                                return section_status;
+                            } else {
+                                return host_linker_object_finalize(path);
+                            }
+                        }
                     }
                 }
             }
@@ -459,3 +853,4 @@ forge ElfFormat {
         return 0;
     }
 }
+

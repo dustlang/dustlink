@@ -1,0 +1,76 @@
+// Deterministic math and bounds tests for DustLink linker helpers.
+
+forge LinkerMathTests {
+    const ERR_OK: UInt32 = 0;
+    const ERR_INVALID_SECTION: UInt32 = 3;
+    const ERR_INVALID_RELOCATION: UInt32 = 6;
+
+    proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
+        if actual == expected {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::expect_u64(actual: UInt64, expected: UInt64) -> UInt32 {
+        if actual == expected {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::test_sections_align_forward_identity() -> UInt32 {
+        let aligned = LinkerSections::K::align_forward(4096, 4096);
+        return expect_u64(aligned, 4096);
+    }
+
+    proc K::test_sections_align_forward_round_up() -> UInt32 {
+        let aligned = LinkerSections::K::align_forward(4097, 4096);
+        return expect_u64(aligned, 8192);
+    }
+
+    proc K::test_flat_align_to_round_up() -> UInt32 {
+        let aligned = FlatFormat::K::align_to(17, 16);
+        return expect_u64(aligned, 32);
+    }
+
+    proc K::test_validate_section_span_boundary_ok() -> UInt32 {
+        let status = LinkerSections::K::validate_section_span(100, 50, 150);
+        return expect_u32(status, ERR_OK);
+    }
+
+    proc K::test_validate_section_span_overflow_rejected() -> UInt32 {
+        let status = LinkerSections::K::validate_section_span(101, 50, 150);
+        return expect_u32(status, ERR_INVALID_SECTION);
+    }
+
+    proc K::test_pcrel_forward_delta() -> UInt32 {
+        let delta = LinkerReloc::K::calculate_pcrel_offset(4096, 8192, 4);
+        return expect_u64(delta, 4092);
+    }
+
+    proc K::test_u32_reloc_value_accepts_max() -> UInt32 {
+        let status = LinkerReloc::K::validate_relocation_value(10, 4294967295);
+        return expect_u32(status, ERR_OK);
+    }
+
+    proc K::test_u32_reloc_value_rejects_overflow() -> UInt32 {
+        let status = LinkerReloc::K::validate_relocation_value(10, 4294967296);
+        return expect_u32(status, ERR_INVALID_RELOCATION);
+    }
+
+    proc K::run_all_tests() -> UInt32 {
+        let passed =
+            test_sections_align_forward_identity()
+            + test_sections_align_forward_round_up()
+            + test_flat_align_to_round_up()
+            + test_validate_section_span_boundary_ok()
+            + test_validate_section_span_overflow_rejected()
+            + test_pcrel_forward_delta()
+            + test_u32_reloc_value_accepts_max()
+            + test_u32_reloc_value_rejects_overflow();
+        return passed;
+    }
+}

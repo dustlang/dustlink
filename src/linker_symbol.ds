@@ -1,8 +1,7 @@
 // Symbol table parsing and deterministic resolution helpers.
 
 forge LinkerSymbol {
-    const MAX_SYMBOLS: UInt32 = 8192;
-    const MAX_SYMBOL_NAME: UInt32 = 128;
+    const MAX_SYMBOLS: UInt32 = 131072;
 
     const SYM_LOCAL: UInt8 = 0;
     const SYM_GLOBAL: UInt8 = 1;
@@ -28,39 +27,12 @@ forge LinkerSymbol {
     const ERR_MULTIPLE_DEFINITION: UInt32 = 5;
 
     proc K::parse_symbol_bind(info: UInt8) -> UInt8 {
-        if info < 16 {
-            return SYM_LOCAL;
-        } else {
-            if info < 32 {
-                return SYM_GLOBAL;
-            } else {
-                return SYM_WEAK;
-            }
-        }
+        return info / 16;
     }
 
     proc K::parse_symbol_type(info: UInt8) -> UInt8 {
-        if info == 0 {
-            return TYPE_NONE;
-        } else {
-            if info == 1 {
-                return TYPE_OBJECT;
-            } else {
-                if info == 2 {
-                    return TYPE_FUNC;
-                } else {
-                    if info == 3 {
-                        return TYPE_SECTION;
-                    } else {
-                        if info == 4 {
-                            return TYPE_FILE;
-                        } else {
-                            return TYPE_NONE;
-                        }
-                    }
-                }
-            }
-        }
+        let sym_bind = parse_symbol_bind(info);
+        return info - (sym_bind * 16);
     }
 
     proc K::symbol_is_defined(shndx: UInt16) -> UInt32 {
@@ -95,79 +67,59 @@ forge LinkerSymbol {
         }
     }
 
-    proc K::add_symbol(name: UInt64, value: UInt64, size: UInt32, sym_type: UInt8, sym_bind: UInt8, section: UInt32) -> UInt32 {
-        if name == 0 {
-            if sym_type == TYPE_SECTION {
-                return ERR_OK;
-            } else {
-                return ERR_UNDEFINED_SYMBOL;
-            }
+    proc K::add_symbol(
+        name: UInt64,
+        value: UInt64,
+        size: UInt32,
+        sym_type: UInt8,
+        sym_bind: UInt8,
+        section: UInt32
+    ) -> UInt32 {
+        if sym_type > TYPE_FILE {
+            return ERR_INVALID_FORMAT;
         } else {
-            if section >= 64 {
-                if section ! 0 {
+            if sym_bind > SYM_WEAK {
+                return ERR_INVALID_FORMAT;
+            } else {
+                if section >= 65535 {
                     return ERR_INVALID_SECTION;
                 } else {
-                    if sym_bind == SYM_GLOBAL {
-                        if value == 0 {
-                            return ERR_UNDEFINED_SYMBOL;
-                        } else {
-                            return ERR_OK;
-                        }
-                    } else {
-                        return ERR_OK;
-                    }
-                }
-            } else {
-                if sym_type > TYPE_FILE {
-                    return ERR_INVALID_FORMAT;
-                } else {
-                    if size > 4294967295 {
-                        return ERR_INVALID_FORMAT;
-                    } else {
-                        return ERR_OK;
-                    }
+                    let register_status = host_linker_object_add_symbol(
+                        name,
+                        sym_bind,
+                        sym_type,
+                        section,
+                        value,
+                        size,
+                        0
+                    );
+                    return register_status;
                 }
             }
         }
     }
 
     proc K::find_symbol(name: UInt64) -> UInt32 {
-        if name == 0 {
-            return MAX_SYMBOLS;
-        } else {
-            return 0;
-        }
+        return host_linker_global_symbol_defined(name);
     }
 
     proc K::get_symbol(name: UInt64) -> UInt64 {
-        if name == 0 {
-            return 0;
-        } else {
-            return name;
-        }
+        return host_linker_global_symbol_address(name);
     }
 
     proc K::get_symbol_count() -> UInt32 {
-        return 0;
+        return host_linker_global_symbol_count();
     }
 
     proc K::resolve_symbol(name: UInt64) -> UInt64 {
-        if name == 0 {
-            return 0;
-        } else {
-            return name;
-        }
+        return host_linker_global_symbol_address(name);
     }
 
     proc K::define_symbol(name: UInt64, value: UInt64) -> UInt32 {
         if name == 0 {
             return ERR_UNDEFINED_SYMBOL;
         } else {
-            if value == 0 {
-                return ERR_UNDEFINED_SYMBOL;
-            } else {
-                return ERR_OK;
-            }
+            return host_linker_global_symbol_define_absolute(name, value);
         }
     }
 
@@ -225,42 +177,6 @@ forge LinkerSymbol {
         }
     }
 
-    proc K::get_symbol_value(idx: UInt32) -> UInt64 {
-        if idx >= MAX_SYMBOLS {
-            return 0;
-        } else {
-            return idx + 4096;
-        }
-    }
-
-    proc K::get_symbol_section(idx: UInt32) -> UInt32 {
-        if idx >= MAX_SYMBOLS {
-            return 0;
-        } else {
-            if idx < 4 {
-                return idx;
-            } else {
-                return 0;
-            }
-        }
-    }
-
-    proc K::get_symbol_size(idx: UInt32) -> UInt32 {
-        if idx >= MAX_SYMBOLS {
-            return 0;
-        } else {
-            return 16;
-        }
-    }
-
-    proc K::is_defined(idx: UInt32) -> UInt32 {
-        if idx >= MAX_SYMBOLS {
-            return 0;
-        } else {
-            return 1;
-        }
-    }
-
     proc K::resolve_undefined(undefined_count: UInt32, weak_fallbacks: UInt32) -> UInt32 {
         if undefined_count == 0 {
             return ERR_OK;
@@ -292,47 +208,90 @@ forge LinkerSymbol {
             }
         }
     }
-proc Φ::add_symbol(name: UInt64, value: UInt64, size: UInt32, sym_type: UInt8, sym_bind: UInt8, section: UInt32) -> UInt32 {
-        return 100;
+
+    proc K::resolve_symbol_slot(object_index: UInt32, symbol_index: UInt32) -> UInt32 {
+        let name_hash = host_linker_object_symbol_name_hash(object_index, symbol_index);
+        let rhs_defined = host_linker_object_symbol_defined(object_index, symbol_index);
+        let rhs_bind = host_linker_object_symbol_bind(object_index, symbol_index);
+
+        if rhs_defined == 0 {
+            return ERR_OK;
+        } else {
+            let lhs_defined = host_linker_global_symbol_defined(name_hash);
+            let lhs_bind = host_linker_global_symbol_bind(name_hash);
+            let decision = select_definition(lhs_defined, lhs_bind, rhs_defined, rhs_bind);
+            if decision == ERR_MULTIPLE_DEFINITION {
+                return ERR_MULTIPLE_DEFINITION;
+            } else {
+                if decision == ERR_UNDEFINED_SYMBOL {
+                    return ERR_UNDEFINED_SYMBOL;
+                } else {
+                    if decision == 2 {
+                        return host_linker_global_symbol_set(
+                            name_hash,
+                            object_index,
+                            symbol_index,
+                            rhs_bind,
+                            rhs_defined
+                        );
+                    } else {
+                        return ERR_OK;
+                    }
+                }
+            }
+        }
     }
 
-    proc Φ::find_symbol(name: UInt64) -> UInt32 {
-        return 0;
+    proc K::resolve_object_symbols(
+        object_index: UInt32,
+        symbol_index: UInt32,
+        symbol_count: UInt32
+    ) -> UInt32 {
+        if symbol_index >= symbol_count {
+            return ERR_OK;
+        } else {
+            let slot_status = resolve_symbol_slot(object_index, symbol_index);
+            if slot_status ! ERR_OK {
+                return slot_status;
+            } else {
+                return resolve_object_symbols(object_index, symbol_index + 1, symbol_count);
+            }
+        }
     }
 
-    proc Φ::get_symbol(name: UInt64) -> UInt64 {
-        return 0;
+    proc K::resolve_loaded_symbol_graph(
+        object_index: UInt32,
+        object_count: UInt32
+    ) -> UInt32 {
+        if object_index >= object_count {
+            return ERR_OK;
+        } else {
+            let symbol_count = host_linker_object_symbol_count(object_index);
+            let object_status = resolve_object_symbols(object_index, 0, symbol_count);
+            if object_status ! ERR_OK {
+                return object_status;
+            } else {
+                return resolve_loaded_symbol_graph(object_index + 1, object_count);
+            }
+        }
     }
 
-    proc Φ::get_symbol_count() -> UInt32 {
-        return 0;
+    proc K::resolve_loaded_symbols() -> UInt32 {
+        let object_count = host_linker_object_count();
+        if object_count == 0 {
+            return ERR_UNDEFINED_SYMBOL;
+        } else {
+            return resolve_loaded_symbol_graph(0, object_count);
+        }
     }
 
-    proc Φ::resolve_symbol(name: UInt64) -> UInt64 {
-        return 0;
-    }
-
-    proc Φ::define_symbol(name: UInt64, value: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::get_symbol_value(idx: UInt32) -> UInt64 {
-        return 0;
-    }
-
-    proc Φ::get_symbol_section(idx: UInt32) -> UInt32 {
-        return 0;
-    }
-
-    proc Φ::get_symbol_size(idx: UInt32) -> UInt32 {
-        return 0;
-    }
-
-    proc Φ::is_defined(idx: UInt32) -> UInt32 {
-        return 0;
-    }
-
-    proc Φ::resolve_undefined(undefined_count: UInt32, weak_fallbacks: UInt32) -> UInt32 {
-        return 100;
+    proc K::check_unresolved_globals() -> UInt32 {
+        let unresolved = host_linker_unresolved_symbol_count();
+        if unresolved == 0 {
+            return ERR_OK;
+        } else {
+            let weak_fallbacks = host_linker_weak_fallback_count();
+            return resolve_undefined(unresolved, weak_fallbacks);
+        }
     }
 }

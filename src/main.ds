@@ -1,39 +1,8 @@
-// Dust-native dustlink entrypoint.
-// This is the primary DPL program entry for invoking the internal linker pipeline.
+// Dust-native dustlink executable entrypoint.
+// Host CLI dispatch is routed through Dust code (no backend forwarding).
 
 forge DustLinkMain {
-    const ERR_OK: UInt32 = 0;
-    const ERR_USAGE: UInt32 = 64;
-
-    const FORMAT_ELF64: UInt32 = 1;
-    const DEFAULT_ENTRY: UInt64 = 1048576;
-    const DEFAULT_BASE: UInt64 = 65536;
-
-    proc K::print_banner() -> UInt32 {
-        emit "dustlink 0.3.0 (Dust-native)";
-        return ERR_OK;
-    }
-
-    proc K::print_help() -> UInt32 {
-        emit "usage: dustlink <object-set> <output>";
-        emit "compat: -o --output -e --entry --oformat -L -l";
-        emit "note: host argv/env plumbing is provided by dust runtime bridge";
-        return ERR_OK;
-    }
-
-    proc K::invoke_internal(
-        input_files: UInt64,
-        output_file: UInt64,
-        format: UInt32,
-        entry: UInt64,
-        base: UInt64
-    ) -> UInt32 {
-        return link_with_options(input_files, output_file, format, entry, base);
-    }
-
     proc K::main() -> UInt32 {
-        emit "dustlink 0.3.0 (Dust-native)";
-        emit "dustlink: internal link pipeline ready";
-        return ERR_OK;
+        return LinkerHostCli::K::run_with_host_args();
     }
 }

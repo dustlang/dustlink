@@ -8,9 +8,11 @@ Source: `src/linker_image.ds`
 
 ## Format Constants
 
-- `FORMAT_FLAT = 1`
-- `FORMAT_ELF = 2`
+- `FORMAT_ELF = 1`
+- `FORMAT_FLAT = 2`
 - `FORMAT_MBR = 3`
+- `FORMAT_PE = 4`
+- `FORMAT_MACHO = 5`
 
 ## Image Constants
 
@@ -37,8 +39,9 @@ Source: `src/linker_image.ds`
 - `create_efi_image(output) -> UInt32`
 - `format_supported(format) -> UInt32`
 
-`K` domain now validates format, base/entry constraints, image sizing, and basic output constraints.
-`create_efi_image` currently returns `ERR_NOT_IMPLEMENTED_YET` after output validation.
+`K` domain validates format, base/entry constraints, image sizing, and output constraints.
+Output writers are routed by format and currently include ELF, flat, MBR, PE, and Mach-O paths.
+`create_efi_image` writes EFI marker output through the host runtime path.
 
 ## `Q` and `Phi`
 

@@ -22,10 +22,12 @@ forge LinkerSections {
         if alignment == 0 {
             return value;
         } else {
-            if value < alignment {
-                return alignment;
+            let quotient = value / alignment;
+            let remainder = value - (quotient * alignment);
+            if remainder == 0 {
+                return value;
             } else {
-                return value + alignment;
+                return value + (alignment - remainder);
             }
         }
     }
@@ -85,7 +87,8 @@ forge LinkerSections {
             if size > file_size {
                 return ERR_INVALID_SECTION;
             } else {
-                if offset + size > file_size {
+                let max_offset = file_size - size;
+                if offset > max_offset {
                     return ERR_INVALID_SECTION;
                 } else {
                     return ERR_OK;
@@ -136,16 +139,28 @@ forge LinkerSections {
                 return ERR_INVALID_SECTION;
             } else {
                 let text_end = image_base + text_size;
-                let ro_start = align_forward(text_end, 16);
-                let ro_end = ro_start + rodata_size;
-                let data_start = align_forward(ro_end, 16);
-                let data_end = data_start + data_size;
-                let bss_start = align_forward(data_end, 16);
-                let bss_end = bss_start + bss_size;
-                if bss_end < bss_start {
+                if text_end < image_base {
                     return ERR_INVALID_SECTION;
                 } else {
-                    return ERR_OK;
+                    let ro_start = align_forward(text_end, 16);
+                    let ro_end = ro_start + rodata_size;
+                    if ro_end < ro_start {
+                        return ERR_INVALID_SECTION;
+                    } else {
+                        let data_start = align_forward(ro_end, 16);
+                        let data_end = data_start + data_size;
+                        if data_end < data_start {
+                            return ERR_INVALID_SECTION;
+                        } else {
+                            let bss_start = align_forward(data_end, 16);
+                            let bss_end = bss_start + bss_size;
+                            if bss_end < bss_start {
+                                return ERR_INVALID_SECTION;
+                            } else {
+                                return ERR_OK;
+                            }
+                        }
+                    }
                 }
             }
         }

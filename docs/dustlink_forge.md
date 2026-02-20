@@ -9,7 +9,7 @@ Source: `src/dustlink.ds`
 ## Version Constants
 
 - `VERSION_MAJOR: UInt8 = 0`
-- `VERSION_MINOR: UInt8 = 2`
+- `VERSION_MINOR: UInt8 = 4`
 
 ## `K` Domain Procedures
 
@@ -22,6 +22,7 @@ Source: `src/dustlink.ds`
 - `set_base_address(addr) -> UInt32`
 - `add_search_path(path) -> UInt32`
 - `add_library(name) -> UInt32`
+- `apply_script(path) -> UInt32`
 - `run() -> UInt32`
 - `get_error() -> UInt64`
 - `print_sections() -> UInt32`
@@ -37,6 +38,7 @@ Source: `src/dustlink.ds`
 - output/format/entry/base checks
 - link invocation contract checks
 - image sanity checks via deterministic layout expectations
+- script forwarding into `LinkerLink::K::link_with_script(...)`
 
 ## `Q` and `Phi` Domain Procedures
 

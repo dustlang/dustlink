@@ -1,0 +1,651 @@
+// Host CLI dispatch for dustlink.
+
+forge LinkerHost {
+    proc K::args_count() -> UInt32 {
+        return host_args_count();
+    }
+
+    proc K::arg_at(index: UInt32) -> UInt64 {
+        return host_arg_at(index);
+    }
+
+    proc K::str_eq(lhs: UInt64, rhs: UInt64) -> UInt32 {
+        return host_str_eq(lhs, rhs);
+    }
+
+    proc K::str_starts_with(text: UInt64, prefix: UInt64) -> UInt32 {
+        return host_str_starts_with(text, prefix);
+    }
+
+    proc K::str_after_prefix(text: UInt64, prefix: UInt64) -> UInt64 {
+        return host_str_after_prefix(text, prefix);
+    }
+
+    proc K::parse_u64(text: UInt64, base: UInt32) -> UInt64 {
+        return host_parse_u64(text, base);
+    }
+
+    proc K::print_line(text: UInt64) -> UInt32 {
+        return host_print_line(text);
+    }
+}
+
+forge LinkerHostCli {
+    const ERR_OK: UInt32 = 0;
+    const ERR_INVALID_FORMAT: UInt32 = 2;
+    const ERR_INVALID_ADDRESS: UInt32 = 8;
+    const ERR_INVALID_ENTRY: UInt32 = 9;
+    const ERR_UNSUPPORTED_FLAG: UInt32 = 12;
+    const ERR_MISSING_FLAG_VALUE: UInt32 = 13;
+    const ERR_EMPTY_INPUT: UInt32 = 15;
+    const ERR_CONFLICTING_OPTIONS: UInt32 = 16;
+
+    const FORMAT_ELF64: UInt32 = 1;
+    const FORMAT_BINARY: UInt32 = 2;
+    const FORMAT_MBR: UInt32 = 3;
+    const FORMAT_PE64: UInt32 = 4;
+    const FORMAT_MACHO64: UInt32 = 5;
+
+    const DEFAULT_OUTPUT: UInt64 = 1;
+    const DEFAULT_ENTRY: UInt64 = 1048576;
+    const DEFAULT_BASE: UInt64 = 65536;
+
+    proc K::is_output_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "-o") == 1 {
+            return 1;
+        } else {
+            if LinkerHost::K::str_eq(arg, "--output") == 1 {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::is_oformat_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--oformat") == 1 {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::is_entry_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "-e") == 1 {
+            return 1;
+        } else {
+            if LinkerHost::K::str_eq(arg, "--entry") == 1 {
+                return 1;
+            } else {
+                if LinkerHost::K::str_eq(arg, "--entry-point") == 1 {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    proc K::is_image_base_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--image-base") == 1 {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::is_text_address_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "-Ttext") == 1 {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::is_script_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "-T") == 1 {
+            return 1;
+        } else {
+            if LinkerHost::K::str_eq(arg, "--script") == 1 {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::is_map_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "-Map") == 1 {
+            return 1;
+        } else {
+            if LinkerHost::K::str_eq(arg, "--Map") == 1 {
+                return 1;
+            } else {
+                if LinkerHost::K::str_eq(arg, "--map-file") == 1 {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    proc K::is_library_path_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "-L") == 1 {
+            return 1;
+        } else {
+            if LinkerHost::K::str_eq(arg, "--library-path") == 1 {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::is_library_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "-l") == 1 {
+            return 1;
+        } else {
+            if LinkerHost::K::str_eq(arg, "--library") == 1 {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::is_strip_debug_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "-s") == 1 {
+            return 1;
+        } else {
+            if LinkerHost::K::str_eq(arg, "--strip-debug") == 1 {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::is_gc_sections_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--gc-sections") == 1 {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::is_allow_multiple_definition_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--allow-multiple-definition") == 1 {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::is_group_marker_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--start-group") == 1 {
+            return 1;
+        } else {
+            if LinkerHost::K::str_eq(arg, "--end-group") == 1 {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::is_help(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "-h") == 1 {
+            return 1;
+        } else {
+            if LinkerHost::K::str_eq(arg, "--help") == 1 {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::is_version(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "-V") == 1 {
+            return 1;
+        } else {
+            if LinkerHost::K::str_eq(arg, "--version") == 1 {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::is_compat_no_value_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--build-id") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--eh-frame-hdr") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--as-needed") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--no-as-needed") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--whole-archive") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--no-whole-archive") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--fatal-warnings") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--no-fatal-warnings") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--color-diagnostics") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--no-color-diagnostics") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--stats") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--print-gc-sections") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--no-print-gc-sections") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--icf=none") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--icf=safe") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--icf=all") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_compat_value_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--sysroot") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--dynamic-linker") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--hash-style") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--build-id") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--defsym") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--threads") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--thread-count") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "-m") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--target") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::resolve_oformat(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "elf64") == 1 { return FORMAT_ELF64; }
+        if LinkerHost::K::str_eq(arg, "elf64-x86-64") == 1 { return FORMAT_ELF64; }
+        if LinkerHost::K::str_eq(arg, "binary") == 1 { return FORMAT_BINARY; }
+        if LinkerHost::K::str_eq(arg, "bin") == 1 { return FORMAT_BINARY; }
+        if LinkerHost::K::str_eq(arg, "mbr") == 1 { return FORMAT_MBR; }
+        if LinkerHost::K::str_eq(arg, "pe") == 1 { return FORMAT_PE64; }
+        if LinkerHost::K::str_eq(arg, "pei-x86-64") == 1 { return FORMAT_PE64; }
+        if LinkerHost::K::str_eq(arg, "pe-x86-64") == 1 { return FORMAT_PE64; }
+        if LinkerHost::K::str_eq(arg, "macho64") == 1 { return FORMAT_MACHO64; }
+        if LinkerHost::K::str_eq(arg, "mach-o") == 1 { return FORMAT_MACHO64; }
+        if LinkerHost::K::str_eq(arg, "macho-x86-64") == 1 { return FORMAT_MACHO64; }
+        return 0;
+    }
+
+    proc K::emit_usage() -> UInt32 {
+        LinkerHost::K::print_line("dustlink (Dust internal linker)");
+        LinkerHost::K::print_line("usage: dustlink [options] <inputs>");
+        LinkerHost::K::print_line("  -o, --output <path>");
+        LinkerHost::K::print_line("  -e, --entry <addr>");
+        LinkerHost::K::print_line("  --image-base <addr>");
+        LinkerHost::K::print_line("  -Ttext <addr>");
+        LinkerHost::K::print_line("  -T <script>, --script <script>");
+        LinkerHost::K::print_line("  --oformat <elf64|binary|mbr|pe|macho64>");
+        LinkerHost::K::print_line("  -L/-l and --library-path/--library");
+        LinkerHost::K::print_line("  -Map/--map-file");
+        return ERR_OK;
+    }
+
+    proc K::emit_version() -> UInt32 {
+        LinkerHost::K::print_line("dustlink version 0.5");
+        return ERR_OK;
+    }
+
+    proc K::inline_output_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--output=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--output=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "-o") == 1 {
+            if is_output_flag(arg) == 1 { return 0; }
+            return LinkerHost::K::str_after_prefix(arg, "-o");
+        }
+        return 0;
+    }
+
+    proc K::inline_oformat_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--oformat=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--oformat=");
+        }
+        return 0;
+    }
+
+    proc K::inline_entry_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--entry=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--entry=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "--entry-point=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--entry-point=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "-e") == 1 {
+            if is_entry_flag(arg) == 1 { return 0; }
+            return LinkerHost::K::str_after_prefix(arg, "-e");
+        }
+        return 0;
+    }
+
+    proc K::inline_image_base_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--image-base=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--image-base=");
+        }
+        return 0;
+    }
+
+    proc K::inline_text_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "-Ttext=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "-Ttext=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "-Ttext") == 1 {
+            if is_text_address_flag(arg) == 1 { return 0; }
+            return LinkerHost::K::str_after_prefix(arg, "-Ttext");
+        }
+        return 0;
+    }
+
+    proc K::inline_map_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "-Map=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "-Map=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "--Map=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--Map=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "--map-file=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--map-file=");
+        }
+        return 0;
+    }
+
+    proc K::inline_script_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--script=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--script=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "-T") == 1 {
+            if is_text_address_flag(arg) == 1 { return 0; }
+            if is_script_flag(arg) == 1 { return 0; }
+            return LinkerHost::K::str_after_prefix(arg, "-T");
+        }
+        return 0;
+    }
+
+    proc K::inline_library_path_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--library-path=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--library-path=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "-L") == 1 {
+            if is_library_path_flag(arg) == 1 { return 0; }
+            return LinkerHost::K::str_after_prefix(arg, "-L");
+        }
+        return 0;
+    }
+
+    proc K::inline_library_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--library=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--library=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "-l") == 1 {
+            if is_library_flag(arg) == 1 { return 0; }
+            return LinkerHost::K::str_after_prefix(arg, "-l");
+        }
+        return 0;
+    }
+
+    proc K::parse_address_or_zero(raw: UInt64, is_base: UInt32) -> UInt64 {
+        let parsed = LinkerHost::K::parse_u64(raw, 0);
+        if parsed == 0 { return 0; }
+        if is_base == 1 {
+            if parsed < 4096 { return 0; }
+        }
+        return parsed;
+    }
+
+    proc K::requires_value(arg: UInt64) -> UInt32 {
+        if is_output_flag(arg) == 1 { return 1; }
+        if is_oformat_flag(arg) == 1 { return 1; }
+        if is_entry_flag(arg) == 1 { return 1; }
+        if is_image_base_flag(arg) == 1 { return 1; }
+        if is_text_address_flag(arg) == 1 { return 1; }
+        if is_map_flag(arg) == 1 { return 1; }
+        if is_library_path_flag(arg) == 1 { return 1; }
+        if is_library_flag(arg) == 1 { return 1; }
+        if is_script_flag(arg) == 1 { return 1; }
+        if is_compat_value_flag(arg) == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::run_default_link(arg_count: UInt32) -> UInt32 {
+        if arg_count <= 1 { return ERR_EMPTY_INPUT; }
+        return DustLink::K::link_with_options(arg_count - 1, DEFAULT_OUTPUT, FORMAT_ELF64, DEFAULT_ENTRY, DEFAULT_BASE);
+    }
+
+    proc K::run_with_output_flag(arg_count: UInt32) -> UInt32 {
+        if arg_count <= 2 { return ERR_MISSING_FLAG_VALUE; }
+        let output_file = LinkerHost::K::arg_at(2);
+        return DustLink::K::link_with_options(1, output_file, FORMAT_ELF64, DEFAULT_ENTRY, DEFAULT_BASE);
+    }
+
+    proc K::run_with_oformat_flag(arg_count: UInt32) -> UInt32 {
+        if arg_count <= 2 { return ERR_MISSING_FLAG_VALUE; }
+        let format_text = LinkerHost::K::arg_at(2);
+        let format = resolve_oformat(format_text);
+        if format == 0 { return ERR_INVALID_FORMAT; }
+        return DustLink::K::link_with_options(1, DEFAULT_OUTPUT, format, DEFAULT_ENTRY, DEFAULT_BASE);
+    }
+
+    proc K::run_with_entry_flag(arg_count: UInt32) -> UInt32 {
+        if arg_count <= 2 { return ERR_MISSING_FLAG_VALUE; }
+        let entry_text = LinkerHost::K::arg_at(2);
+        let entry_addr = parse_address_or_zero(entry_text, 0);
+        if entry_addr == 0 { return ERR_INVALID_ENTRY; }
+        return DustLink::K::link_with_options(1, DEFAULT_OUTPUT, FORMAT_ELF64, entry_addr, DEFAULT_BASE);
+    }
+
+    proc K::run_with_image_base_flag(arg_count: UInt32) -> UInt32 {
+        if arg_count <= 2 { return ERR_MISSING_FLAG_VALUE; }
+        let base_text = LinkerHost::K::arg_at(2);
+        let base_addr = parse_address_or_zero(base_text, 1);
+        if base_addr == 0 { return ERR_INVALID_ADDRESS; }
+        return DustLink::K::link_with_options(1, DEFAULT_OUTPUT, FORMAT_ELF64, DEFAULT_ENTRY, base_addr);
+    }
+
+    proc K::effective_output_format(cli_format: UInt32) -> UInt32 {
+        let scripted = host_linker_get_output_format();
+        if scripted == 0 {
+            return cli_format;
+        }
+        if cli_format == FORMAT_ELF64 {
+            return scripted;
+        }
+        return cli_format;
+    }
+
+    proc K::effective_entry(cli_entry: UInt64, saw_cli_entry: UInt32) -> UInt64 {
+        if saw_cli_entry == 1 {
+            return cli_entry;
+        }
+        let scripted = host_linker_get_entry();
+        if scripted == 0 {
+            return cli_entry;
+        }
+        return scripted;
+    }
+
+    proc K::effective_base(cli_base: UInt64, saw_cli_text: UInt32) -> UInt64 {
+        if saw_cli_text == 1 {
+            return cli_base;
+        }
+        let scripted = host_linker_get_image_base();
+        if scripted == 0 {
+            return cli_base;
+        }
+        return scripted;
+    }
+
+    proc K::finalize_invocation(
+        input_count: UInt32,
+        output_file: UInt64,
+        output_format: UInt32,
+        entry_addr: UInt64,
+        base_addr: UInt64,
+        map_file: UInt64,
+        saw_entry: UInt32,
+        saw_text_base: UInt32
+    ) -> UInt32 {
+        if saw_entry == 1 {
+            if saw_text_base == 1 {
+                if entry_addr < base_addr { return ERR_CONFLICTING_OPTIONS; }
+            }
+        }
+        if input_count == 0 { return ERR_EMPTY_INPUT; }
+        let final_format = effective_output_format(output_format);
+        let final_entry = effective_entry(entry_addr, saw_entry);
+        let final_base = effective_base(base_addr, saw_text_base);
+        let link_status = DustLink::K::link_with_options(input_count, output_file, final_format, final_entry, final_base);
+        if link_status ! ERR_OK { return link_status; }
+        if map_file == 0 { return ERR_OK; }
+        return DustLink::K::create_map_file(map_file);
+    }
+
+    proc K::scan_args(
+        arg_count: UInt32,
+        idx: UInt32,
+        input_count: UInt32,
+        output_file: UInt64,
+        output_format: UInt32,
+        entry_addr: UInt64,
+        base_addr: UInt64,
+        map_file: UInt64,
+        saw_entry: UInt32,
+        saw_text_base: UInt32
+    ) -> UInt32 {
+        if idx >= arg_count {
+            return finalize_invocation(input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+        }
+
+        let arg = LinkerHost::K::arg_at(idx);
+        if is_help(arg) == 1 { return emit_usage(); }
+        if is_version(arg) == 1 { return emit_version(); }
+
+        let v_output = inline_output_value(arg);
+        if v_output ! 0 { return scan_args(arg_count, idx + 1, input_count, v_output, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base); }
+        let v_oformat = inline_oformat_value(arg);
+        if v_oformat ! 0 {
+            let f = resolve_oformat(v_oformat);
+            if f == 0 { return ERR_INVALID_FORMAT; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, f, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+        }
+        let v_entry = inline_entry_value(arg);
+        if v_entry ! 0 {
+            let e = parse_address_or_zero(v_entry, 0);
+            if e == 0 { return ERR_INVALID_ENTRY; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, e, base_addr, map_file, 1, saw_text_base);
+        }
+        let v_base = inline_image_base_value(arg);
+        if v_base ! 0 {
+            let b = parse_address_or_zero(v_base, 1);
+            if b == 0 { return ERR_INVALID_ADDRESS; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, b, map_file, saw_entry, saw_text_base);
+        }
+        let v_text = inline_text_value(arg);
+        if v_text ! 0 {
+            let t = parse_address_or_zero(v_text, 1);
+            if t == 0 { return ERR_INVALID_ADDRESS; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, t, map_file, saw_entry, 1);
+        }
+        let v_map = inline_map_value(arg);
+        if v_map ! 0 { return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, v_map, saw_entry, saw_text_base); }
+        let v_script = inline_script_value(arg);
+        if v_script ! 0 {
+            let s = DustLink::K::apply_script(v_script);
+            if s ! ERR_OK { return s; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+        }
+        let v_path = inline_library_path_value(arg);
+        if v_path ! 0 {
+            let p = DustLink::K::add_search_path(v_path);
+            if p ! ERR_OK { return p; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+        }
+        let v_lib = inline_library_value(arg);
+        if v_lib ! 0 {
+            let l = DustLink::K::add_library(v_lib);
+            if l ! ERR_OK { return l; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+        }
+
+        if requires_value(arg) == 1 {
+            let next_idx = idx + 1;
+            if next_idx >= arg_count { return ERR_MISSING_FLAG_VALUE; }
+            let value = LinkerHost::K::arg_at(next_idx);
+            if is_output_flag(arg) == 1 {
+                return scan_args(arg_count, idx + 2, input_count, value, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+            }
+            if is_oformat_flag(arg) == 1 {
+                let f2 = resolve_oformat(value);
+                if f2 == 0 { return ERR_INVALID_FORMAT; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, f2, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+            }
+            if is_entry_flag(arg) == 1 {
+                let e2 = parse_address_or_zero(value, 0);
+                if e2 == 0 { return ERR_INVALID_ENTRY; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, e2, base_addr, map_file, 1, saw_text_base);
+            }
+            if is_image_base_flag(arg) == 1 {
+                let b2 = parse_address_or_zero(value, 1);
+                if b2 == 0 { return ERR_INVALID_ADDRESS; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, b2, map_file, saw_entry, saw_text_base);
+            }
+            if is_text_address_flag(arg) == 1 {
+                let t2 = parse_address_or_zero(value, 1);
+                if t2 == 0 { return ERR_INVALID_ADDRESS; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, t2, map_file, saw_entry, 1);
+            }
+            if is_map_flag(arg) == 1 {
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, value, saw_entry, saw_text_base);
+            }
+            if is_library_path_flag(arg) == 1 {
+                let p2 = DustLink::K::add_search_path(value);
+                if p2 ! ERR_OK { return p2; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+            }
+            if is_library_flag(arg) == 1 {
+                let l2 = DustLink::K::add_library(value);
+                if l2 ! ERR_OK { return l2; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+            }
+            if is_script_flag(arg) == 1 {
+                let s2 = DustLink::K::apply_script(value);
+                if s2 ! ERR_OK { return s2; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+            }
+            if is_compat_value_flag(arg) == 1 {
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+            }
+            return ERR_UNSUPPORTED_FLAG;
+        }
+
+        if is_strip_debug_flag(arg) == 1 {
+            let s3 = DustLink::K::strip_debug();
+            if s3 ! ERR_OK { return s3; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+        }
+        if is_gc_sections_flag(arg) == 1 { return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base); }
+        if is_allow_multiple_definition_flag(arg) == 1 { return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base); }
+        if is_group_marker_flag(arg) == 1 { return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base); }
+        if is_compat_no_value_flag(arg) == 1 { return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base); }
+
+        if LinkerHost::K::str_starts_with(arg, "--threads=") == 1 { return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base); }
+        if LinkerHost::K::str_starts_with(arg, "--thread-count=") == 1 { return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base); }
+        if LinkerHost::K::str_starts_with(arg, "--target=") == 1 { return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base); }
+        if LinkerHost::K::str_starts_with(arg, "--sysroot=") == 1 { return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base); }
+        if LinkerHost::K::str_starts_with(arg, "-m") == 1 {
+            if LinkerHost::K::str_eq(arg, "-m") == 1 { return ERR_MISSING_FLAG_VALUE; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+        }
+
+        if LinkerHost::K::str_starts_with(arg, "-") == 1 { return ERR_UNSUPPORTED_FLAG; }
+        let add_input_status = DustLink::K::add_input_file(arg);
+        if add_input_status ! ERR_OK { return add_input_status; }
+        return scan_args(arg_count, idx + 1, input_count + 1, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base);
+    }
+
+    proc K::run_with_host_args() -> UInt32 {
+        let arg_count = LinkerHost::K::args_count();
+        if arg_count <= 1 {
+            return emit_usage();
+        }
+        return scan_args(arg_count, 1, 0, DEFAULT_OUTPUT, FORMAT_ELF64, DEFAULT_ENTRY, DEFAULT_BASE, 0, 0, 0);
+    }
+}

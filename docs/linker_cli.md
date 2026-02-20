@@ -40,13 +40,14 @@ The module exposes:
 ## Alias Examples
 
 - `-o`, `--output`
-- `-e`, `--entry`
-- `-Map`
+- `-e`, `--entry`, `--entry-point`
+- `-Map`, `--Map`, `--map-file`
 - `--image-base`
 - `-Ttext`
+- `-T`, `--script`
 - `--oformat`
-- `-L`
-- `-l`
+- `-L`, `--library-path`
+- `-l`, `--library`
 - `-s`, `--strip-debug`
 - `--gc-sections`
 - `--allow-multiple-definition`
@@ -65,6 +66,8 @@ The module exposes:
 - `oformat_supported(format) -> UInt32`
 
 Validation returns linker error codes from `LinkerErrors` for unsupported flags, missing flag values, and unsupported targets.
+
+`oformat_supported` includes `ELF64`, `binary`, `MBR`, `PE64`, and `Mach-O64` IDs.
 
 ## `Q` and `Phi`
 

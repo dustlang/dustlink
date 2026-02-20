@@ -17,6 +17,15 @@ Source: `src/linker_link.ds`
 - `FORMAT_ELF64 = 1`
 - `FORMAT_FLAT = 2`
 - `FORMAT_MBR = 3`
+- `FORMAT_PE64 = 4`
+- `FORMAT_MACHO64 = 5`
+
+## Object Format Routing Constants
+
+- `OBJECT_FORMAT_UNKNOWN = 0`
+- `OBJECT_FORMAT_ELF64 = 1`
+- `OBJECT_FORMAT_COFF64 = 2`
+- `OBJECT_FORMAT_MACHO64 = 3`
 
 ## Target Constants
 
@@ -37,6 +46,7 @@ Source: `src/linker_link.ds`
 - `set_base_address(base) -> UInt32`
 - `link() -> UInt32`
 - `link_with_script(script) -> UInt32`
+- `ingest_object_by_format(path, object_kind) -> UInt32`
 - `create_flat_binary(output, entry) -> UInt32`
 - `create_mbr_image(output, boot_sector, kernel) -> UInt32`
 - `get_linker_path() -> UInt64`
@@ -44,7 +54,8 @@ Source: `src/linker_link.ds`
 - `is_supported_target(target) -> UInt32`
 - `is_supported_format(format) -> UInt32`
 
-`K` domain now performs deterministic input/target/format validation and returns `LinkerErrors` status codes.
+`K` domain now performs deterministic input/target/format validation, probes object format via host runtime, routes ingest across ELF/COFF/Mach-O handlers, and returns `LinkerErrors` status codes.
+`link_with_script(script)` applies script directives through the host runtime script parser path.
 
 `find_linker()` currently resolves to `LINKER_INTERNAL_MVP`.
 

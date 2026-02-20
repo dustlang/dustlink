@@ -2,11 +2,13 @@
 
 forge DustLink {
     const VERSION_MAJOR: UInt8 = 0;
-    const VERSION_MINOR: UInt8 = 3;
+    const VERSION_MINOR: UInt8 = 4;
 
     const FORMAT_ELF64: UInt32 = 1;
     const FORMAT_FLAT: UInt32 = 2;
     const FORMAT_MBR: UInt32 = 3;
+    const FORMAT_PE64: UInt32 = 4;
+    const FORMAT_MACHO64: UInt32 = 5;
 
     const TARGET_X86_64_NONE: UInt32 = 0;
 
@@ -37,7 +39,15 @@ forge DustLink {
                 if format == FORMAT_MBR {
                     return 1;
                 } else {
-                    return 0;
+                    if format == FORMAT_PE64 {
+                        return 1;
+                    } else {
+                        if format == FORMAT_MACHO64 {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    }
                 }
             }
         }
@@ -53,7 +63,7 @@ forge DustLink {
         if object_count == 0 {
             return ERR_EMPTY_INPUT;
         } else {
-            let link_status = link_internal(
+            return link_internal(
                 object_count,
                 format,
                 TARGET_X86_64_NONE,
@@ -61,37 +71,6 @@ forge DustLink {
                 entry,
                 base
             );
-            if link_status ! ERR_OK {
-                return link_status;
-            } else {
-                if format == FORMAT_FLAT {
-                    return compose_flat_image_plan(
-                        base,
-                        entry,
-                        4096,
-                        2048,
-                        2048,
-                        1024
-                    );
-                } else {
-                    if format == FORMAT_ELF64 {
-                        return compose_elf_image_plan(
-                            base,
-                            entry,
-                            4096,
-                            2048,
-                            2048,
-                            1024
-                        );
-                    } else {
-                        if format == FORMAT_MBR {
-                            return create_boot_image(1, 4096, output_file);
-                        } else {
-                            return ERR_INVALID_FORMAT;
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -107,13 +86,19 @@ forge DustLink {
                 if is_error(output_status) == 1 {
                     return output_status;
                 } else {
-                    return route_phase2_pipeline(1, output_file, format, 1048576, 65536);
+                    return route_phase2_pipeline(input_files, output_file, format, 1048576, 65536);
                 }
             }
         }
     }
 
-    proc K::link_with_options(input_files: UInt64, output_file: UInt64, format: UInt32, entry: UInt64, base: UInt64) -> UInt32 {
+    proc K::link_with_options(
+        input_files: UInt64,
+        output_file: UInt64,
+        format: UInt32,
+        entry: UInt64,
+        base: UInt64
+    ) -> UInt32 {
         if input_files == 0 {
             return ERR_EMPTY_INPUT;
         } else {
@@ -133,7 +118,7 @@ forge DustLink {
                         if is_error(base_status) == 1 {
                             return base_status;
                         } else {
-                            return route_phase2_pipeline(1, output_file, format, entry, base);
+                            return route_phase2_pipeline(input_files, output_file, format, entry, base);
                         }
                     }
                 }
@@ -161,7 +146,7 @@ forge DustLink {
         if format_supported(format) == 0 {
             return ERR_INVALID_FORMAT;
         } else {
-            return ERR_OK;
+            return set_image_format(format);
         }
     }
 
@@ -180,7 +165,7 @@ forge DustLink {
             if addr < 4096 {
                 return ERR_INVALID_ADDRESS;
             } else {
-            return linker_link_set_base_address(addr);
+                return linker_link_set_base_address(addr);
             }
         }
     }
@@ -201,35 +186,43 @@ forge DustLink {
         }
     }
 
+    proc K::apply_script(path: UInt64) -> UInt32 {
+        if path == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            return LinkerLink::K::link_with_script(path);
+        }
+    }
+
     proc K::run() -> UInt32 {
-        return ERR_OK;
+        return LinkerLink::K::link();
     }
 
     proc K::get_error() -> UInt64 {
-        return ERR_OK;
+        return host_linker_last_error();
     }
 
     proc K::print_sections() -> UInt32 {
-        return ERR_OK;
+        return host_linker_dump_sections();
     }
 
     proc K::print_symbols() -> UInt32 {
-        return ERR_OK;
+        return host_linker_dump_symbols();
     }
 
     proc K::print_relocations() -> UInt32 {
-        return ERR_OK;
+        return host_linker_dump_relocations();
     }
 
     proc K::strip_debug() -> UInt32 {
-        return ERR_OK;
+        return host_linker_strip_debug();
     }
 
     proc K::create_map_file(path: UInt64) -> UInt32 {
         if path == 0 {
             return ERR_WRITE_FAILED;
         } else {
-            return ERR_OK;
+            return write_map_file(path);
         }
     }
 
@@ -238,74 +231,11 @@ forge DustLink {
         if size == 0 {
             return ERR_INVALID_IMAGE;
         } else {
-            return ERR_OK;
+            if size > 33554432 {
+                return ERR_INVALID_IMAGE;
+            } else {
+                return ERR_OK;
+            }
         }
-    }
-proc Φ::link(input_files: UInt64, output_file: UInt64, format: UInt32) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::link_with_options(input_files: UInt64, output_file: UInt64, format: UInt32, entry: UInt64, base: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::add_input_file(path: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::set_output(path: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::set_output_format(format: UInt32) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::set_entry_point(addr: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::set_base_address(addr: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::add_search_path(path: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::add_library(name: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::run() -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::get_error() -> UInt64 {
-        return 0;
-    }
-
-    proc Φ::print_sections() -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::print_symbols() -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::print_relocations() -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::strip_debug() -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::create_map_file(path: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::verify_image() -> UInt32 {
-        return 100;
     }
 }

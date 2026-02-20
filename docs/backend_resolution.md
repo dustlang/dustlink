@@ -1,44 +1,26 @@
 # Backend Resolution
 
-Source: `src/main.rs`
+Source: compiler host link path in `dust/crates/dust_codegen/src/lib.rs`
 
-## Resolution Order
+## Policy
 
-`dustlink` resolves backend in this exact order:
+`dustlink` is not a backend pass-through wrapper. Resolution here describes how the Dust compiler links host executables.
 
-1. `DUSTLINK_BACKEND` environment variable.
-2. `ld.lld` in `PATH`.
-3. `rust-lld` in `PATH`.
-4. `rust-lld` from Rust sysroot discovered through `rustc`.
+## Link Attempt Order
 
-If all fail, `dustlink` returns:
+General host executable build:
 
-```text
-no linker backend found; install ld.lld or rustup toolchain with rust-lld
-```
+1. `dustlink` (preferred host linker frontend)
+2. compiler driver with `-fuse-ld=lld`
+3. `rust-lld`
+4. `ld.lld`
+5. compiler driver default linker
 
-## `DUSTLINK_BACKEND` Rules
+Bootstrap build of `dustlink` executable itself:
 
-If env value contains a path separator or is absolute:
+1. compiler driver with `-fuse-ld=lld`
+2. `rust-lld`
+3. `ld.lld` (platform-dependent)
+4. compiler driver default linker
 
-- Must point to an existing file.
-- Otherwise fails with missing-file error.
-
-If env value is a bare command name:
-
-- Searched in `PATH`.
-- Fails if command is not found.
-
-## PATH Search Behavior
-
-- Non-Windows: checks `<dir>/<command>` across `PATH` entries.
-- Windows: also tries PATHEXT extensions (`EXE`, `CMD`, `BAT` fallback when `PATHEXT` unavailable).
-
-## Sysroot Fallback
-
-`dustlink` executes:
-
-- `rustc --print sysroot`
-- `rustc -vV` (to parse `host:` triple)
-
-Then probes typical rust-lld locations in sysroot, including host-specific and generic rustlib bin directories.
+This avoids recursive self-invocation while producing the first Dust-built `dustlink` binary.

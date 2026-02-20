@@ -8,6 +8,13 @@ forge LinkerLink {
     const FORMAT_ELF64: UInt32 = 1;
     const FORMAT_FLAT: UInt32 = 2;
     const FORMAT_MBR: UInt32 = 3;
+    const FORMAT_PE64: UInt32 = 4;
+    const FORMAT_MACHO64: UInt32 = 5;
+
+    const OBJECT_FORMAT_UNKNOWN: UInt32 = 0;
+    const OBJECT_FORMAT_ELF64: UInt32 = 1;
+    const OBJECT_FORMAT_COFF64: UInt32 = 2;
+    const OBJECT_FORMAT_MACHO64: UInt32 = 3;
 
     const TARGET_X86_64_NONE: UInt32 = 0;
     const TARGET_X86_64_LINUX: UInt32 = 1;
@@ -19,12 +26,14 @@ forge LinkerLink {
     const ERR_OK: UInt32 = 0;
     const ERR_FILE_NOT_FOUND: UInt32 = 1;
     const ERR_INVALID_FORMAT: UInt32 = 2;
-    const ERR_EMPTY_INPUT: UInt32 = 15;
+    const ERR_UNDEFINED_SYMBOL: UInt32 = 4;
+    const ERR_INVALID_RELOCATION: UInt32 = 6;
+    const ERR_INVALID_ADDRESS: UInt32 = 8;
     const ERR_INVALID_ENTRY: UInt32 = 9;
     const ERR_WRITE_FAILED: UInt32 = 10;
     const ERR_UNSUPPORTED_FLAG: UInt32 = 12;
     const ERR_UNSUPPORTED_TARGET: UInt32 = 14;
-    const ERR_INVALID_ADDRESS: UInt32 = 8;
+    const ERR_EMPTY_INPUT: UInt32 = 15;
     const ERR_NOT_IMPLEMENTED_YET: UInt32 = 17;
 
     proc K::is_supported_target(target: UInt32) -> UInt32 {
@@ -57,7 +66,15 @@ forge LinkerLink {
                 if format == FORMAT_MBR {
                     return 1;
                 } else {
-                    return 0;
+                    if format == FORMAT_PE64 {
+                        return 1;
+                    } else {
+                        if format == FORMAT_MACHO64 {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    }
                 }
             }
         }
@@ -70,7 +87,7 @@ forge LinkerLink {
             if file_size == 0 {
                 return ERR_FILE_NOT_FOUND;
             } else {
-                if kind == 0 {
+                if kind == OBJECT_FORMAT_UNKNOWN {
                     return ERR_INVALID_FORMAT;
                 } else {
                     return ERR_OK;
@@ -84,10 +101,10 @@ forge LinkerLink {
             return ERR_EMPTY_INPUT;
         } else {
             if symbol_count == 0 {
-                return 4;
+                return ERR_UNDEFINED_SYMBOL;
             } else {
                 if relocation_count > 131072 {
-                    return 6;
+                    return ERR_INVALID_RELOCATION;
                 } else {
                     return ERR_OK;
                 }
@@ -95,11 +112,48 @@ forge LinkerLink {
         }
     }
 
-    proc K::add_object_file(path: UInt64) -> UInt32 {
-        if path == 0 {
-            return ERR_FILE_NOT_FOUND;
+    proc K::ingest_object_by_format(path: UInt64, object_kind: UInt32) -> UInt32 {
+        if object_kind == OBJECT_FORMAT_ELF64 {
+            return ElfFormat::K::ingest_object_file(path);
         } else {
-            return ERR_OK;
+            if object_kind == OBJECT_FORMAT_COFF64 {
+                return host_linker_ingest_coff_object(path);
+            } else {
+                if object_kind == OBJECT_FORMAT_MACHO64 {
+                    return host_linker_ingest_macho_object(path);
+                } else {
+                    return ERR_INVALID_FORMAT;
+                }
+            }
+        }
+    }
+
+    proc K::ingest_path(path: UInt64) -> UInt32 {
+        if LinkerArchive::K::is_archive_path(path) == 1 {
+            return LinkerArchive::K::ingest_archive(path);
+        } else {
+            let file_size = LinkerFs::K::file_size(path);
+            let object_kind = host_linker_probe_object_format(path);
+            let descriptor_status = validate_object_descriptor(path, file_size, object_kind);
+            if descriptor_status ! ERR_OK {
+                return descriptor_status;
+            } else {
+                return ingest_object_by_format(path, object_kind);
+            }
+        }
+    }
+
+    proc K::add_object_file(path: UInt64) -> UInt32 {
+        let file_status = LinkerFs::K::validate_input_file(path);
+        if file_status ! ERR_OK {
+            return file_status;
+        } else {
+            let ingest_status = ingest_path(path);
+            if ingest_status ! ERR_OK {
+                return ingest_status;
+            } else {
+                return host_linker_register_input(path);
+            }
         }
     }
 
@@ -107,7 +161,7 @@ forge LinkerLink {
         if path == 0 {
             return ERR_FILE_NOT_FOUND;
         } else {
-            return ERR_OK;
+            return LinkerArchive::K::resolve_and_ingest_library(path);
         }
     }
 
@@ -115,7 +169,11 @@ forge LinkerLink {
         if path == 0 {
             return ERR_FILE_NOT_FOUND;
         } else {
-            return ERR_OK;
+            if LinkerFs::K::path_exists(path) == 0 {
+                return ERR_FILE_NOT_FOUND;
+            } else {
+                return host_linker_add_search_path(path);
+            }
         }
     }
 
@@ -133,7 +191,7 @@ forge LinkerLink {
 
     proc K::set_target(target: UInt32) -> UInt32 {
         if is_supported_target(target) == 1 {
-            return ERR_OK;
+            return host_linker_set_target(target);
         } else {
             return ERR_UNSUPPORTED_TARGET;
         }
@@ -143,7 +201,7 @@ forge LinkerLink {
         if output == 0 {
             return ERR_WRITE_FAILED;
         } else {
-            return ERR_OK;
+            return host_linker_set_output_path(output);
         }
     }
 
@@ -151,7 +209,7 @@ forge LinkerLink {
         if entry == 0 {
             return ERR_INVALID_ENTRY;
         } else {
-            return ERR_OK;
+            return host_linker_set_entry(entry);
         }
     }
 
@@ -162,7 +220,7 @@ forge LinkerLink {
             if base < 4096 {
                 return ERR_INVALID_ADDRESS;
             } else {
-                return ERR_OK;
+                return host_linker_set_image_base(base);
             }
         }
     }
@@ -183,6 +241,89 @@ forge LinkerLink {
         return add_library(path);
     }
 
+    proc K::ensure_loaded_inputs(expected: UInt32) -> UInt32 {
+        let loaded = host_linker_object_count();
+        if loaded >= expected {
+            return ERR_OK;
+        } else {
+            let cli_load_status = host_linker_ingest_cli_inputs();
+            if cli_load_status ! ERR_OK {
+                return cli_load_status;
+            } else {
+                let loaded_after = host_linker_object_count();
+                if loaded_after == 0 {
+                    return ERR_EMPTY_INPUT;
+                } else {
+                    return ERR_OK;
+                }
+            }
+        }
+    }
+
+    proc K::resolve_symbols_and_relocs() -> UInt32 {
+        let symbol_status = LinkerSymbol::K::resolve_loaded_symbols();
+        if symbol_status ! ERR_OK {
+            return symbol_status;
+        } else {
+            let unresolved_status = LinkerSymbol::K::check_unresolved_globals();
+            if unresolved_status ! ERR_OK {
+                return unresolved_status;
+            } else {
+                let object_count = host_linker_object_count();
+                return LinkerReloc::K::apply_all_relocations(0, object_count);
+            }
+        }
+    }
+
+    proc K::emit_output(
+        format: UInt32,
+        output: UInt64,
+        entry: UInt64,
+        base: UInt64
+    ) -> UInt32 {
+        if format == FORMAT_FLAT {
+            let plan_status = compose_flat_image_plan(base, entry, 4096, 2048, 2048, 1024);
+            if plan_status ! ERR_OK {
+                return plan_status;
+            } else {
+                return write_flat_output(output);
+            }
+        } else {
+            if format == FORMAT_ELF64 {
+                let plan_status_elf = compose_elf_image_plan(base, entry, 4096, 2048, 2048, 1024);
+                if plan_status_elf ! ERR_OK {
+                    return plan_status_elf;
+                } else {
+                    return write_elf_output(output, entry, base);
+                }
+            } else {
+                if format == FORMAT_MBR {
+                    return host_linker_write_mbr_image(output);
+                } else {
+                    if format == FORMAT_PE64 {
+                        let plan_status_pe = compose_elf_image_plan(base, entry, 4096, 2048, 2048, 1024);
+                        if plan_status_pe ! ERR_OK {
+                            return plan_status_pe;
+                        } else {
+                            return host_linker_write_pe_image(output);
+                        }
+                    } else {
+                        if format == FORMAT_MACHO64 {
+                            let plan_status_macho = compose_elf_image_plan(base, entry, 4096, 2048, 2048, 1024);
+                            if plan_status_macho ! ERR_OK {
+                                return plan_status_macho;
+                            } else {
+                                return host_linker_write_macho_image(output);
+                            }
+                        } else {
+                            return ERR_INVALID_FORMAT;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     proc K::link_internal(
         object_count: UInt32,
         format: UInt32,
@@ -191,30 +332,43 @@ forge LinkerLink {
         entry: UInt64,
         base: UInt64
     ) -> UInt32 {
-        let plan = plan_object_set(object_count, 1, 0);
-        if plan ! ERR_OK {
-            return plan;
+        if is_supported_format(format) == 0 {
+            return ERR_INVALID_FORMAT;
         } else {
-            if is_supported_format(format) == 0 {
-                return ERR_INVALID_FORMAT;
+            let target_status = set_target(target);
+            if target_status ! ERR_OK {
+                return target_status;
             } else {
-                let target_status = set_target(target);
-                if target_status ! ERR_OK {
-                    return target_status;
+                let output_status = set_output(output);
+                if output_status ! ERR_OK {
+                    return output_status;
                 } else {
-                    let output_status = set_output(output);
-                    if output_status ! ERR_OK {
-                        return output_status;
+                    let entry_status = set_entry(entry);
+                    if entry_status ! ERR_OK {
+                        return entry_status;
                     } else {
-                        let entry_status = set_entry(entry);
-                        if entry_status ! ERR_OK {
-                            return entry_status;
+                        let base_status = set_base_address(base);
+                        if base_status ! ERR_OK {
+                            return base_status;
                         } else {
-                            let base_status = set_base_address(base);
-                            if base_status ! ERR_OK {
-                                return base_status;
+                            let load_status = ensure_loaded_inputs(object_count);
+                            if load_status ! ERR_OK {
+                                return load_status;
                             } else {
-                                return ERR_OK;
+                                let loaded_objects = host_linker_object_count();
+                                let symbol_count = host_linker_total_symbol_count();
+                                let relocation_count = host_linker_total_relocation_count();
+                                let plan = plan_object_set(loaded_objects, symbol_count, relocation_count);
+                                if plan ! ERR_OK {
+                                    return plan;
+                                } else {
+                                    let resolve_status = resolve_symbols_and_relocs();
+                                    if resolve_status ! ERR_OK {
+                                        return resolve_status;
+                                    } else {
+                                        return emit_output(format, output, entry, base);
+                                    }
+                                }
                             }
                         }
                     }
@@ -224,14 +378,20 @@ forge LinkerLink {
     }
 
     proc K::link() -> UInt32 {
-        return ERR_OK;
+        let object_count = host_linker_object_count();
+        let output = host_linker_get_output_path();
+        let format = host_linker_get_output_format();
+        let target = host_linker_get_target();
+        let entry = host_linker_get_entry();
+        let base = host_linker_get_image_base();
+        return link_internal(object_count, format, target, output, entry, base);
     }
 
     proc K::link_with_script(script: UInt64) -> UInt32 {
         if script == 0 {
             return ERR_FILE_NOT_FOUND;
         } else {
-            return ERR_NOT_IMPLEMENTED_YET;
+            return host_linker_apply_script(script);
         }
     }
 
@@ -242,7 +402,7 @@ forge LinkerLink {
             if entry == 0 {
                 return ERR_INVALID_ENTRY;
             } else {
-                return ERR_OK;
+                return write_flat_output(output);
             }
         }
     }
@@ -257,7 +417,7 @@ forge LinkerLink {
                 if kernel == 0 {
                     return ERR_FILE_NOT_FOUND;
                 } else {
-                    return ERR_OK;
+                    return host_linker_write_mbr_boot_image(output, kernel, host_linker_kernel_size(kernel));
                 }
             }
         }
@@ -269,61 +429,5 @@ forge LinkerLink {
 
     proc K::find_linker() -> UInt32 {
         return LINKER_INTERNAL_MVP;
-    }
-
-    proc Φ::add_object_file(path: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::add_library(path: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::add_search_path(path: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::set_linker(linker: UInt32) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::set_target(target: UInt32) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::set_output(output: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::set_entry(entry: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::set_base_address(base: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::link() -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::link_with_script(script: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::create_flat_binary(output: UInt64, entry: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::create_mbr_image(output: UInt64, boot_sector: UInt64, kernel: UInt64) -> UInt32 {
-        return 100;
-    }
-
-    proc Φ::get_linker_path() -> UInt64 {
-        return 0;
-    }
-
-    proc Φ::find_linker() -> UInt32 {
-        return 100;
     }
 }
