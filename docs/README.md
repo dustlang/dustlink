@@ -32,8 +32,9 @@ This directory contains complete Markdown documentation for `dustlink`.
 
 ## Current Implementation Highlights
 
-- Object formats: ELF64, COFF x86_64, Mach-O 64-bit x86_64.
+- Object formats: ELF64, COFF64 (`x86_64` + `arm64` machine IDs), Mach-O 64-bit (`x86_64` + `arm64` CPU IDs).
 - Output formats: ELF, flat, MBR, PE, Mach-O.
+- PE/Mach-O writer paths now emit sectionized images from real alloc chunks instead of single synthetic payload sections.
 - Archive/library resolution:
   - deterministic `-L` + `-rpath-link` + target/sysroot default search order
   - dynamic-mode `-l` search prefers shared objects before static archives
@@ -50,7 +51,8 @@ This directory contains complete Markdown documentation for `dustlink`.
   - PE export table names
   - COFF external definitions
   - Mach-O external definitions
-- Linker script support: directives (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `INCLUDE`) plus `MEMORY`/`SECTIONS` subset handling.
-- Script parser now uses block-aware statement splitting, supports `SECTIONS` output-address forms, resolves `SEARCH_DIR(=...)` against `--sysroot`, and recognizes `INPUT` token forms `-L` / `-l`.
+- Linker script support: directives (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `INCLUDE`, `ASSERT`) plus `PHDRS`/`VERSION` compatibility blocks with block-shape validation.
+- Script parser now uses block-aware statement splitting, supports expression evaluation (`ORIGIN/LENGTH/ADDR/LOADADDR/SIZEOF/ALIGN` + `+/-`), supports `SECTIONS` output-address and `AT(...)` forms, resolves `SEARCH_DIR(=...)` against `--sysroot`, and recognizes `INPUT` token forms `-L` / `-l`.
 - Dynamic-link policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`.
 - Compatibility-state controls: hash-style/thread settings, eh-frame-header toggle, diagnostics toggles, print-gc toggle, and `--icf=*` mode.
+- `lld-link` spellings: `/OUT`, `/ENTRY`, `/MACHINE`, `/LIBPATH`, `/DEFAULTLIB`, `/MAP`, `/DLL`, `/SUBSYSTEM`, `/OPT`, `/WX`.

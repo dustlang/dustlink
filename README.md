@@ -18,8 +18,8 @@
 
 - Object ingestion:
   - ELF64 relocatable objects
-  - COFF x86_64 objects
-  - Mach-O 64-bit x86_64 objects
+  - COFF 64-bit objects (`x86_64` and `arm64` machine IDs)
+  - Mach-O 64-bit objects (`x86_64` and `arm64` CPU IDs)
 - Archive ingestion:
   - `.a` and `.lib` search/ingest via `-L/-l` and `--library-path/--library`
   - deterministic search order: explicit `-L` paths, then `-rpath-link` (dynamic mode), then target/sysroot default library roots
@@ -30,12 +30,14 @@
   - ELF executable
   - flat binary
   - MBR image
-  - PE executable
-  - Mach-O executable
+  - PE executable (multi-section, section-per-chunk emission)
+  - Mach-O executable (multi-section segment/section emission)
 - Script application:
   - `-T <script>` / `--script <script>`
-  - directive support: `ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `PROVIDE_HIDDEN`, `INCLUDE`
-  - subset coverage: `MEMORY` (`ORIGIN`, `LENGTH`), `SECTIONS` location-counter assignment (`. = <addr>`), and `SECTIONS` output-address form (`.text 0x... : { ... }`)
+  - directive support: `ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `PROVIDE_HIDDEN`, `INCLUDE`, `ASSERT`
+  - compatibility blocks: `PHDRS`, `VERSION` (block-shape validated)
+  - script expression coverage for `ORIGIN(...)`, `LENGTH(...)`, `ADDR(...)`, `LOADADDR(...)`, `SIZEOF(...)`, `ALIGN(...)`, plus additive/subtractive arithmetic
+  - `SECTIONS` coverage: location-counter assignment (`. = <expr>`), output-address forms (`.text <expr> : { ... }`), and `AT(<expr>)` load-address capture
   - `SEARCH_DIR(=...)` resolves through configured `--sysroot` when present
   - `INPUT` family token handling recognizes `-L` and `-l` forms
   - block-aware script statement splitting for multi-line `MEMORY`/`SECTIONS` blocks
@@ -50,11 +52,14 @@
   - dynamic-tag controls: `--enable-new-dtags` / `--disable-new-dtags`
   - transitive `DT_NEEDED` policy controls: `--copy-dt-needed-entries` / `--no-copy-dt-needed-entries`
   - compatibility-state controls: `--hash-style`, `--threads`, `--thread-count`, `--eh-frame-hdr`, `--fatal-warnings`, `--color-diagnostics`, `--print-gc-sections`, `--icf=*`
+  - broader compatibility controls: `--version-script`, `--dynamic-list`, `--trace-symbol`, `--print-map`, `--start-lib`, `--end-lib`, `--emit-relocs`, `--strip-all`
+  - `lld-link` compatibility controls: `/OUT:`, `/ENTRY:`, `/MACHINE:`, `/LIBPATH:`, `/DEFAULTLIB:`, `/MAP[:file]`, `/DLL`, `/SUBSYSTEM:`, `/OPT:`, `/WX`
   - shared-object symbol ingestion for exported symbol resolution across ELF, PE, COFF, and Mach-O metadata paths
 
 ## Supported Targets and Relocations
 
-- Target IDs: `x86_64` families (`none/linux/windows/macos` IDs).
+- Target IDs: platform families (`none/linux/windows/macos` IDs).
+- CLI target parsing accepts both `x86_64` and `aarch64/arm64` triple aliases and maps them into platform target IDs.
 - ELF object validator machine coverage includes `EM_X86_64` and `EM_AARCH64`.
 - Core relocation set includes:
   - `R_X86_64_NONE`, `R_X86_64_64`, `R_X86_64_PC32`, `R_X86_64_PLT32`
@@ -93,6 +98,13 @@ Primary options:
 - `--enable-new-dtags`, `--disable-new-dtags`
 - `--copy-dt-needed-entries`, `--no-copy-dt-needed-entries`
 - `--start-group`, `--end-group`
+- `--version-script`, `--dynamic-list`, `--trace-symbol`
+- `--print-map`, `--start-lib`, `--end-lib`
+- `--emit-relocs`, `--strip-all`
+- `lld-link` compatibility spellings:
+  - `/OUT:<path>`, `/ENTRY:<symbol|addr>`, `/MACHINE:<arch>`
+  - `/LIBPATH:<dir>`, `/DEFAULTLIB:<name>`, `/MAP` or `/MAP:<path>`
+  - `/DLL`, `/SUBSYSTEM:<kind>`, `/OPT:<token>`, `/WX`, `/WX:NO`
 - `--help`, `--version`
 
 Compatibility spellings for common ld/lld flags are accepted.  
@@ -114,6 +126,6 @@ dust build src --out target/dust/dustlink
 
 ## Status
 
-`dustlink` has advanced beyond initial ELF-only MVP behavior, but it is not yet full lld parity across every flag and script semantic.
+`dustlink` has advanced beyond initial ELF-only behavior, but it is not yet full lld parity across every flag/script/cross-format semantic.
 
 See `changelog.md` for detailed change history.

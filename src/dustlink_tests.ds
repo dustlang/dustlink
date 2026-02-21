@@ -1,4 +1,4 @@
-// DustLink MVP tests focused on deterministic linker behavior.
+// DustLink tests focused on deterministic linker behavior.
 
 forge DustLinkTests {
     const ERR_OK: UInt32 = 0;
@@ -29,7 +29,7 @@ forge DustLinkTests {
         return expect_u32(result, ERR_WRITE_FAILED);
     }
 
-    proc K::test_link_accepts_basic_mvp_case() -> UInt32 {
+    proc K::test_link_accepts_basic_case() -> UInt32 {
         let result = DustLink::K::link(1, 1, 1);
         return expect_u32(result, ERR_OK);
     }
@@ -83,7 +83,7 @@ forge DustLinkTests {
         let passed =
             test_link_requires_input()
             + test_link_requires_output()
-            + test_link_accepts_basic_mvp_case()
+            + test_link_accepts_basic_case()
             + test_invalid_output_format_rejected()
             + test_entry_validation()
             + test_base_alignment_validation()

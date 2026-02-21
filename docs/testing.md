@@ -31,6 +31,8 @@ Both files define forge-based test procedures with this pattern:
 - Script `ENTRY(symbol)` required-symbol registration checks
 - Script checks for sysroot-aware `SEARCH_DIR(=...)` resolution
 - Script checks for `INPUT(-L...)` search-path updates and `INPUT(-l...)` needed-library recording
+- Script expression checks (`ORIGIN/LENGTH` arithmetic) and `ASSERT(...)` failure path checks
+- Script compatibility-block acceptance checks for `PHDRS` and `VERSION`
 - Build-id mode and `-z` option semantic state checks
 - Dynamic unresolved-policy checks (`--no-undefined` and allow-shared-unresolved gate behavior)
 - Search-path state checks (`--sysroot`, `-rpath`, `-rpath-link`)
@@ -41,6 +43,7 @@ Both files define forge-based test procedures with this pattern:
 
 - Dust host executable build succeeds from `src/main.ds`.
 - PE and Mach-O writer paths emit valid file magics (`MZ`, `CFFAEDFE`).
+- PE and Mach-O writer paths now emit sectionized images from alloc chunks rather than single synthetic text payloads.
 - COFF object ingestion path links into PE output.
 - Script path (`-T/--script`) applies basic directives and can override output format.
 - `-Map` output creation works on split form (`-Map file.map`).
@@ -51,10 +54,13 @@ Both files define forge-based test procedures with this pattern:
 - Shared-object symbol ingestion now includes ELF, PE, COFF, and Mach-O metadata paths.
 - Relocation handling coverage now includes additional x86_64 relocation IDs used in broader compatibility workflows.
 - CLI compatibility state controls (`--hash-style`, `--threads`, `--thread-count`) are parsed in inline and split flag forms.
+- Extended CLI compatibility controls (`--version-script`, `--dynamic-list`, `--trace-symbol`, `--dependency-file`, `--print-map`, `--start-lib`, `--end-lib`) are parsed in inline/split or no-value forms as applicable.
+- `lld-link` compatibility parser helpers (`/OUT`, `/ENTRY`, `/MACHINE`, `/LIBPATH`, `/DEFAULTLIB`, `/MAP`, `/DLL`, and compatibility inline/no-value families) have explicit host-CLI unit coverage.
+- Linker script tests now include malformed `PHDRS`/`VERSION` block rejection coverage.
 
 ## Current Limitations
 
-- Tests still focus on deterministic status behavior and MVP arithmetic helpers.
+- Tests still focus on deterministic status behavior and arithmetic/helper semantics.
 - They do not yet validate exhaustive byte-for-byte parity against `lld` across full flag/script/cross-format matrices.
 - Cross-platform host-link attempt ordering is not yet validated by integration tests.
 

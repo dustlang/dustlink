@@ -9,6 +9,7 @@ Source: `src/linker_link.ds`
 ## Linker Constants
 
 - `LINKER_NONE = 0`
+- `LINKER_INTERNAL = 1`
 - `LINKER_INTERNAL_MVP = 1`
 - `LINKER_EXTERNAL_COMPAT = 2`
 
@@ -63,7 +64,7 @@ Source: `src/linker_link.ds`
 - exact-name `-l:<file>` tokens,
 - deterministic search order across explicit `-L`, dynamic `-rpath-link`, and target/sysroot defaults.
 
-`find_linker()` currently resolves to `LINKER_INTERNAL_MVP`.
+`find_linker()` resolves to `LINKER_INTERNAL` (`LINKER_INTERNAL_MVP` kept as compatibility alias).
 
 ## `Q` and `Phi`
 

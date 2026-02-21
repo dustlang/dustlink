@@ -102,6 +102,32 @@
   - script semantic checks for `INPUT(-L...)` search-path updates
   - script semantic checks for `INPUT(-l...)` needed-library recording
   - host CLI checks for inline/value handling of `--hash-style`, `--threads`, and `--thread-count`
+- Extended CLI parity wiring/compat coverage:
+  - `--version-script` / `--dynamic-list` now route through script application semantics
+  - `--trace-symbol` now maps to required-symbol registration
+  - compatibility handling for `--print-map`, `--start-lib`, `--end-lib`, `--emit-relocs`, `--strip-all`,
+    `--dependency-file`, `--compress-debug-sections`, and `--pack-dyn-relocs`
+- Script semantic coverage additions:
+  - `ASSERT(...)` evaluation with deterministic non-zero/zero condition handling
+  - compatibility-accepted `PHDRS` and `VERSION` blocks
+  - expression evaluation for `ORIGIN/LENGTH/ADDR/LOADADDR/SIZEOF/ALIGN` and `+`/`-` arithmetic
+  - `SECTIONS ... AT(<expr>)` load-address capture
+- Output writer parity improvements:
+  - PE writer now emits sectionized images from alloc chunks (multi-section headers/materialization)
+  - Mach-O writer now emits sectionized segment/section metadata from alloc chunks
+- `lld-link` compatibility additions in Dust CLI parsing:
+  - slash-option support for `/OUT:`, `/ENTRY:`, `/MACHINE:`, `/LIBPATH:`, `/DEFAULTLIB:`, `/MAP`/`/MAP:<file>`, `/DLL`, `/SUBSYSTEM:`, `/OPT:`, and `/WX`
+  - compatibility acceptance for common slash metadata families (`/PDB:`, `/IMPLIB:`, `/MANIFEST:`, `/EXPORT:`, `/NODEFAULTLIB[:...]`, `/INCLUDE:`)
+  - additional long-inline compatibility acceptance for `--plugin-opt=*`, `--mllvm=*`, and `--thinlto-*`
+- Target alias expansion:
+  - accepted `aarch64` / `arm64` triple/emulation aliases in both Dust CLI and host script target parsing
+  - accepted COFF ARM64 and Mach-O ARM64 machine/cpu identifiers in object-format probe and shared-symbol ingest paths
+- Script semantic strictness additions:
+  - `PHDRS` and `VERSION` compatibility blocks now require valid block structure
+  - added script tests for malformed `PHDRS`/`VERSION` rejection
+- Relocation behavior additions:
+  - unresolved dynamic-placeholder relocations (`PLT/GOT/JUMP_SLOT/GLOB_DAT` families) now allow zero-placeholder patching when dynamic unresolved policy permits
+  - `R_X86_64_RELATIVE` now resolves via `image_base + addend`
 
 ### Changed
 
@@ -124,6 +150,9 @@
 - script statement handling now uses block-aware splitting instead of naive `;`/newline splitting, reducing false splits inside structured linker-script blocks.
 - compatibility flags previously consumed through generic no-op paths now route into explicit linker state updates (`hash-style`, thread count, eh-frame header, diagnostics, print-gc, and icf mode).
 - staged ELF write path now performs complete image emission in the header/finalize sequence, and per-section emit callbacks validate section stream bounds.
+- host CLI no longer rejects several previously unsupported-but-common lld compatibility spellings in the script/export and diagnostics families.
+- no-value `--print-map` now auto-derives a map output path (`a.out.map` for default output).
+- linker-link profile naming now uses `LINKER_INTERNAL` while preserving `LINKER_INTERNAL_MVP` as a compatibility alias in Dust modules.
 
 ## 2026-02-20
 

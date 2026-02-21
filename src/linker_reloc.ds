@@ -122,6 +122,34 @@ forge LinkerReloc {
         }
     }
 
+    proc K::is_dynamic_placeholder_reloc(reloc_type: UInt32) -> UInt32 {
+        if reloc_type == R_X86_64_PLT32 {
+            return 1;
+        } else {
+            if reloc_type == R_X86_64_GLOB_DAT {
+                return 1;
+            } else {
+                if reloc_type == R_X86_64_JUMP_SLOT {
+                    return 1;
+                } else {
+                    if reloc_type == R_X86_64_GOTPCREL {
+                        return 1;
+                    } else {
+                        if reloc_type == R_X86_64_GOTPCRELX {
+                            return 1;
+                        } else {
+                            if reloc_type == R_X86_64_REX_GOTPCRELX {
+                                return 1;
+                            } else {
+                                return 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     proc K::fits_u32(value: UInt64) -> UInt32 {
         if value > 4294967295 {
             return 0;
@@ -220,7 +248,7 @@ forge LinkerReloc {
                                         return sum;
                                     } else {
                                         if reloc_type == R_X86_64_RELATIVE {
-                                            return sum;
+                                            return host_linker_get_image_base() + addend;
                                         } else {
                                             if reloc_type == R_X86_64_GOTPCREL {
                                                 return calculate_pcrel_offset(place_addr, sum, 0);
@@ -299,7 +327,18 @@ forge LinkerReloc {
         if validate_status ! ERR_OK {
             return validate_status;
         } else {
+            let symbol_defined = host_linker_object_symbol_defined(object_index, sym_index);
             let symbol_addr = host_linker_resolved_symbol_address(object_index, sym_index);
+            if symbol_defined == 0 {
+                if symbol_addr == 0 {
+                    if is_dynamic_placeholder_reloc(reloc_type) == 1 {
+                        if host_linker_allow_dynamic_unresolved() == 1 {
+                            return apply_relocation_value(target_section, offset, reloc_type, 0);
+                        }
+                    }
+                    return ERR_UNDEFINED_SYMBOL;
+                }
+            }
             let place = host_linker_section_runtime_address(object_index, target_section) + offset;
             let value = calc_relocation_value(reloc_type, symbol_addr, addend, place);
             return apply_relocation_value(target_section, offset, reloc_type, value);

@@ -8,7 +8,7 @@
 - `src/*_tests.ds`: Dust test harness modules.
 - `State.toml`: Dust workspace/sector metadata.
 
-## Runtime Flow (Internal MVP)
+## Runtime Flow (Internal)
 
 1. `dust build src` emits a host executable.
 2. `DustLinkMain::K::main` routes into `LinkerHostCli::K::run_with_host_args()`.
@@ -30,6 +30,7 @@ The Dust modules provide deterministic linker behavior for:
 - flag normalization and validation (gcc/ld/lld profile)
 - target/format validation and routing
 - target/emulation CLI mapping (`--target`, `-m`) into linker target IDs
+- `lld-link` slash-option mapping (`/OUT`, `/ENTRY`, `/MACHINE`, `/LIBPATH`, `/DEFAULTLIB`, `/MAP`, `/DLL`, `/SUBSYSTEM`, `/OPT`, `/WX`)
 - archive search (`.a`/`.lib`) over deterministic `-L` order
 - archive search (`.a`/`.lib`) over deterministic explicit/default path order
   - explicit `-L` paths
@@ -40,6 +41,7 @@ The Dust modules provide deterministic linker behavior for:
 - exact-name library token handling (`-l:<file>`)
 - section and image planning helpers
 - dynamic image-size planning for final emit
+- sectionized PE/Mach-O image emission from alloc-section chunks
 - symbol/relocation resolution and patch application
 - symbol policy controls (`--defsym`, `--allow-multiple-definition`)
 - required-symbol controls (`-u`, `--undefined`, `--require-defined`)
@@ -51,7 +53,8 @@ The Dust modules provide deterministic linker behavior for:
 - `-z` controls (`relro`/`norelro`, `now`/`lazy`, `execstack`/`noexecstack`)
 - section GC policy controls (`--gc-sections`, `--no-gc-sections`)
 - shared-symbol ingestion across ELF, PE, COFF, and Mach-O metadata paths
-- script application (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `INCLUDE`, `MEMORY`, `SECTIONS` subset including location-counter and output-address forms)
+- COFF and Mach-O ingest acceptance for both x86_64 and arm64 machine/cpu identifiers
+- script application (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `INCLUDE`, `ASSERT`, `MEMORY`, `SECTIONS` with location-counter/output-address/`AT(...)` forms; `PHDRS`/`VERSION` blocks with block-shape validation)
 - script `SEARCH_DIR(=...)` sysroot-aware resolution and script-token handling for `-L`/`-l` forms
 - block-aware script statement splitting for multi-line linker scripts
 - expanded relocation handling in Dust modules (`PLT32`, `GLOB_DAT`, `JUMP_SLOT`, `RELATIVE`, `GOTPCREL`, `GOTPCRELX`, `REX_GOTPCRELX`) and ELF machine validator acceptance for `EM_AARCH64`

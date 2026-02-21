@@ -2,6 +2,8 @@
 
 forge LinkerScriptSemanticsTests {
     const ERR_OK: UInt32 = 0;
+    const ERR_INVALID_FORMAT: UInt32 = 2;
+    const ERR_CONFLICTING_OPTIONS: UInt32 = 16;
 
     const FORMAT_PE64: UInt32 = 4;
     const FORMAT_MACHO64: UInt32 = 5;
@@ -258,6 +260,58 @@ forge LinkerScriptSemanticsTests {
         }
     }
 
+    proc K::test_script_origin_length_expression_sets_image_base() -> UInt32 {
+        let path = "dustlink_script_test_expr_origin.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "MEMORY { RAM (rwx) : ORIGIN = 0x200000, LENGTH = 64M }");
+        LinkerFs::K::append_line(path, "SECTIONS { . = ORIGIN(RAM) + 0x1000; }");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let image_base = host_linker_get_image_base();
+            return expect_u64(image_base, 2101248);
+        }
+    }
+
+    proc K::test_script_assert_failure_returns_conflict() -> UInt32 {
+        let path = "dustlink_script_test_assert.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "ASSERT(0, \"force failure\");");
+        let status = DustLink::K::apply_script(path);
+        return expect_u32(status, ERR_CONFLICTING_OPTIONS);
+    }
+
+    proc K::test_script_phdrs_and_version_blocks_accepted() -> UInt32 {
+        let path = "dustlink_script_test_phdrs_version.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "PHDRS { text PT_LOAD FLAGS(5); }");
+        LinkerFs::K::append_line(path, "VERSION { global: *; local: *; };");
+        let status = DustLink::K::apply_script(path);
+        return expect_u32(status, ERR_OK);
+    }
+
+    proc K::test_script_phdrs_block_malformed_rejected() -> UInt32 {
+        let path = "dustlink_script_test_phdrs_bad.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "PHDRS text PT_LOAD FLAGS(5);");
+        let status = DustLink::K::apply_script(path);
+        return expect_u32(status, ERR_INVALID_FORMAT);
+    }
+
+    proc K::test_script_version_block_malformed_rejected() -> UInt32 {
+        let path = "dustlink_script_test_version_bad.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "VERSION global: *;");
+        let status = DustLink::K::apply_script(path);
+        return expect_u32(status, ERR_INVALID_FORMAT);
+    }
+
     proc K::run_all_tests() -> UInt32 {
         let passed =
             test_script_output_format_directive()
@@ -273,7 +327,12 @@ forge LinkerScriptSemanticsTests {
             + test_script_as_needed_scope_restores_state()
             + test_script_search_dir_equals_uses_sysroot()
             + test_script_input_library_path_flag_adds_search_path()
-            + test_script_input_l_token_records_needed();
+            + test_script_input_l_token_records_needed()
+            + test_script_origin_length_expression_sets_image_base()
+            + test_script_assert_failure_returns_conflict()
+            + test_script_phdrs_and_version_blocks_accepted()
+            + test_script_phdrs_block_malformed_rejected()
+            + test_script_version_block_malformed_rejected();
         return passed;
     }
 }

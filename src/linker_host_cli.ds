@@ -365,10 +365,45 @@ forge LinkerHostCli {
         return 0;
     }
 
+    proc K::is_extended_compat_no_value_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--print-map") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--emit-relocs") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--export-dynamic") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "-E") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--start-lib") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--end-lib") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--gdb-index") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--warn-common") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--no-undefined-version") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--strip-all") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--warn-unresolved-symbols") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--no-warn-unresolved-symbols") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--nmagic") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--omagic") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--discard-all") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--discard-locals") == 1 { return 1; }
+        return 0;
+    }
+
     proc K::is_compat_value_flag(arg: UInt64) -> UInt32 {
         if LinkerHost::K::str_eq(arg, "--hash-style") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--threads") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--thread-count") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_extended_compat_value_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--version-script") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--dynamic-list") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--trace-symbol") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--dependency-file") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--compress-debug-sections") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--pack-dyn-relocs") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--plugin-opt") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--mllvm") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--thinlto-cache-dir") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--thinlto-jobs") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--thinlto-cache-policy") == 1 { return 1; }
         return 0;
     }
 
@@ -391,20 +426,33 @@ forge LinkerHostCli {
         if LinkerHost::K::str_eq(arg, "x86_64-linux") == 1 { return TARGET_X86_64_LINUX; }
         if LinkerHost::K::str_eq(arg, "x86_64-linux-gnu") == 1 { return TARGET_X86_64_LINUX; }
         if LinkerHost::K::str_eq(arg, "x86_64-unknown-linux-gnu") == 1 { return TARGET_X86_64_LINUX; }
+        if LinkerHost::K::str_eq(arg, "aarch64-linux") == 1 { return TARGET_X86_64_LINUX; }
+        if LinkerHost::K::str_eq(arg, "aarch64-linux-gnu") == 1 { return TARGET_X86_64_LINUX; }
+        if LinkerHost::K::str_eq(arg, "aarch64-unknown-linux-gnu") == 1 { return TARGET_X86_64_LINUX; }
         if LinkerHost::K::str_eq(arg, "elf_x86_64") == 1 { return TARGET_X86_64_LINUX; }
         if LinkerHost::K::str_eq(arg, "elf64-x86-64") == 1 { return TARGET_X86_64_LINUX; }
+        if LinkerHost::K::str_eq(arg, "elf64-littleaarch64") == 1 { return TARGET_X86_64_LINUX; }
+        if LinkerHost::K::str_eq(arg, "aarch64elf") == 1 { return TARGET_X86_64_LINUX; }
 
         if LinkerHost::K::str_eq(arg, "x86_64-windows-msvc") == 1 { return TARGET_X86_64_WINDOWS; }
         if LinkerHost::K::str_eq(arg, "x86_64-pc-windows-msvc") == 1 { return TARGET_X86_64_WINDOWS; }
         if LinkerHost::K::str_eq(arg, "x86_64-windows-gnu") == 1 { return TARGET_X86_64_WINDOWS; }
+        if LinkerHost::K::str_eq(arg, "aarch64-windows-msvc") == 1 { return TARGET_X86_64_WINDOWS; }
+        if LinkerHost::K::str_eq(arg, "aarch64-pc-windows-msvc") == 1 { return TARGET_X86_64_WINDOWS; }
+        if LinkerHost::K::str_eq(arg, "aarch64-windows-gnu") == 1 { return TARGET_X86_64_WINDOWS; }
         if LinkerHost::K::str_eq(arg, "i386pep") == 1 { return TARGET_X86_64_WINDOWS; }
         if LinkerHost::K::str_eq(arg, "pep") == 1 { return TARGET_X86_64_WINDOWS; }
         if LinkerHost::K::str_eq(arg, "pe-x86-64") == 1 { return TARGET_X86_64_WINDOWS; }
+        if LinkerHost::K::str_eq(arg, "arm64pe") == 1 { return TARGET_X86_64_WINDOWS; }
 
         if LinkerHost::K::str_eq(arg, "x86_64-apple-darwin") == 1 { return TARGET_X86_64_MACOS; }
         if LinkerHost::K::str_eq(arg, "x86_64-macos") == 1 { return TARGET_X86_64_MACOS; }
         if LinkerHost::K::str_eq(arg, "mach_o_x86_64") == 1 { return TARGET_X86_64_MACOS; }
         if LinkerHost::K::str_eq(arg, "macho-x86-64") == 1 { return TARGET_X86_64_MACOS; }
+        if LinkerHost::K::str_eq(arg, "aarch64-apple-darwin") == 1 { return TARGET_X86_64_MACOS; }
+        if LinkerHost::K::str_eq(arg, "arm64-apple-darwin") == 1 { return TARGET_X86_64_MACOS; }
+        if LinkerHost::K::str_eq(arg, "arm64-macos") == 1 { return TARGET_X86_64_MACOS; }
+        if LinkerHost::K::str_eq(arg, "macho-arm64") == 1 { return TARGET_X86_64_MACOS; }
         return 0;
     }
 
@@ -442,6 +490,11 @@ forge LinkerHostCli {
         LinkerHost::K::print_line("  --copy-dt-needed-entries/--no-copy-dt-needed-entries");
         LinkerHost::K::print_line("  --build-id[=<none|fast|md5|sha1|uuid|0x...>]");
         LinkerHost::K::print_line("  -z <relro|norelro|now|lazy|execstack|noexecstack>");
+        LinkerHost::K::print_line("  --version-script <file>  --dynamic-list <file>");
+        LinkerHost::K::print_line("  --trace-symbol <name>  --print-map");
+        LinkerHost::K::print_line("  --start-lib/--end-lib  --emit-relocs  --strip-all");
+        LinkerHost::K::print_line("  lld-link forms: /OUT:<path> /ENTRY:<sym|addr> /MACHINE:<arch>");
+        LinkerHost::K::print_line("  lld-link forms: /LIBPATH:<dir> /DEFAULTLIB:<name> /DLL /SUBSYSTEM:<kind>");
         return ERR_OK;
     }
 
@@ -675,6 +728,205 @@ forge LinkerHostCli {
         return 0;
     }
 
+    proc K::inline_version_script_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--version-script=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--version-script=");
+        }
+        return 0;
+    }
+
+    proc K::inline_dynamic_list_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--dynamic-list=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--dynamic-list=");
+        }
+        return 0;
+    }
+
+    proc K::inline_trace_symbol_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--trace-symbol=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--trace-symbol=");
+        }
+        return 0;
+    }
+
+    proc K::inline_dependency_file_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--dependency-file=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--dependency-file=");
+        }
+        return 0;
+    }
+
+    proc K::inline_compress_debug_sections_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--compress-debug-sections=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--compress-debug-sections=");
+        }
+        return 0;
+    }
+
+    proc K::inline_pack_dyn_relocs_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--pack-dyn-relocs=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--pack-dyn-relocs=");
+        }
+        return 0;
+    }
+
+    proc K::is_link_dll_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "/DLL") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/dll") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_link_map_flag_no_value(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "/MAP") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/map") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_link_compat_no_value_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "/NOLOGO") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/nologo") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/DEBUG") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/debug") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/INCREMENTAL") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/incremental") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/INCREMENTAL:NO") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/incremental:no") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/NODEFAULTLIB") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/nodefaultlib") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/WX") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/wx") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/WX:NO") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/wx:no") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_link_compat_inline_value_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_starts_with(arg, "/PDB:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/pdb:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/IMPLIB:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/implib:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/MANIFEST:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/manifest:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/MANIFESTINPUT:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/manifestinput:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/FAILIFMISMATCH:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/failifmismatch:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/ALTERNATENAME:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/alternatename:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/EXPORT:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/export:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/BASE:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/base:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/STACK:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/stack:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/HEAP:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/heap:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/NODEFAULTLIB:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/nodefaultlib:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/INCLUDE:") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "/include:") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_long_compat_inline_value_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_starts_with(arg, "--plugin-opt=") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "--mllvm=") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "--thinlto-cache-dir=") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "--thinlto-jobs=") == 1 { return 1; }
+        if LinkerHost::K::str_starts_with(arg, "--thinlto-cache-policy=") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::inline_link_out_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "/OUT:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/OUT:");
+        }
+        if LinkerHost::K::str_starts_with(arg, "/out:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/out:");
+        }
+        return 0;
+    }
+
+    proc K::inline_link_entry_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "/ENTRY:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/ENTRY:");
+        }
+        if LinkerHost::K::str_starts_with(arg, "/entry:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/entry:");
+        }
+        return 0;
+    }
+
+    proc K::inline_link_machine_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "/MACHINE:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/MACHINE:");
+        }
+        if LinkerHost::K::str_starts_with(arg, "/machine:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/machine:");
+        }
+        return 0;
+    }
+
+    proc K::inline_link_subsystem_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "/SUBSYSTEM:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/SUBSYSTEM:");
+        }
+        if LinkerHost::K::str_starts_with(arg, "/subsystem:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/subsystem:");
+        }
+        return 0;
+    }
+
+    proc K::inline_link_libpath_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "/LIBPATH:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/LIBPATH:");
+        }
+        if LinkerHost::K::str_starts_with(arg, "/libpath:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/libpath:");
+        }
+        return 0;
+    }
+
+    proc K::inline_link_defaultlib_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "/DEFAULTLIB:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/DEFAULTLIB:");
+        }
+        if LinkerHost::K::str_starts_with(arg, "/defaultlib:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/defaultlib:");
+        }
+        return 0;
+    }
+
+    proc K::inline_link_map_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "/MAP:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/MAP:");
+        }
+        if LinkerHost::K::str_starts_with(arg, "/map:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/map:");
+        }
+        return 0;
+    }
+
+    proc K::inline_link_opt_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "/OPT:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/OPT:");
+        }
+        if LinkerHost::K::str_starts_with(arg, "/opt:") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "/opt:");
+        }
+        return 0;
+    }
+
+    proc K::resolve_link_machine(machine: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(machine, "X64") == 1 { return TARGET_X86_64_WINDOWS; }
+        if LinkerHost::K::str_eq(machine, "x64") == 1 { return TARGET_X86_64_WINDOWS; }
+        if LinkerHost::K::str_eq(machine, "AMD64") == 1 { return TARGET_X86_64_WINDOWS; }
+        if LinkerHost::K::str_eq(machine, "amd64") == 1 { return TARGET_X86_64_WINDOWS; }
+        if LinkerHost::K::str_eq(machine, "ARM64") == 1 { return TARGET_X86_64_WINDOWS; }
+        if LinkerHost::K::str_eq(machine, "arm64") == 1 { return TARGET_X86_64_WINDOWS; }
+        return 0;
+    }
+
     proc K::parse_thread_count_or_invalid(raw: UInt64) -> UInt32 {
         let parsed = LinkerHost::K::parse_u64(raw, 10);
         if parsed == 0 {
@@ -699,6 +951,14 @@ forge LinkerHostCli {
         return parsed;
     }
 
+    proc K::default_map_file_for_output(output_file: UInt64) -> UInt64 {
+        if output_file == DEFAULT_OUTPUT {
+            return "a.out.map";
+        } else {
+            return LinkerFs::K::str_concat(output_file, ".map");
+        }
+    }
+
     proc K::requires_value(arg: UInt64) -> UInt32 {
         if is_output_flag(arg) == 1 { return 1; }
         if is_oformat_flag(arg) == 1 { return 1; }
@@ -717,6 +977,7 @@ forge LinkerHostCli {
         if is_undefined_flag(arg) == 1 { return 1; }
         if is_z_flag(arg) == 1 { return 1; }
         if is_compat_value_flag(arg) == 1 { return 1; }
+        if is_extended_compat_value_flag(arg) == 1 { return 1; }
         return 0;
     }
 
@@ -1007,6 +1268,135 @@ forge LinkerHostCli {
             if ts ! ERR_OK { return ts; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
+        let v_version_script = inline_version_script_value(arg);
+        if v_version_script ! 0 {
+            let vs = DustLink::K::apply_script(v_version_script);
+            if vs ! ERR_OK { return vs; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        let v_dynamic_list = inline_dynamic_list_value(arg);
+        if v_dynamic_list ! 0 {
+            let dlv = DustLink::K::apply_script(v_dynamic_list);
+            if dlv ! ERR_OK { return dlv; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        let v_trace_symbol = inline_trace_symbol_value(arg);
+        if v_trace_symbol ! 0 {
+            let tr = DustLink::K::require_symbol(v_trace_symbol);
+            if tr ! ERR_OK { return tr; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if inline_dependency_file_value(arg) ! 0 {
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if inline_compress_debug_sections_value(arg) ! 0 {
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if inline_pack_dyn_relocs_value(arg) ! 0 {
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_long_compat_inline_value_flag(arg) == 1 {
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+
+        let v_link_output = inline_link_out_value(arg);
+        if v_link_output ! 0 {
+            return scan_args(arg_count, idx + 1, input_count, v_link_output, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        let v_link_entry = inline_link_entry_value(arg);
+        if v_link_entry ! 0 {
+            let e_link = parse_address_or_zero(v_link_entry, 0);
+            if e_link ! 0 {
+                return scan_args(arg_count, idx + 1, input_count, output_file, output_format, e_link, base_addr, map_file, 1, saw_text_base, saw_oformat);
+            } else {
+                if LinkerHost::K::str_eq(v_link_entry, "0") == 1 {
+                    return ERR_INVALID_ENTRY;
+                }
+                let req_entry = DustLink::K::require_symbol(v_link_entry);
+                if req_entry ! ERR_OK { return req_entry; }
+                return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+        }
+        let v_link_machine = inline_link_machine_value(arg);
+        if v_link_machine ! 0 {
+            let t_link = resolve_link_machine(v_link_machine);
+            if t_link == 0 { return ERR_UNSUPPORTED_TARGET; }
+            let ts_link = DustLink::K::set_target(t_link);
+            if ts_link ! ERR_OK { return ts_link; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, FORMAT_PE64, entry_addr, base_addr, map_file, saw_entry, saw_text_base, 1);
+        }
+        let v_link_subsystem = inline_link_subsystem_value(arg);
+        if v_link_subsystem ! 0 {
+            let ts_subsystem = DustLink::K::set_target(TARGET_X86_64_WINDOWS);
+            if ts_subsystem ! ERR_OK { return ts_subsystem; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, FORMAT_PE64, entry_addr, base_addr, map_file, saw_entry, saw_text_base, 1);
+        }
+        let v_link_libpath = inline_link_libpath_value(arg);
+        if v_link_libpath ! 0 {
+            let lp_status = DustLink::K::add_search_path(v_link_libpath);
+            if lp_status ! ERR_OK { return lp_status; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        let v_link_defaultlib = inline_link_defaultlib_value(arg);
+        if v_link_defaultlib ! 0 {
+            let dl_status = DustLink::K::add_library(v_link_defaultlib);
+            if dl_status ! ERR_OK { return dl_status; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        let v_link_map = inline_link_map_value(arg);
+        if v_link_map ! 0 {
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, v_link_map, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_link_map_flag_no_value(arg) == 1 {
+            let auto_map_link = default_map_file_for_output(output_file);
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, auto_map_link, saw_entry, saw_text_base, saw_oformat);
+        }
+        let v_link_opt = inline_link_opt_value(arg);
+        if v_link_opt ! 0 {
+            if LinkerHost::K::str_eq(v_link_opt, "REF") == 1 {
+                let g_ref = DustLink::K::set_gc_sections(1);
+                if g_ref ! ERR_OK { return g_ref; }
+            } else {
+                if LinkerHost::K::str_eq(v_link_opt, "ref") == 1 {
+                    let g_ref2 = DustLink::K::set_gc_sections(1);
+                    if g_ref2 ! ERR_OK { return g_ref2; }
+                } else {
+                    if LinkerHost::K::str_eq(v_link_opt, "NOREF") == 1 {
+                        let g_noref = DustLink::K::set_gc_sections(0);
+                        if g_noref ! ERR_OK { return g_noref; }
+                    } else {
+                        if LinkerHost::K::str_eq(v_link_opt, "noref") == 1 {
+                            let g_noref2 = DustLink::K::set_gc_sections(0);
+                            if g_noref2 ! ERR_OK { return g_noref2; }
+                        } else {
+                            if LinkerHost::K::str_eq(v_link_opt, "ICF") == 1 {
+                                let i_icf = DustLink::K::set_icf_mode(1);
+                                if i_icf ! ERR_OK { return i_icf; }
+                            } else {
+                                if LinkerHost::K::str_eq(v_link_opt, "icf") == 1 {
+                                    let i_icf2 = DustLink::K::set_icf_mode(1);
+                                    if i_icf2 ! ERR_OK { return i_icf2; }
+                                } else {
+                                    if LinkerHost::K::str_eq(v_link_opt, "NOICF") == 1 {
+                                        let i_noicf = DustLink::K::set_icf_mode(0);
+                                        if i_noicf ! ERR_OK { return i_noicf; }
+                                    } else {
+                                        if LinkerHost::K::str_eq(v_link_opt, "noicf") == 1 {
+                                            let i_noicf2 = DustLink::K::set_icf_mode(0);
+                                            if i_noicf2 ! ERR_OK { return i_noicf2; }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_link_compat_inline_value_flag(arg) == 1 {
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
 
         if requires_value(arg) == 1 {
             let next_idx = idx + 1;
@@ -1125,7 +1515,34 @@ forge LinkerHostCli {
                 if ts3 ! ERR_OK { return ts3; }
                 return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
             }
+            if LinkerHost::K::str_eq(arg, "--version-script") == 1 {
+                let vs2 = DustLink::K::apply_script(value);
+                if vs2 ! ERR_OK { return vs2; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if LinkerHost::K::str_eq(arg, "--dynamic-list") == 1 {
+                let dl2 = DustLink::K::apply_script(value);
+                if dl2 ! ERR_OK { return dl2; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if LinkerHost::K::str_eq(arg, "--trace-symbol") == 1 {
+                let tr2 = DustLink::K::require_symbol(value);
+                if tr2 ! ERR_OK { return tr2; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if LinkerHost::K::str_eq(arg, "--dependency-file") == 1 {
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if LinkerHost::K::str_eq(arg, "--compress-debug-sections") == 1 {
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if LinkerHost::K::str_eq(arg, "--pack-dyn-relocs") == 1 {
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
             if is_compat_value_flag(arg) == 1 {
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if is_extended_compat_value_flag(arg) == 1 {
                 return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
             }
             return ERR_UNSUPPORTED_FLAG;
@@ -1241,6 +1658,33 @@ forge LinkerHostCli {
             if bst0 ! ERR_OK { return bst0; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
+        if is_link_dll_flag(arg) == 1 {
+            let sh_link = DustLink::K::set_shared(1);
+            if sh_link ! ERR_OK { return sh_link; }
+            let ts_link = DustLink::K::set_target(TARGET_X86_64_WINDOWS);
+            if ts_link ! ERR_OK { return ts_link; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, FORMAT_PE64, entry_addr, base_addr, map_file, saw_entry, saw_text_base, 1);
+        }
+        if LinkerHost::K::str_eq(arg, "/WX") == 1 {
+            let w1 = DustLink::K::set_fatal_warnings(1);
+            if w1 ! ERR_OK { return w1; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "/wx") == 1 {
+            let w1b = DustLink::K::set_fatal_warnings(1);
+            if w1b ! ERR_OK { return w1b; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "/WX:NO") == 1 {
+            let w0 = DustLink::K::set_fatal_warnings(0);
+            if w0 ! ERR_OK { return w0; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "/wx:no") == 1 {
+            let w0b = DustLink::K::set_fatal_warnings(0);
+            if w0b ! ERR_OK { return w0b; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
         if is_whole_archive_flag(arg) == 1 {
             let wa1 = DustLink::K::set_whole_archive(1);
             if wa1 ! ERR_OK { return wa1; }
@@ -1249,6 +1693,21 @@ forge LinkerHostCli {
         if is_no_whole_archive_flag(arg) == 1 {
             let wa0 = DustLink::K::set_whole_archive(0);
             if wa0 ! ERR_OK { return wa0; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--print-map") == 1 {
+            let auto_map = default_map_file_for_output(output_file);
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, auto_map, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--strip-all") == 1 {
+            let sa = DustLink::K::strip_debug();
+            if sa ! ERR_OK { return sa; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_extended_compat_no_value_flag(arg) == 1 {
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_link_compat_no_value_flag(arg) == 1 {
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
         if LinkerHost::K::str_eq(arg, "--eh-frame-hdr") == 1 {
@@ -1307,6 +1766,11 @@ forge LinkerHostCli {
         if LinkerHost::K::str_starts_with(arg, "-m") == 1 {
             if LinkerHost::K::str_eq(arg, "-m") == 1 { return ERR_MISSING_FLAG_VALUE; }
             return ERR_UNSUPPORTED_TARGET;
+        }
+        if LinkerHost::K::str_starts_with(arg, "/") == 1 {
+            if LinkerFs::K::path_exists(arg) == 0 {
+                return ERR_UNSUPPORTED_FLAG;
+            }
         }
 
         if LinkerHost::K::str_starts_with(arg, "-") == 1 { return ERR_UNSUPPORTED_FLAG; }

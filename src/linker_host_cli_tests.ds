@@ -84,6 +84,21 @@ forge LinkerHostCliTests {
         return expect_u32(target, TARGET_X86_64_LINUX);
     }
 
+    proc K::test_target_linux_arm_alias() -> UInt32 {
+        let target = LinkerHostCli::K::resolve_target("aarch64-unknown-linux-gnu");
+        return expect_u32(target, TARGET_X86_64_LINUX);
+    }
+
+    proc K::test_target_windows_arm_alias() -> UInt32 {
+        let target = LinkerHostCli::K::resolve_target("aarch64-pc-windows-msvc");
+        return expect_u32(target, TARGET_X86_64_WINDOWS);
+    }
+
+    proc K::test_target_macos_arm_alias() -> UInt32 {
+        let target = LinkerHostCli::K::resolve_target("arm64-apple-darwin");
+        return expect_u32(target, TARGET_X86_64_MACOS);
+    }
+
     proc K::test_default_format_for_windows_target() -> UInt32 {
         let format = LinkerHostCli::K::default_format_for_target(TARGET_X86_64_WINDOWS);
         return expect_u32(format, FORMAT_PE64);
@@ -234,6 +249,112 @@ forge LinkerHostCliTests {
         return expect_u32(LinkerHost::K::str_eq(value, "16"), 1);
     }
 
+    proc K::test_version_script_flag_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--version-script");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_inline_version_script_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_version_script_value("--version-script=app.ld");
+        return expect_u32(LinkerHost::K::str_eq(value, "app.ld"), 1);
+    }
+
+    proc K::test_dynamic_list_flag_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--dynamic-list");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_inline_dynamic_list_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_dynamic_list_value("--dynamic-list=exports.list");
+        return expect_u32(LinkerHost::K::str_eq(value, "exports.list"), 1);
+    }
+
+    proc K::test_trace_symbol_flag_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--trace-symbol");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_inline_trace_symbol_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_trace_symbol_value("--trace-symbol=malloc");
+        return expect_u32(LinkerHost::K::str_eq(value, "malloc"), 1);
+    }
+
+    proc K::test_dependency_file_flag_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--dependency-file");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_inline_dependency_file_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_dependency_file_value("--dependency-file=out.d");
+        return expect_u32(LinkerHost::K::str_eq(value, "out.d"), 1);
+    }
+
+    proc K::test_print_map_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--print-map");
+        return expect_u32(required, 0);
+    }
+
+    proc K::test_start_end_lib_flags_no_value() -> UInt32 {
+        let a = LinkerHostCli::K::requires_value("--start-lib");
+        let b = LinkerHostCli::K::requires_value("--end-lib");
+        return expect_u32(a, 0) * expect_u32(b, 0);
+    }
+
+    proc K::test_inline_link_out_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_link_out_value("/OUT:kernel.exe");
+        return expect_u32(LinkerHost::K::str_eq(value, "kernel.exe"), 1);
+    }
+
+    proc K::test_inline_link_entry_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_link_entry_value("/ENTRY:_start");
+        return expect_u32(LinkerHost::K::str_eq(value, "_start"), 1);
+    }
+
+    proc K::test_inline_link_machine_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_link_machine_value("/MACHINE:X64");
+        return expect_u32(LinkerHost::K::str_eq(value, "X64"), 1);
+    }
+
+    proc K::test_inline_link_libpath_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_link_libpath_value("/LIBPATH:C:\\libs");
+        return expect_u32(LinkerHost::K::str_eq(value, "C:\\libs"), 1);
+    }
+
+    proc K::test_inline_link_defaultlib_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_link_defaultlib_value("/DEFAULTLIB:kernel32.lib");
+        return expect_u32(LinkerHost::K::str_eq(value, "kernel32.lib"), 1);
+    }
+
+    proc K::test_inline_link_map_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_link_map_value("/MAP:kernel.map");
+        return expect_u32(LinkerHost::K::str_eq(value, "kernel.map"), 1);
+    }
+
+    proc K::test_link_dll_flag_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_link_dll_flag("/DLL");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_link_map_no_value_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_link_map_flag_no_value("/MAP");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_link_compat_no_value_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_link_compat_no_value_flag("/NOLOGO");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_link_compat_inline_value_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_link_compat_inline_value_flag("/PDB:kernel.pdb");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_long_compat_inline_value_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_long_compat_inline_value_flag("--plugin-opt=emit-relocs");
+        return expect_u32(flag, 1);
+    }
+
     proc K::test_shared_flag_no_value() -> UInt32 {
         let required = LinkerHostCli::K::requires_value("-shared");
         return expect_u32(required, 0);
@@ -283,6 +404,9 @@ forge LinkerHostCliTests {
             + test_target_windows_alias()
             + test_target_macos_alias()
             + test_target_linux_alias()
+            + test_target_linux_arm_alias()
+            + test_target_windows_arm_alias()
+            + test_target_macos_arm_alias()
             + test_default_format_for_windows_target()
             + test_default_format_for_macos_target()
             + test_inline_undefined_short_alias()
@@ -312,6 +436,27 @@ forge LinkerHostCliTests {
             + test_inline_hash_style_value()
             + test_inline_threads_value()
             + test_inline_thread_count_value()
+            + test_version_script_flag_requires_value()
+            + test_inline_version_script_value()
+            + test_dynamic_list_flag_requires_value()
+            + test_inline_dynamic_list_value()
+            + test_trace_symbol_flag_requires_value()
+            + test_inline_trace_symbol_value()
+            + test_dependency_file_flag_requires_value()
+            + test_inline_dependency_file_value()
+            + test_print_map_flag_no_value()
+            + test_start_end_lib_flags_no_value()
+            + test_inline_link_out_value()
+            + test_inline_link_entry_value()
+            + test_inline_link_machine_value()
+            + test_inline_link_libpath_value()
+            + test_inline_link_defaultlib_value()
+            + test_inline_link_map_value()
+            + test_link_dll_flag_detected()
+            + test_link_map_no_value_detected()
+            + test_link_compat_no_value_detected()
+            + test_link_compat_inline_value_detected()
+            + test_long_compat_inline_value_detected()
             + test_shared_flag_no_value()
             + test_pie_flag_no_value()
             + test_enable_new_dtags_flag_no_value()

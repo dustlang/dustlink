@@ -1,7 +1,8 @@
-// DustLink object/link stage orchestration for internal linker mode.
+// DustLink object/link stage orchestration for the internal linker pipeline.
 
 forge LinkerLink {
     const LINKER_NONE: UInt32 = 0;
+    const LINKER_INTERNAL: UInt32 = 1;
     const LINKER_INTERNAL_MVP: UInt32 = 1;
     const LINKER_EXTERNAL_COMPAT: UInt32 = 2;
 
@@ -179,7 +180,7 @@ forge LinkerLink {
     }
 
     proc K::set_linker(linker: UInt32) -> UInt32 {
-        if linker == LINKER_INTERNAL_MVP {
+        if linker == LINKER_INTERNAL {
             return ERR_OK;
         } else {
             if linker == LINKER_EXTERNAL_COMPAT {
@@ -433,6 +434,6 @@ forge LinkerLink {
     }
 
     proc K::find_linker() -> UInt32 {
-        return LINKER_INTERNAL_MVP;
+        return LINKER_INTERNAL;
     }
 }

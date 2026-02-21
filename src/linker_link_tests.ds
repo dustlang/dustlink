@@ -1,4 +1,4 @@
-// Link stage behavior tests for the Dust internal linker MVP profile.
+// Link stage behavior tests for the Dust internal linker profile.
 
 forge LinkerLinkTests {
     const ERR_OK: UInt32 = 0;
@@ -9,7 +9,7 @@ forge LinkerLinkTests {
     const ERR_UNSUPPORTED_FLAG: UInt32 = 12;
     const ERR_UNSUPPORTED_TARGET: UInt32 = 14;
     const ERR_CONFLICTING_OPTIONS: UInt32 = 16;
-    const LINKER_INTERNAL_MVP: UInt32 = 1;
+    const LINKER_INTERNAL: UInt32 = 1;
     const TARGET_X86_64_LINUX: UInt32 = 1;
     const FORMAT_ELF64: UInt32 = 1;
     const FORMAT_PE64: UInt32 = 4;
@@ -29,7 +29,7 @@ forge LinkerLinkTests {
     }
 
     proc K::test_set_linker_internal_ok() -> UInt32 {
-        let result = LinkerLink::K::set_linker(LINKER_INTERNAL_MVP);
+        let result = LinkerLink::K::set_linker(LINKER_INTERNAL);
         return expect_u32(result, ERR_OK);
     }
 
@@ -75,7 +75,7 @@ forge LinkerLinkTests {
 
     proc K::test_find_linker_prefers_internal() -> UInt32 {
         let result = LinkerLink::K::find_linker();
-        return expect_u32(result, LINKER_INTERNAL_MVP);
+        return expect_u32(result, LINKER_INTERNAL);
     }
 
     proc K::test_format_elf_supported() -> UInt32 {
