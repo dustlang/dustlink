@@ -1,0 +1,114 @@
+// Build-id and -z semantic behavior tests.
+
+forge LinkerBuildIdZTests {
+    const ERR_OK: UInt32 = 0;
+    const ERR_UNSUPPORTED_FLAG: UInt32 = 12;
+
+    const BUILD_ID_MODE_NONE: UInt32 = 0;
+    const BUILD_ID_MODE_FAST: UInt32 = 1;
+    const BUILD_ID_MODE_SHA1: UInt32 = 3;
+    const BUILD_ID_MODE_HEX: UInt32 = 5;
+
+    proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
+        if actual == expected {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::test_build_id_default_mode() -> UInt32 {
+        DustLink::K::reset_state();
+        let status = DustLink::K::enable_build_id_default();
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let mode = host_linker_get_build_id_mode();
+            return expect_u32(mode, BUILD_ID_MODE_FAST);
+        }
+    }
+
+    proc K::test_build_id_sha1_mode() -> UInt32 {
+        DustLink::K::reset_state();
+        let status = DustLink::K::set_build_id("sha1");
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let mode = host_linker_get_build_id_mode();
+            return expect_u32(mode, BUILD_ID_MODE_SHA1);
+        }
+    }
+
+    proc K::test_build_id_none_mode() -> UInt32 {
+        DustLink::K::reset_state();
+        let status = DustLink::K::set_build_id("none");
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let mode = host_linker_get_build_id_mode();
+            return expect_u32(mode, BUILD_ID_MODE_NONE);
+        }
+    }
+
+    proc K::test_build_id_hex_mode() -> UInt32 {
+        DustLink::K::reset_state();
+        let status = DustLink::K::set_build_id("0xA1B2C3D4");
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let mode = host_linker_get_build_id_mode();
+            return expect_u32(mode, BUILD_ID_MODE_HEX);
+        }
+    }
+
+    proc K::test_z_relro_now_flags() -> UInt32 {
+        DustLink::K::reset_state();
+        let s1 = DustLink::K::set_z_option("relro");
+        if s1 ! ERR_OK {
+            return 0;
+        }
+        let s2 = DustLink::K::set_z_option("now");
+        if s2 ! ERR_OK {
+            return 0;
+        }
+        let flags = host_linker_get_z_flags();
+        let has_relro = flags & 1;
+        let has_now = flags & 2;
+        return expect_u32(has_relro, 1) * expect_u32(has_now, 2);
+    }
+
+    proc K::test_z_execstack_toggle() -> UInt32 {
+        DustLink::K::reset_state();
+        let s1 = DustLink::K::set_z_option("execstack");
+        if s1 ! ERR_OK {
+            return 0;
+        }
+        let flags_on = host_linker_get_z_flags();
+        let exec_on = flags_on & 4;
+        let s2 = DustLink::K::set_z_option("noexecstack");
+        if s2 ! ERR_OK {
+            return 0;
+        }
+        let flags_off = host_linker_get_z_flags();
+        let exec_off = flags_off & 4;
+        return expect_u32(exec_on, 4) * expect_u32(exec_off, 0);
+    }
+
+    proc K::test_z_invalid_rejected() -> UInt32 {
+        DustLink::K::reset_state();
+        let status = DustLink::K::set_z_option("badflag");
+        return expect_u32(status, ERR_UNSUPPORTED_FLAG);
+    }
+
+    proc K::run_all_tests() -> UInt32 {
+        let passed =
+            test_build_id_default_mode()
+            + test_build_id_sha1_mode()
+            + test_build_id_none_mode()
+            + test_build_id_hex_mode()
+            + test_z_relro_now_flags()
+            + test_z_execstack_toggle()
+            + test_z_invalid_rejected();
+        return passed;
+    }
+}

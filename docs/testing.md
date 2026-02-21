@@ -6,6 +6,7 @@
 - `src/linker_link_tests.ds`
 - `src/linker_host_cli_tests.ds`
 - `src/linker_script_semantics_tests.ds`
+- `src/linker_buildid_z_tests.ds`
 
 ## Test Structure
 
@@ -24,6 +25,8 @@ Both files define forge-based test procedures with this pattern:
 - Linker-link integration surface coverage (`set_linker`, `set_target`, `create_flat_binary`, `find_linker`, etc.)
 - Cross-format compatibility checks (ELF/PE/Mach-O oformat and support routing)
 - Script semantic checks (`OUTPUT_FORMAT`, `PROVIDE`, `EXTERN`, `INCLUDE`)
+- Script subset checks for `MEMORY` (`ORIGIN`) and `SECTIONS` location-counter assignment
+- Build-id mode and `-z` option semantic state checks
 
 ## Recent Integration Checks
 

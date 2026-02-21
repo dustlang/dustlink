@@ -83,12 +83,42 @@ forge LinkerScriptSemanticsTests {
         }
     }
 
+    proc K::test_script_memory_origin_sets_image_base() -> UInt32 {
+        let path = "dustlink_script_test_memory.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "MEMORY { RAM (rwx) : ORIGIN = 0x200000, LENGTH = 64M }");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let image_base = host_linker_get_image_base();
+            return expect_u64(image_base, 2097152);
+        }
+    }
+
+    proc K::test_script_sections_location_counter_sets_image_base() -> UInt32 {
+        let path = "dustlink_script_test_sections.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "SECTIONS { . = 0x300000; .text : { *(.text) } }");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let image_base = host_linker_get_image_base();
+            return expect_u64(image_base, 3145728);
+        }
+    }
+
     proc K::run_all_tests() -> UInt32 {
         let passed =
             test_script_output_format_directive()
             + test_script_provide_symbol_definition()
             + test_script_extern_symbol_requirement()
-            + test_script_include_directive();
+            + test_script_include_directive()
+            + test_script_memory_origin_sets_image_base()
+            + test_script_sections_location_counter_sets_image_base();
         return passed;
     }
 }

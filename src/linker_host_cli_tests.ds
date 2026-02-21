@@ -114,6 +114,26 @@ forge LinkerHostCliTests {
         return expect_u32(required, 0);
     }
 
+    proc K::test_build_id_inline_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_build_id_value("--build-id=sha1");
+        return expect_u32(LinkerHost::K::str_eq(value, "sha1"), 1);
+    }
+
+    proc K::test_build_id_bare_flag_no_required_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--build-id");
+        return expect_u32(required, 0);
+    }
+
+    proc K::test_z_flag_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("-z");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_inline_z_short_alias() -> UInt32 {
+        let token = LinkerHostCli::K::inline_z_value("-zrelro");
+        return expect_u32(LinkerHost::K::str_eq(token, "relro"), 1);
+    }
+
     proc K::test_ok_constant() -> UInt32 {
         return expect_u32(ERR_OK, 0);
     }
@@ -139,6 +159,10 @@ forge LinkerHostCliTests {
             + test_undefined_flag_requires_value()
             + test_require_defined_flag_requires_value()
             + test_no_undefined_flag_no_value()
+            + test_build_id_inline_value()
+            + test_build_id_bare_flag_no_required_value()
+            + test_z_flag_requires_value()
+            + test_inline_z_short_alias()
             + test_ok_constant();
         return passed;
     }

@@ -229,6 +229,16 @@ forge LinkerHostCli {
         return 0;
     }
 
+    proc K::is_build_id_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--build-id") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_z_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "-z") == 1 { return 1; }
+        return 0;
+    }
+
     proc K::is_group_marker_flag(arg: UInt64) -> UInt32 {
         if LinkerHost::K::str_eq(arg, "--start-group") == 1 {
             return 1;
@@ -266,7 +276,6 @@ forge LinkerHostCli {
     }
 
     proc K::is_compat_no_value_flag(arg: UInt64) -> UInt32 {
-        if LinkerHost::K::str_eq(arg, "--build-id") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--eh-frame-hdr") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--as-needed") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--no-as-needed") == 1 { return 1; }
@@ -289,7 +298,6 @@ forge LinkerHostCli {
         if LinkerHost::K::str_eq(arg, "--sysroot") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--dynamic-linker") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--hash-style") == 1 { return 1; }
-        if LinkerHost::K::str_eq(arg, "--build-id") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--threads") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--thread-count") == 1 { return 1; }
         return 0;
@@ -357,6 +365,8 @@ forge LinkerHostCli {
         LinkerHost::K::print_line("  --target=<triple> | -m<emulation>");
         LinkerHost::K::print_line("  --defsym=name=value");
         LinkerHost::K::print_line("  -u/--undefined/--require-defined <symbol>");
+        LinkerHost::K::print_line("  --build-id[=<none|fast|md5|sha1|uuid|0x...>]");
+        LinkerHost::K::print_line("  -z <relro|norelro|now|lazy|execstack|noexecstack>");
         return ERR_OK;
     }
 
@@ -478,6 +488,24 @@ forge LinkerHostCli {
         return 0;
     }
 
+    proc K::inline_build_id_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--build-id=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--build-id=");
+        }
+        return 0;
+    }
+
+    proc K::inline_z_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "-z") == 1 {
+            if is_z_flag(arg) == 1 {
+                return 0;
+            } else {
+                return LinkerHost::K::str_after_prefix(arg, "-z");
+            }
+        }
+        return 0;
+    }
+
     proc K::inline_library_path_value(arg: UInt64) -> UInt64 {
         if LinkerHost::K::str_starts_with(arg, "--library-path=") == 1 {
             return LinkerHost::K::str_after_prefix(arg, "--library-path=");
@@ -522,6 +550,7 @@ forge LinkerHostCli {
         if is_defsym_flag(arg) == 1 { return 1; }
         if is_target_flag(arg) == 1 { return 1; }
         if is_undefined_flag(arg) == 1 { return 1; }
+        if is_z_flag(arg) == 1 { return 1; }
         if is_compat_value_flag(arg) == 1 { return 1; }
         return 0;
     }
@@ -727,6 +756,32 @@ forge LinkerHostCli {
             if rs ! ERR_OK { return rs; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
+        let v_build_id = inline_build_id_value(arg);
+        if v_build_id ! 0 {
+            let bi = DustLink::K::set_build_id(v_build_id);
+            if bi ! ERR_OK { return bi; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        let v_z = inline_z_value(arg);
+        if v_z ! 0 {
+            let zs = DustLink::K::set_z_option(v_z);
+            if zs ! ERR_OK { return zs; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_build_id_flag(arg) == 1 {
+            let next_idx_build = idx + 1;
+            if next_idx_build < arg_count {
+                let next_arg_build = LinkerHost::K::arg_at(next_idx_build);
+                if LinkerHost::K::str_starts_with(next_arg_build, "-") == 0 {
+                    let bi2 = DustLink::K::set_build_id(next_arg_build);
+                    if bi2 ! ERR_OK { return bi2; }
+                    return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+                }
+            }
+            let bi_default = DustLink::K::enable_build_id_default();
+            if bi_default ! ERR_OK { return bi_default; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
         let v_path = inline_library_path_value(arg);
         if v_path ! 0 {
             let p = DustLink::K::add_search_path(v_path);
@@ -800,6 +855,12 @@ forge LinkerHostCli {
             if is_undefined_flag(arg) == 1 {
                 let rs2 = DustLink::K::require_symbol(value);
                 if rs2 ! ERR_OK { return rs2; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if is_z_flag(arg) == 1 {
+                if LinkerHost::K::str_starts_with(value, "-") == 1 { return ERR_MISSING_FLAG_VALUE; }
+                let zs2 = DustLink::K::set_z_option(value);
+                if zs2 ! ERR_OK { return zs2; }
                 return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
             }
             if is_compat_value_flag(arg) == 1 {

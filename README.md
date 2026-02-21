@@ -32,6 +32,7 @@
 - Script application:
   - `-T <script>` / `--script <script>`
   - directive support: `ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `EXTERN`, `PROVIDE`, `PROVIDE_HIDDEN`, `INCLUDE`
+  - subset coverage: `MEMORY` (`ORIGIN`, `LENGTH`) and `SECTIONS` location-counter assignment (`. = <addr>`)
 - Link-mode controls:
   - `--gc-sections` / `--no-gc-sections` (GC-aware alloc section selection)
   - `--allow-multiple-definition`
@@ -61,15 +62,17 @@ Primary options:
 - `--no-gc-sections`
 - `--allow-multiple-definition`
 - `--defsym` / `--defsym=<name=value>`
+- `--build-id` / `--build-id=<none|fast|md5|sha1|uuid|0x...>`
 - `--target` / `--target=<triple>`
 - `-m` / `-m<emulation>`
+- `-z` / `-z<...>`
 - `-u`, `--undefined`, `--require-defined`
 - `--no-undefined`, `--error-unresolved-symbols`
 - `--start-group`, `--end-group`
 - `--help`, `--version`
 
-Accepted compatibility flags still consumed as no-op/value-skip include common lld flags like `--build-id`, `--threads=*`, and related variants.  
-`--target`/`-m`, `--defsym`, and section-GC/multi-definition toggles are now wired into linker state.
+Accepted compatibility flags still consumed as no-op/value-skip include some common lld flags like `--threads=*` and related variants.  
+`--target`/`-m`, `--defsym`, `--build-id`, `-z`, required-symbol flags, and section-GC/multi-definition toggles are wired into linker state.
 
 ## Build
 

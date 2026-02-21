@@ -36,8 +36,10 @@ The Dust modules provide deterministic linker behavior for:
 - symbol/relocation resolution and patch application
 - symbol policy controls (`--defsym`, `--allow-multiple-definition`)
 - required-symbol controls (`-u`, `--undefined`, `--require-defined`)
+- build-id controls (`--build-id` with mode/value)
+- `-z` controls (`relro`/`norelro`, `now`/`lazy`, `execstack`/`noexecstack`)
 - section GC policy controls (`--gc-sections`, `--no-gc-sections`)
-- script application (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `EXTERN`, `PROVIDE`, `INCLUDE`)
+- script application (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `EXTERN`, `PROVIDE`, `INCLUDE`, `MEMORY`, `SECTIONS` location-counter subset)
 - top-level orchestrated status/error flow in `DustLink::K`
 
 `Q` and `Phi` remain domain-unavailable for operational paths and return `100`.

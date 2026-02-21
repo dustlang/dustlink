@@ -25,7 +25,22 @@
   - `INCLUDE(...)` with bounded recursive include depth.
 - New Dust test modules:
   - `src/linker_script_semantics_tests.ds`
+  - `src/linker_buildid_z_tests.ds`
   - expanded CLI and cross-format behavior checks in existing test modules.
+- Host runtime linker intrinsics for `--build-id` and `-z` semantics:
+  - `host_linker_enable_build_id_default`
+  - `host_linker_set_build_id`
+  - `host_linker_get_build_id_mode`
+  - `host_linker_set_z_option`
+  - `host_linker_get_z_flags`
+- Linker script subset coverage additions:
+  - `MEMORY` keyword extraction for `ORIGIN` and `LENGTH`
+  - `SECTIONS` location-counter assignment parsing (`. = <addr>`)
+  - location-counter parse now works when assignment appears inside `SECTIONS { ... }` statements.
+- CLI semantic coverage additions:
+  - `--build-id[=<none|fast|md5|sha1|uuid|0x...>]`
+  - `-z <relro|norelro|now|lazy|execstack|noexecstack>` and `-z<...>`
+  - explicit test coverage for hex build-id mode, bare `--build-id` optional-value behavior, and invalid `-z` rejection.
 
 ### Changed
 
@@ -34,6 +49,7 @@
 - Link image planning now uses dynamic calculated image size instead of fixed placeholder section-size constants.
 - Script `SEARCH_DIR` and `INPUT`/`GROUP` path tokens now resolve relative to the including script directory.
 - Symbol resolution checks now enforce required symbol declarations after global resolution.
+- ELF writer now includes build-id note payload when configured, and applies `-z execstack/noexecstack` to emitted segment flag policy.
 
 ## 2026-02-20
 

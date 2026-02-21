@@ -233,6 +233,26 @@ forge DustLink {
         }
     }
 
+    proc K::enable_build_id_default() -> UInt32 {
+        return host_linker_enable_build_id_default();
+    }
+
+    proc K::set_build_id(spec: UInt64) -> UInt32 {
+        if spec == 0 {
+            return ERR_INVALID_FORMAT;
+        } else {
+            return host_linker_set_build_id(spec);
+        }
+    }
+
+    proc K::set_z_option(option: UInt64) -> UInt32 {
+        if option == 0 {
+            return ERR_INVALID_FORMAT;
+        } else {
+            return host_linker_set_z_option(option);
+        }
+    }
+
     proc K::apply_script(path: UInt64) -> UInt32 {
         if path == 0 {
             return ERR_FILE_NOT_FOUND;
