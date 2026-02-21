@@ -141,6 +141,50 @@ forge LinkerBuildIdZTests {
             * expect_u32(LinkerFs::K::str_eq(soname, "libxdv.so"), 1);
     }
 
+    proc K::test_needed_library_note_normalization() -> UInt32 {
+        DustLink::K::reset_state();
+        DustLink::K::set_static(0);
+        DustLink::K::set_as_needed(0);
+        let status = host_linker_note_needed_library("m", "C:\\libs\\libm.a", 1);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let count = host_linker_needed_library_count();
+            if count ! 1 {
+                return 0;
+            } else {
+                let needed = host_linker_get_needed_library(0);
+                return expect_u32(LinkerFs::K::str_eq(needed, "libm.so"), 1);
+            }
+        }
+    }
+
+    proc K::test_as_needed_skips_unused_library() -> UInt32 {
+        DustLink::K::reset_state();
+        DustLink::K::set_static(0);
+        DustLink::K::set_as_needed(1);
+        let status = host_linker_note_needed_library("z", "C:\\libs\\libz.a", 0);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let count = host_linker_needed_library_count();
+            return expect_u32(count, 0);
+        }
+    }
+
+    proc K::test_static_mode_skips_needed_library() -> UInt32 {
+        DustLink::K::reset_state();
+        DustLink::K::set_static(1);
+        DustLink::K::set_as_needed(0);
+        let status = host_linker_note_needed_library("c", "C:\\libs\\libc.a", 1);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let count = host_linker_needed_library_count();
+            return expect_u32(count, 0);
+        }
+    }
+
     proc K::run_all_tests() -> UInt32 {
         let passed =
             test_build_id_default_mode()
@@ -151,7 +195,10 @@ forge LinkerBuildIdZTests {
             + test_z_execstack_toggle()
             + test_z_invalid_rejected()
             + test_dynamic_mode_toggles()
-            + test_dynamic_linker_and_soname_set();
+            + test_dynamic_linker_and_soname_set()
+            + test_needed_library_note_normalization()
+            + test_as_needed_skips_unused_library()
+            + test_static_mode_skips_needed_library();
         return passed;
     }
 }

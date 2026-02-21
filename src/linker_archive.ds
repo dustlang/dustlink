@@ -365,7 +365,28 @@ forge LinkerArchive {
             if archive == 0 {
                 return ERR_FILE_NOT_FOUND;
             } else {
-                return ingest_archive(archive);
+                let before = host_linker_object_count();
+                let status = ingest_archive(archive);
+                if status ! ERR_OK {
+                    return status;
+                } else {
+                    let after = host_linker_object_count();
+                    if after > before {
+                        let note_used = host_linker_note_needed_library(name, archive, 1);
+                        if note_used ! ERR_OK {
+                            return note_used;
+                        } else {
+                            return ERR_OK;
+                        }
+                    } else {
+                        let note_unused = host_linker_note_needed_library(name, archive, 0);
+                        if note_unused ! ERR_OK {
+                            return note_unused;
+                        } else {
+                            return ERR_OK;
+                        }
+                    }
+                }
             }
         }
     }
