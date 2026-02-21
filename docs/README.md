@@ -34,4 +34,10 @@ This directory contains complete Markdown documentation for `dustlink`.
 
 - Object formats: ELF64, COFF x86_64, Mach-O 64-bit x86_64.
 - Output formats: ELF, flat, MBR, PE, Mach-O.
-- Linker script support: basic directives (`ENTRY`, `OUTPUT_FORMAT`, `SEARCH_DIR`, `INPUT`, `GROUP`).
+- Archive/library resolution:
+  - deterministic `-L` search order
+  - dynamic-mode `-l` search prefers shared objects before static archives
+  - static-mode `-l` search prefers static archives
+  - exact-name `-l:<file>` token support
+- Linker script support: directives (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `INCLUDE`) plus `MEMORY`/`SECTIONS` subset handling.
+- Dynamic-link policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`.

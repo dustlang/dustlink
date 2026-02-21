@@ -229,6 +229,11 @@ forge LinkerHostCli {
         return 0;
     }
 
+    proc K::is_allow_shlib_undefined_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--allow-shlib-undefined") == 1 { return 1; }
+        return 0;
+    }
+
     proc K::is_build_id_flag(arg: UInt64) -> UInt32 {
         if LinkerHost::K::str_eq(arg, "--build-id") == 1 { return 1; }
         return 0;
@@ -959,6 +964,13 @@ forge LinkerHostCli {
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
         if is_no_undefined_flag(arg) == 1 {
+            let nu1 = DustLink::K::set_no_undefined(1);
+            if nu1 ! ERR_OK { return nu1; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_allow_shlib_undefined_flag(arg) == 1 {
+            let nu0 = DustLink::K::set_no_undefined(0);
+            if nu0 ! ERR_OK { return nu0; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
         if is_start_group_flag(arg) == 1 {

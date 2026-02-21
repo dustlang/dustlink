@@ -26,7 +26,9 @@ Both files define forge-based test procedures with this pattern:
 - Cross-format compatibility checks (ELF/PE/Mach-O oformat and support routing)
 - Script semantic checks (`OUTPUT_FORMAT`, `PROVIDE`, `EXTERN`, `INCLUDE`)
 - Script subset checks for `MEMORY` (`ORIGIN`) and `SECTIONS` location-counter assignment
+- Script directive checks for `OUTPUT_ARCH` and `AS_NEEDED` state scoping
 - Build-id mode and `-z` option semantic state checks
+- Dynamic unresolved-policy checks (`--no-undefined` and allow-shared-unresolved gate behavior)
 
 ## Recent Integration Checks
 
@@ -36,6 +38,7 @@ Both files define forge-based test procedures with this pattern:
 - Script path (`-T/--script`) applies basic directives and can override output format.
 - `-Map` output creation works on split form (`-Map file.map`).
 - Required-symbol CLI paths (`-u`, `--undefined`, `--require-defined`) are parsed and wired to enforcement checks.
+- Dynamic unresolved-policy CLI paths (`--no-undefined`, `--allow-shlib-undefined`) are parsed and wired to linker state.
 
 ## Current Limitations
 

@@ -56,6 +56,11 @@ Source: `src/linker_link.ds`
 
 `K` domain now performs deterministic input/target/format validation, probes object format via host runtime, routes ingest across ELF/COFF/Mach-O handlers, and returns `LinkerErrors` status codes.
 `link_with_script(script)` applies script directives through the host runtime script parser path.
+`add_library(name)` routes through search-path resolution that now supports:
+
+- dynamic-mode shared-object preference for `-l` resolution,
+- static-mode archive-only resolution,
+- exact-name `-l:<file>` tokens.
 
 `find_linker()` currently resolves to `LINKER_INTERNAL_MVP`.
 

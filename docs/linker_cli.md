@@ -51,6 +51,7 @@ The module exposes:
 - `-s`, `--strip-debug`
 - `--gc-sections`
 - `--allow-multiple-definition`
+- `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`
 - `--help`
 - `--version`
 

@@ -23,6 +23,9 @@
 - Archive ingestion:
   - `.a` and `.lib` search/ingest via `-L/-l` and `--library-path/--library`
   - deterministic search path order
+  - dynamic-mode `-l` resolution prefers shared objects (`.so`/`.dylib`/`.dll`) before static archives
+  - static-mode `-l` resolution uses static archives only
+  - exact-name `-l:<file>` token support
 - Output writers:
   - ELF executable (minimal)
   - flat binary
@@ -31,13 +34,15 @@
   - Mach-O executable (minimal)
 - Script application:
   - `-T <script>` / `--script <script>`
-  - directive support: `ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `EXTERN`, `PROVIDE`, `PROVIDE_HIDDEN`, `INCLUDE`
+  - directive support: `ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `PROVIDE_HIDDEN`, `INCLUDE`
   - subset coverage: `MEMORY` (`ORIGIN`, `LENGTH`) and `SECTIONS` location-counter assignment (`. = <addr>`)
 - Link-mode controls:
   - `--gc-sections` / `--no-gc-sections` (GC-aware alloc section selection)
   - `--allow-multiple-definition`
   - `--defsym name=value`
   - `--target=<triple>` / `-m<emulation>` target selection
+  - dynamic-unresolved policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`
+  - ELF shared-object dynsym ingest for exported symbol resolution
 
 ## Supported Targets and Relocations
 
@@ -68,6 +73,7 @@ Primary options:
 - `-z` / `-z<...>`
 - `-u`, `--undefined`, `--require-defined`
 - `--no-undefined`, `--error-unresolved-symbols`
+- `--allow-shlib-undefined`
 - `--start-group`, `--end-group`
 - `--help`, `--version`
 

@@ -294,6 +294,10 @@ forge LinkerSymbol {
         if unresolved == 0 {
             return host_linker_check_required_symbols();
         } else {
+            let allow_dynamic = host_linker_allow_dynamic_unresolved();
+            if allow_dynamic == 1 {
+                return host_linker_check_required_symbols();
+            }
             let weak_fallbacks = host_linker_weak_fallback_count();
             let unresolved_status = resolve_undefined(unresolved, weak_fallbacks);
             if unresolved_status ! ERR_OK {

@@ -7,6 +7,11 @@ forge LinkerArchive {
     const ERR_CONFLICTING_OPTIONS: UInt32 = 16;
     const ERR_NOT_IMPLEMENTED_YET: UInt32 = 17;
 
+    const TARGET_X86_64_NONE: UInt32 = 0;
+    const TARGET_X86_64_LINUX: UInt32 = 1;
+    const TARGET_X86_64_WINDOWS: UInt32 = 2;
+    const TARGET_X86_64_MACOS: UInt32 = 3;
+
     proc K::is_archive_path(path: UInt64) -> UInt32 {
         if LinkerFs::K::str_ends_with(path, ".a") == 1 {
             return 1;
@@ -288,6 +293,42 @@ forge LinkerArchive {
         }
     }
 
+    proc K::path_is_existing_file(path: UInt64) -> UInt32 {
+        if path == 0 {
+            return 0;
+        } else {
+            if LinkerFs::K::path_exists(path) == 0 {
+                return 0;
+            } else {
+                return LinkerFs::K::path_is_file(path);
+            }
+        }
+    }
+
+    proc K::is_shared_library_path(path: UInt64) -> UInt32 {
+        if LinkerFs::K::str_ends_with(path, ".so") == 1 {
+            return 1;
+        } else {
+            if LinkerFs::K::str_ends_with(path, ".dylib") == 1 {
+                return 1;
+            } else {
+                if LinkerFs::K::str_ends_with(path, ".dll") == 1 {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    proc K::exact_library_leaf(name: UInt64) -> UInt64 {
+        if LinkerFs::K::str_starts_with(name, ":") == 1 {
+            return LinkerFs::K::str_after_prefix(name, ":");
+        } else {
+            return 0;
+        }
+    }
+
     proc K::candidate_unix_lib_name(name: UInt64) -> UInt64 {
         let prefixed = LinkerFs::K::str_concat("lib", name);
         return LinkerFs::K::str_concat(prefixed, ".a");
@@ -306,39 +347,117 @@ forge LinkerArchive {
         return LinkerFs::K::str_concat(prefixed, ".lib");
     }
 
-    proc K::resolve_library_in_path(search_path: UInt64, name: UInt64) -> UInt64 {
-        let unix_with_prefix = LinkerFs::K::path_join(search_path, candidate_unix_lib_name(name));
-        if LinkerFs::K::path_exists(unix_with_prefix) == 1 {
-            if LinkerFs::K::path_is_file(unix_with_prefix) == 1 {
-                return unix_with_prefix;
+    proc K::candidate_unix_shared_name(name: UInt64) -> UInt64 {
+        let prefixed = LinkerFs::K::str_concat("lib", name);
+        return LinkerFs::K::str_concat(prefixed, ".so");
+    }
+
+    proc K::candidate_macos_shared_name(name: UInt64) -> UInt64 {
+        let prefixed = LinkerFs::K::str_concat("lib", name);
+        return LinkerFs::K::str_concat(prefixed, ".dylib");
+    }
+
+    proc K::candidate_windows_shared_name(name: UInt64) -> UInt64 {
+        return LinkerFs::K::str_concat(name, ".dll");
+    }
+
+    proc K::candidate_windows_lib_shared_name(name: UInt64) -> UInt64 {
+        let prefixed = LinkerFs::K::str_concat("lib", name);
+        return LinkerFs::K::str_concat(prefixed, ".dll");
+    }
+
+    proc K::resolve_exact_library_in_path(search_path: UInt64, name: UInt64) -> UInt64 {
+        let leaf = exact_library_leaf(name);
+        if leaf == 0 {
+            return 0;
+        } else {
+            let candidate = LinkerFs::K::path_join(search_path, leaf);
+            if path_is_existing_file(candidate) == 1 {
+                return candidate;
+            } else {
+                return 0;
             }
+        }
+    }
+
+    proc K::resolve_static_library_in_path(search_path: UInt64, name: UInt64) -> UInt64 {
+        let exact = resolve_exact_library_in_path(search_path, name);
+        if exact ! 0 {
+            return exact;
+        }
+
+        let unix_with_prefix = LinkerFs::K::path_join(search_path, candidate_unix_lib_name(name));
+        if path_is_existing_file(unix_with_prefix) == 1 {
+            return unix_with_prefix;
         }
 
         let unix_plain = LinkerFs::K::path_join(search_path, candidate_unix_plain_name(name));
-        if LinkerFs::K::path_exists(unix_plain) == 1 {
-            if LinkerFs::K::path_is_file(unix_plain) == 1 {
-                return unix_plain;
-            }
+        if path_is_existing_file(unix_plain) == 1 {
+            return unix_plain;
         }
 
         let windows_plain = LinkerFs::K::path_join(search_path, candidate_windows_plain_name(name));
-        if LinkerFs::K::path_exists(windows_plain) == 1 {
-            if LinkerFs::K::path_is_file(windows_plain) == 1 {
-                return windows_plain;
-            }
+        if path_is_existing_file(windows_plain) == 1 {
+            return windows_plain;
         }
 
         let windows_with_prefix = LinkerFs::K::path_join(search_path, candidate_windows_lib_name(name));
-        if LinkerFs::K::path_exists(windows_with_prefix) == 1 {
-            if LinkerFs::K::path_is_file(windows_with_prefix) == 1 {
-                return windows_with_prefix;
+        if path_is_existing_file(windows_with_prefix) == 1 {
+            return windows_with_prefix;
+        }
+
+        return 0;
+    }
+
+    proc K::resolve_shared_library_in_path(search_path: UInt64, name: UInt64, target: UInt32) -> UInt64 {
+        let exact = resolve_exact_library_in_path(search_path, name);
+        if exact ! 0 {
+            if is_shared_library_path(exact) == 1 {
+                return exact;
+            } else {
+                return 0;
+            }
+        }
+
+        if target == TARGET_X86_64_WINDOWS {
+            let win_plain = LinkerFs::K::path_join(search_path, candidate_windows_shared_name(name));
+            if path_is_existing_file(win_plain) == 1 {
+                return win_plain;
+            }
+            let win_pref = LinkerFs::K::path_join(search_path, candidate_windows_lib_shared_name(name));
+            if path_is_existing_file(win_pref) == 1 {
+                return win_pref;
+            }
+        } else {
+            if target == TARGET_X86_64_MACOS {
+                let mac = LinkerFs::K::path_join(search_path, candidate_macos_shared_name(name));
+                if path_is_existing_file(mac) == 1 {
+                    return mac;
+                }
+                let unix = LinkerFs::K::path_join(search_path, candidate_unix_shared_name(name));
+                if path_is_existing_file(unix) == 1 {
+                    return unix;
+                }
+            } else {
+                let unix_linux = LinkerFs::K::path_join(search_path, candidate_unix_shared_name(name));
+                if path_is_existing_file(unix_linux) == 1 {
+                    return unix_linux;
+                }
+                let mac_linux = LinkerFs::K::path_join(search_path, candidate_macos_shared_name(name));
+                if path_is_existing_file(mac_linux) == 1 {
+                    return mac_linux;
+                }
+                let win_linux = LinkerFs::K::path_join(search_path, candidate_windows_shared_name(name));
+                if path_is_existing_file(win_linux) == 1 {
+                    return win_linux;
+                }
             }
         }
 
         return 0;
     }
 
-    proc K::resolve_library_with_search_paths(
+    proc K::resolve_library_with_search_paths_static(
         name: UInt64,
         path_index: UInt32,
         path_count: UInt32
@@ -347,11 +466,83 @@ forge LinkerArchive {
             return 0;
         } else {
             let search_path = host_linker_get_search_path(path_index);
-            let found = resolve_library_in_path(search_path, name);
+            let found = resolve_static_library_in_path(search_path, name);
             if found ! 0 {
                 return found;
             } else {
-                return resolve_library_with_search_paths(name, path_index + 1, path_count);
+                return resolve_library_with_search_paths_static(name, path_index + 1, path_count);
+            }
+        }
+    }
+
+    proc K::resolve_library_with_search_paths_dynamic(
+        name: UInt64,
+        target: UInt32,
+        path_index: UInt32,
+        path_count: UInt32
+    ) -> UInt64 {
+        if path_index >= path_count {
+            return 0;
+        } else {
+            let search_path = host_linker_get_search_path(path_index);
+            let shared = resolve_shared_library_in_path(search_path, name, target);
+            if shared ! 0 {
+                return shared;
+            } else {
+                let archive = resolve_static_library_in_path(search_path, name);
+                if archive ! 0 {
+                    return archive;
+                } else {
+                    return resolve_library_with_search_paths_dynamic(name, target, path_index + 1, path_count);
+                }
+            }
+        }
+    }
+
+    proc K::resolve_library_with_search_paths(
+        name: UInt64,
+        target: UInt32,
+        static_mode: UInt32,
+        path_index: UInt32,
+        path_count: UInt32
+    ) -> UInt64 {
+        if static_mode == 1 {
+            return resolve_library_with_search_paths_static(name, path_index, path_count);
+        } else {
+            return resolve_library_with_search_paths_dynamic(name, target, path_index, path_count);
+        }
+    }
+
+    proc K::shared_contribution(unresolved_before: UInt32, unresolved_after: UInt32) -> UInt32 {
+        if unresolved_after < unresolved_before {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::ingest_resolved_library(name: UInt64, path: UInt64) -> UInt32 {
+        if is_shared_library_path(path) == 1 {
+            let unresolved_before = host_linker_unresolved_symbol_count();
+            let shared_status = host_linker_ingest_shared_object(path);
+            if shared_status ! ERR_OK {
+                if shared_status ! ERR_NOT_IMPLEMENTED_YET {
+                    return shared_status;
+                }
+            }
+            let unresolved_after = host_linker_unresolved_symbol_count();
+            let contributed = shared_contribution(unresolved_before, unresolved_after);
+            let note_status = host_linker_note_needed_library(name, path, contributed);
+            if note_status ! ERR_OK {
+                return note_status;
+            } else {
+                return ERR_OK;
+            }
+        } else {
+            if is_archive_path(path) == 1 {
+                return ingest_archive(path);
+            } else {
+                return ingest_object_file(path);
             }
         }
     }
@@ -361,32 +552,13 @@ forge LinkerArchive {
             return ERR_FILE_NOT_FOUND;
         } else {
             let path_count = host_linker_search_path_count();
-            let archive = resolve_library_with_search_paths(name, 0, path_count);
-            if archive == 0 {
+            let target = host_linker_get_target();
+            let static_mode = host_linker_get_static();
+            let library = resolve_library_with_search_paths(name, target, static_mode, 0, path_count);
+            if library == 0 {
                 return ERR_FILE_NOT_FOUND;
             } else {
-                let before = host_linker_object_count();
-                let status = ingest_archive(archive);
-                if status ! ERR_OK {
-                    return status;
-                } else {
-                    let after = host_linker_object_count();
-                    if after > before {
-                        let note_used = host_linker_note_needed_library(name, archive, 1);
-                        if note_used ! ERR_OK {
-                            return note_used;
-                        } else {
-                            return ERR_OK;
-                        }
-                    } else {
-                        let note_unused = host_linker_note_needed_library(name, archive, 0);
-                        if note_unused ! ERR_OK {
-                            return note_unused;
-                        } else {
-                            return ERR_OK;
-                        }
-                    }
-                }
+                return ingest_resolved_library(name, library);
             }
         }
     }

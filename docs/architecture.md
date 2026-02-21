@@ -31,15 +31,19 @@ The Dust modules provide deterministic linker behavior for:
 - target/format validation and routing
 - target/emulation CLI mapping (`--target`, `-m`) into linker target IDs
 - archive search (`.a`/`.lib`) over deterministic `-L` order
+- dynamic-mode library search preferring shared objects before static archives
+- static-mode library search constrained to static archives
+- exact-name library token handling (`-l:<file>`)
 - section and image planning helpers
 - dynamic image-size planning for final emit
 - symbol/relocation resolution and patch application
 - symbol policy controls (`--defsym`, `--allow-multiple-definition`)
 - required-symbol controls (`-u`, `--undefined`, `--require-defined`)
+- dynamic unresolved-policy controls (`--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`)
 - build-id controls (`--build-id` with mode/value)
 - `-z` controls (`relro`/`norelro`, `now`/`lazy`, `execstack`/`noexecstack`)
 - section GC policy controls (`--gc-sections`, `--no-gc-sections`)
-- script application (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `EXTERN`, `PROVIDE`, `INCLUDE`, `MEMORY`, `SECTIONS` location-counter subset)
+- script application (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `INCLUDE`, `MEMORY`, `SECTIONS` location-counter subset)
 - top-level orchestrated status/error flow in `DustLink::K`
 
 `Q` and `Phi` remain domain-unavailable for operational paths and return `100`.

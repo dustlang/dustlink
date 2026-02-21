@@ -185,6 +185,36 @@ forge LinkerBuildIdZTests {
         }
     }
 
+    proc K::test_no_undefined_toggle() -> UInt32 {
+        DustLink::K::reset_state();
+        let on = DustLink::K::set_no_undefined(1);
+        if on ! ERR_OK {
+            return 0;
+        }
+        let a = host_linker_get_no_undefined();
+        let off = DustLink::K::set_no_undefined(0);
+        if off ! ERR_OK {
+            return 0;
+        }
+        let b = host_linker_get_no_undefined();
+        return expect_u32(a, 1) * expect_u32(b, 0);
+    }
+
+    proc K::test_dynamic_unresolved_policy_gate() -> UInt32 {
+        DustLink::K::reset_state();
+        DustLink::K::set_static(0);
+        DustLink::K::set_no_undefined(0);
+        let before = host_linker_allow_dynamic_unresolved();
+        let note = host_linker_note_needed_library("m", "libm.so", 1);
+        if note ! ERR_OK {
+            return 0;
+        }
+        let during = host_linker_allow_dynamic_unresolved();
+        DustLink::K::set_no_undefined(1);
+        let forced = host_linker_allow_dynamic_unresolved();
+        return expect_u32(before, 0) * expect_u32(during, 1) * expect_u32(forced, 0);
+    }
+
     proc K::run_all_tests() -> UInt32 {
         let passed =
             test_build_id_default_mode()
@@ -198,7 +228,9 @@ forge LinkerBuildIdZTests {
             + test_dynamic_linker_and_soname_set()
             + test_needed_library_note_normalization()
             + test_as_needed_skips_unused_library()
-            + test_static_mode_skips_needed_library();
+            + test_static_mode_skips_needed_library()
+            + test_no_undefined_toggle()
+            + test_dynamic_unresolved_policy_gate();
         return passed;
     }
 }

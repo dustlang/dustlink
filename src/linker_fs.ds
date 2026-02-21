@@ -27,6 +27,14 @@ forge LinkerFs {
         return host_str_eq(lhs, rhs);
     }
 
+    proc K::str_starts_with(text: UInt64, prefix: UInt64) -> UInt32 {
+        return host_str_starts_with(text, prefix);
+    }
+
+    proc K::str_after_prefix(text: UInt64, prefix: UInt64) -> UInt64 {
+        return host_str_after_prefix(text, prefix);
+    }
+
     proc K::str_ends_with(text: UInt64, suffix: UInt64) -> UInt32 {
         return host_str_ends_with(text, suffix);
     }

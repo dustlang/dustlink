@@ -35,6 +35,7 @@ The internal Dust linker profile recognizes canonical/alias families for:
 - multiple definition policy (`--allow-multiple-definition`)
 - group flags (`--start-group`, `--end-group`)
 - utility flags (`--help`, `--version`)
+- dynamic-policy flags (`--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`)
 
 ### OFormat values
 
@@ -48,6 +49,17 @@ The internal Dust linker profile recognizes canonical/alias families for:
 
 ### Compatibility handling
 
-Several lld-style flags are accepted for compatibility and currently consumed as no-op/value-skip behaviors (for example `--build-id`, `--threads=*`, `--target=*`, `--sysroot=*`).
+Several lld-style flags are accepted for compatibility and currently consumed as no-op/value-skip behaviors (for example `--threads=*`, `--sysroot=*`, and related diagnostics/stat flags).
+
+State-wired (non-no-op) controls include:
+
+- `--build-id[=<mode>]`
+- `-z <token>`
+- `--target` / `-m`
+- `--defsym`
+- `-u` / `--undefined` / `--require-defined`
+- `--no-undefined` / `--error-unresolved-symbols` / `--allow-shlib-undefined`
+- `-shared` / `-pie` / `--no-pie` / `-static` / `-Bstatic` / `-Bdynamic`
+- `--dynamic-linker` / `--soname`
 
 `linker_cli.ds` and `linker_host_cli.ds` return typed linker errors for unsupported flags and missing values.

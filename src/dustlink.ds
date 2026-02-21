@@ -281,6 +281,10 @@ forge DustLink {
         return host_linker_set_as_needed(enabled);
     }
 
+    proc K::set_no_undefined(enabled: UInt32) -> UInt32 {
+        return host_linker_set_no_undefined(enabled);
+    }
+
     proc K::set_dynamic_linker(path: UInt64) -> UInt32 {
         if path == 0 {
             return ERR_INVALID_FORMAT;

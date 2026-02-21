@@ -41,6 +41,20 @@
   - `--build-id[=<none|fast|md5|sha1|uuid|0x...>]`
   - `-z <relro|norelro|now|lazy|execstack|noexecstack>` and `-z<...>`
   - explicit test coverage for hex build-id mode, bare `--build-id` optional-value behavior, and invalid `-z` rejection.
+- Shared-library parity additions:
+  - host runtime shared-object ingest path: `host_linker_ingest_shared_object`
+  - ELF `.so` dynsym-based exported-symbol ingestion for dynamic resolution
+  - host runtime unresolved-policy intrinsics:
+    - `host_linker_set_no_undefined`
+    - `host_linker_get_no_undefined`
+    - `host_linker_allow_dynamic_unresolved`
+- Script subset additions:
+  - `OUTPUT_ARCH(...)`
+  - `AS_NEEDED(...)` and `NO_AS_NEEDED(...)` scoped token ingestion
+- Additional tests:
+  - dynamic unresolved-policy state tests in `src/linker_buildid_z_tests.ds`
+  - `OUTPUT_ARCH` and `AS_NEEDED` script semantics tests in `src/linker_script_semantics_tests.ds`
+  - `--allow-shlib-undefined` CLI-value behavior test in `src/linker_host_cli_tests.ds`
 
 ### Changed
 
@@ -49,6 +63,11 @@
 - Link image planning now uses dynamic calculated image size instead of fixed placeholder section-size constants.
 - Script `SEARCH_DIR` and `INPUT`/`GROUP` path tokens now resolve relative to the including script directory.
 - Symbol resolution checks now enforce required symbol declarations after global resolution.
+- `-l`/`--library` resolution now differentiates dynamic and static mode:
+  - dynamic mode prefers shared libraries (`.so`, `.dylib`, `.dll`) before static archives
+  - static mode resolves static archives
+  - exact-name `-l:<file>` search tokens are handled
+- `--no-undefined` / `--error-unresolved-symbols` and `--allow-shlib-undefined` now drive unresolved-symbol policy state instead of being parse-only.
 - ELF writer now includes build-id note payload when configured, and applies `-z execstack/noexecstack` to emitted segment flag policy.
 
 ## 2026-02-20
