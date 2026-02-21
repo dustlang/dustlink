@@ -32,6 +32,11 @@
 - Script application:
   - `-T <script>` / `--script <script>`
   - basic directives: `ENTRY`, `OUTPUT_FORMAT`, `SEARCH_DIR`, `INPUT`, `GROUP`
+- Link-mode controls:
+  - `--gc-sections` / `--no-gc-sections` (GC-aware alloc section selection)
+  - `--allow-multiple-definition`
+  - `--defsym name=value`
+  - `--target=<triple>` / `-m<emulation>` target selection
 
 ## Supported Targets and Relocations
 
@@ -53,11 +58,16 @@ Primary options:
 - `-Map`, `--Map`, `--map-file`
 - `-s`, `--strip-debug`
 - `--gc-sections`
+- `--no-gc-sections`
 - `--allow-multiple-definition`
+- `--defsym` / `--defsym=<name=value>`
+- `--target` / `--target=<triple>`
+- `-m` / `-m<emulation>`
 - `--start-group`, `--end-group`
 - `--help`, `--version`
 
-Accepted compatibility flags (currently consumed/no-op) include common lld flags like `--build-id`, `--threads=*`, `--target=*`, and related variants.
+Accepted compatibility flags still consumed as no-op/value-skip include common lld flags like `--build-id`, `--threads=*`, and related variants.  
+`--target`/`-m`, `--defsym`, and section-GC/multi-definition toggles are now wired into linker state.
 
 ## Build
 

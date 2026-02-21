@@ -29,9 +29,13 @@ The Dust modules provide deterministic linker behavior for:
 
 - flag normalization and validation (gcc/ld/lld profile)
 - target/format validation and routing
+- target/emulation CLI mapping (`--target`, `-m`) into linker target IDs
 - archive search (`.a`/`.lib`) over deterministic `-L` order
 - section and image planning helpers
+- dynamic image-size planning for final emit
 - symbol/relocation resolution and patch application
+- symbol policy controls (`--defsym`, `--allow-multiple-definition`)
+- section GC policy controls (`--gc-sections`, `--no-gc-sections`)
 - script application (basic directive set)
 - top-level orchestrated status/error flow in `DustLink::K`
 

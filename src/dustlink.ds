@@ -11,6 +11,9 @@ forge DustLink {
     const FORMAT_MACHO64: UInt32 = 5;
 
     const TARGET_X86_64_NONE: UInt32 = 0;
+    const TARGET_X86_64_LINUX: UInt32 = 1;
+    const TARGET_X86_64_WINDOWS: UInt32 = 2;
+    const TARGET_X86_64_MACOS: UInt32 = 3;
 
     const ERR_OK: UInt32 = 0;
     const ERR_FILE_NOT_FOUND: UInt32 = 1;
@@ -178,11 +181,47 @@ forge DustLink {
         }
     }
 
+    proc K::set_target(target: UInt32) -> UInt32 {
+        if target == TARGET_X86_64_NONE {
+            return LinkerLink::K::set_target(TARGET_X86_64_NONE);
+        } else {
+            if target == TARGET_X86_64_LINUX {
+                return LinkerLink::K::set_target(TARGET_X86_64_LINUX);
+            } else {
+                if target == TARGET_X86_64_WINDOWS {
+                    return LinkerLink::K::set_target(TARGET_X86_64_WINDOWS);
+                } else {
+                    if target == TARGET_X86_64_MACOS {
+                        return LinkerLink::K::set_target(TARGET_X86_64_MACOS);
+                    } else {
+                        return LinkerLink::K::set_target(target);
+                    }
+                }
+            }
+        }
+    }
+
     proc K::add_library(name: UInt64) -> UInt32 {
         if name == 0 {
             return ERR_FILE_NOT_FOUND;
         } else {
             return linker_link_add_library(name);
+        }
+    }
+
+    proc K::set_gc_sections(enabled: UInt32) -> UInt32 {
+        return host_linker_set_gc_sections(enabled);
+    }
+
+    proc K::set_allow_multiple_definition(enabled: UInt32) -> UInt32 {
+        return host_linker_set_allow_multiple_definition(enabled);
+    }
+
+    proc K::apply_defsym(spec: UInt64) -> UInt32 {
+        if spec == 0 {
+            return ERR_INVALID_FORMAT;
+        } else {
+            return host_linker_apply_defsym(spec);
         }
     }
 

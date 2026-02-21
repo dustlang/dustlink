@@ -221,7 +221,11 @@ forge LinkerSymbol {
             let lhs_bind = host_linker_global_symbol_bind(name_hash);
             let decision = select_definition(lhs_defined, lhs_bind, rhs_defined, rhs_bind);
             if decision == ERR_MULTIPLE_DEFINITION {
-                return ERR_MULTIPLE_DEFINITION;
+                if host_linker_get_allow_multiple_definition() == 1 {
+                    return ERR_OK;
+                } else {
+                    return ERR_MULTIPLE_DEFINITION;
+                }
             } else {
                 if decision == ERR_UNDEFINED_SYMBOL {
                     return ERR_UNDEFINED_SYMBOL;

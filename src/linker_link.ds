@@ -31,6 +31,7 @@ forge LinkerLink {
     const ERR_INVALID_ADDRESS: UInt32 = 8;
     const ERR_INVALID_ENTRY: UInt32 = 9;
     const ERR_WRITE_FAILED: UInt32 = 10;
+    const ERR_INVALID_IMAGE: UInt32 = 11;
     const ERR_UNSUPPORTED_FLAG: UInt32 = 12;
     const ERR_UNSUPPORTED_TARGET: UInt32 = 14;
     const ERR_EMPTY_INPUT: UInt32 = 15;
@@ -281,8 +282,13 @@ forge LinkerLink {
         entry: UInt64,
         base: UInt64
     ) -> UInt32 {
+        let payload_size = calculate_image_size();
+        let text_size = payload_size;
+        if text_size == 0 {
+            return ERR_INVALID_IMAGE;
+        }
         if format == FORMAT_FLAT {
-            let plan_status = compose_flat_image_plan(base, entry, 4096, 2048, 2048, 1024);
+            let plan_status = compose_flat_image_plan(base, entry, text_size, 0, 0, 0);
             if plan_status ! ERR_OK {
                 return plan_status;
             } else {
@@ -290,7 +296,7 @@ forge LinkerLink {
             }
         } else {
             if format == FORMAT_ELF64 {
-                let plan_status_elf = compose_elf_image_plan(base, entry, 4096, 2048, 2048, 1024);
+                let plan_status_elf = compose_elf_image_plan(base, entry, text_size, 0, 0, 0);
                 if plan_status_elf ! ERR_OK {
                     return plan_status_elf;
                 } else {
@@ -301,7 +307,7 @@ forge LinkerLink {
                     return host_linker_write_mbr_image(output);
                 } else {
                     if format == FORMAT_PE64 {
-                        let plan_status_pe = compose_elf_image_plan(base, entry, 4096, 2048, 2048, 1024);
+                        let plan_status_pe = compose_elf_image_plan(base, entry, text_size, 0, 0, 0);
                         if plan_status_pe ! ERR_OK {
                             return plan_status_pe;
                         } else {
@@ -309,7 +315,7 @@ forge LinkerLink {
                         }
                     } else {
                         if format == FORMAT_MACHO64 {
-                            let plan_status_macho = compose_elf_image_plan(base, entry, 4096, 2048, 2048, 1024);
+                            let plan_status_macho = compose_elf_image_plan(base, entry, text_size, 0, 0, 0);
                             if plan_status_macho ! ERR_OK {
                                 return plan_status_macho;
                             } else {

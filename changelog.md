@@ -1,5 +1,23 @@
 # dustlink Changelog
 
+## 2026-02-21
+
+### Added
+
+- Host runtime linker intrinsics:
+  - `host_linker_set_gc_sections` / `host_linker_get_gc_sections`
+  - `host_linker_set_allow_multiple_definition` / `host_linker_get_allow_multiple_definition`
+  - `host_linker_apply_defsym`
+- `--defsym` application path (including `--defsym=name=value`) to absolute symbol definitions.
+- `--target` / `-m` resolution to x86_64 linux/windows/macos target IDs.
+- Target-based output-format defaults when `--oformat` is not explicitly provided.
+
+### Changed
+
+- `--gc-sections` is no longer a no-op; output segment construction now applies GC-aware section retention.
+- `--allow-multiple-definition` now affects global symbol selection conflict behavior.
+- Link image planning now uses dynamic calculated image size instead of fixed placeholder section-size constants.
+
 ## 2026-02-20
 
 ### Added
