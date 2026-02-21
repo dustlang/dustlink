@@ -45,5 +45,11 @@ This directory contains complete Markdown documentation for `dustlink`.
   - `-rpath-link` / `--rpath-link` dynamic resolution paths
   - `--enable-new-dtags` / `--disable-new-dtags` (`DT_RUNPATH` vs `DT_RPATH`)
   - `--copy-dt-needed-entries` / `--no-copy-dt-needed-entries`
+- Shared-symbol ingestion:
+  - ELF dynsym (`.so`) exports
+  - PE export table names
+  - COFF external definitions
+  - Mach-O external definitions
 - Linker script support: directives (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `INCLUDE`) plus `MEMORY`/`SECTIONS` subset handling.
+- Script parser now uses block-aware statement splitting and supports `SECTIONS` output-address forms.
 - Dynamic-link policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`.

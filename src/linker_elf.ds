@@ -10,6 +10,7 @@ forge ElfFormat {
     const EI_VERSION: UInt8 = 1;
 
     const EM_X86_64: UInt16 = 62;
+    const EM_AARCH64: UInt16 = 183;
     const EV_CURRENT: UInt8 = 1;
 
     const ET_REL: UInt16 = 1;
@@ -47,8 +48,15 @@ forge ElfFormat {
     const R_X86_64_NONE: UInt32 = 0;
     const R_X86_64_64: UInt32 = 1;
     const R_X86_64_PC32: UInt32 = 2;
+    const R_X86_64_PLT32: UInt32 = 4;
+    const R_X86_64_GLOB_DAT: UInt32 = 6;
+    const R_X86_64_JUMP_SLOT: UInt32 = 7;
+    const R_X86_64_RELATIVE: UInt32 = 8;
+    const R_X86_64_GOTPCREL: UInt32 = 9;
     const R_X86_64_32: UInt32 = 10;
     const R_X86_64_32S: UInt32 = 11;
+    const R_X86_64_GOTPCRELX: UInt32 = 41;
+    const R_X86_64_REX_GOTPCRELX: UInt32 = 42;
 
     const ELF64_HEADER_SIZE: UInt32 = 64;
     const ELF64_SECTION_HEADER_SIZE: UInt32 = 64;
@@ -139,7 +147,11 @@ forge ElfFormat {
         if machine == EM_X86_64 {
             return 0;
         } else {
-            return 14;
+            if machine == EM_AARCH64 {
+                return 0;
+            } else {
+                return 14;
+            }
         }
     }
 
@@ -175,7 +187,35 @@ forge ElfFormat {
                         if reloc_type == R_X86_64_32S {
                             return 0;
                         } else {
-                            return 6;
+                            if reloc_type == R_X86_64_PLT32 {
+                                return 0;
+                            } else {
+                                if reloc_type == R_X86_64_GLOB_DAT {
+                                    return 0;
+                                } else {
+                                    if reloc_type == R_X86_64_JUMP_SLOT {
+                                        return 0;
+                                    } else {
+                                        if reloc_type == R_X86_64_RELATIVE {
+                                            return 0;
+                                        } else {
+                                            if reloc_type == R_X86_64_GOTPCREL {
+                                                return 0;
+                                            } else {
+                                                if reloc_type == R_X86_64_GOTPCRELX {
+                                                    return 0;
+                                                } else {
+                                                    if reloc_type == R_X86_64_REX_GOTPCRELX {
+                                                        return 0;
+                                                    } else {
+                                                        return 6;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

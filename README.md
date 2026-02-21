@@ -35,7 +35,9 @@
 - Script application:
   - `-T <script>` / `--script <script>`
   - directive support: `ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `PROVIDE_HIDDEN`, `INCLUDE`
-  - subset coverage: `MEMORY` (`ORIGIN`, `LENGTH`) and `SECTIONS` location-counter assignment (`. = <addr>`)
+  - subset coverage: `MEMORY` (`ORIGIN`, `LENGTH`), `SECTIONS` location-counter assignment (`. = <addr>`), and `SECTIONS` output-address form (`.text 0x... : { ... }`)
+  - block-aware script statement splitting for multi-line `MEMORY`/`SECTIONS` blocks
+  - `ENTRY(symbol)` now registers required-symbol intent when symbol resolution is deferred
 - Link-mode controls:
   - `--gc-sections` / `--no-gc-sections` (GC-aware alloc section selection)
   - `--allow-multiple-definition`
@@ -45,12 +47,17 @@
   - dynamic-unresolved policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`
   - dynamic-tag controls: `--enable-new-dtags` / `--disable-new-dtags`
   - transitive `DT_NEEDED` policy controls: `--copy-dt-needed-entries` / `--no-copy-dt-needed-entries`
-  - ELF shared-object dynsym ingest for exported symbol resolution
+  - shared-object symbol ingestion for exported symbol resolution across ELF, PE, COFF, and Mach-O metadata paths
 
 ## Supported Targets and Relocations
 
 - Target IDs: `x86_64` families (`none/linux/windows/macos` IDs).
-- Core relocation set: `R_X86_64_NONE`, `R_X86_64_64`, `R_X86_64_PC32`, `R_X86_64_32`, `R_X86_64_32S`.
+- ELF object validator machine coverage includes `EM_X86_64` and `EM_AARCH64`.
+- Core relocation set includes:
+  - `R_X86_64_NONE`, `R_X86_64_64`, `R_X86_64_PC32`, `R_X86_64_PLT32`
+  - `R_X86_64_GLOB_DAT`, `R_X86_64_JUMP_SLOT`, `R_X86_64_RELATIVE`
+  - `R_X86_64_GOTPCREL`, `R_X86_64_32`, `R_X86_64_32S`
+  - `R_X86_64_GOTPCRELX`, `R_X86_64_REX_GOTPCRELX`
 
 ## CLI Compatibility Surface
 

@@ -10,11 +10,15 @@ Source: `src/linker_elf.ds`
 
 - ELF magic bytes: `EI_MAG0..EI_MAG3`
 - Class/data/version defaults: `EI_CLASS`, `EI_DATA`, `EI_VERSION`
-- Machine: `EM_X86_64 = 62`
+- Machine: `EM_X86_64 = 62`, `EM_AARCH64 = 183`
 - File types: `ET_REL`, `ET_EXEC`, `ET_DYN`
 - Section constants: `SHN_UNDEF`, `SHN_ABS`, `SHT_*`, `SHF_*`
 - Symbol bind/type masks and values: `ELF64_ST_BIND`, `ELF64_ST_TYPE`, `STB_*`, `STT_*`
-- Relocation types: `R_X86_64_NONE`, `R_X86_64_64`, `R_X86_64_PC32`, `R_X86_64_32`, `R_X86_64_32S`
+- Relocation types:
+  - `R_X86_64_NONE`, `R_X86_64_64`, `R_X86_64_PC32`, `R_X86_64_PLT32`
+  - `R_X86_64_GLOB_DAT`, `R_X86_64_JUMP_SLOT`, `R_X86_64_RELATIVE`
+  - `R_X86_64_GOTPCREL`, `R_X86_64_32`, `R_X86_64_32S`
+  - `R_X86_64_GOTPCRELX`, `R_X86_64_REX_GOTPCRELX`
 
 ## `K` Domain Procedures
 
@@ -32,7 +36,7 @@ Source: `src/linker_elf.ds`
 - `get_section_header_offset(data) -> UInt64`
 - `get_program_header_offset(data) -> UInt64`
 
-The MVP implementation now validates ELF identity, machine type, file type, and relocation type using System-V ELF64 constants. Getter helpers remain deterministic descriptor-based defaults.
+The current implementation validates ELF identity, machine type, file type, and relocation type using System-V ELF64 constants. Machine validation now accepts `EM_X86_64` and `EM_AARCH64`. Getter helpers remain deterministic descriptor-based defaults.
 
 ## `Q` and `Phi`
 

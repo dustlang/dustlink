@@ -112,6 +112,53 @@ forge LinkerScriptSemanticsTests {
         }
     }
 
+    proc K::test_script_sections_named_output_address_sets_image_base() -> UInt32 {
+        let path = "dustlink_script_test_sections_named.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "SECTIONS { .text 0x400000 : { *(.text) } }");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let image_base = host_linker_get_image_base();
+            return expect_u64(image_base, 4194304);
+        }
+    }
+
+    proc K::test_script_entry_symbol_marks_required() -> UInt32 {
+        let path = "dustlink_script_test_entry_symbol.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "ENTRY(kernel_entry);");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let required = host_linker_required_symbol_count();
+            return expect_u32(required, 1);
+        }
+    }
+
+    proc K::test_script_multiline_memory_sections_blocks() -> UInt32 {
+        let path = "dustlink_script_test_multiline.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "MEMORY {");
+        LinkerFs::K::append_line(path, "  RAM (rwx) : ORIGIN = 0x500000, LENGTH = 64M");
+        LinkerFs::K::append_line(path, "}");
+        LinkerFs::K::append_line(path, "SECTIONS {");
+        LinkerFs::K::append_line(path, "  .text 0x500000 : { *(.text) }");
+        LinkerFs::K::append_line(path, "}");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let image_base = host_linker_get_image_base();
+            return expect_u64(image_base, 5242880);
+        }
+    }
+
     proc K::test_script_output_arch_sets_target() -> UInt32 {
         let path = "dustlink_script_test_output_arch.ld";
         DustLink::K::reset_state();
@@ -149,6 +196,9 @@ forge LinkerScriptSemanticsTests {
             + test_script_include_directive()
             + test_script_memory_origin_sets_image_base()
             + test_script_sections_location_counter_sets_image_base()
+            + test_script_sections_named_output_address_sets_image_base()
+            + test_script_entry_symbol_marks_required()
+            + test_script_multiline_memory_sections_blocks()
             + test_script_output_arch_sets_target()
             + test_script_as_needed_scope_restores_state();
         return passed;

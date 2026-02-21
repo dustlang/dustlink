@@ -26,7 +26,9 @@ Both files define forge-based test procedures with this pattern:
 - Cross-format compatibility checks (ELF/PE/Mach-O oformat and support routing)
 - Script semantic checks (`OUTPUT_FORMAT`, `PROVIDE`, `EXTERN`, `INCLUDE`)
 - Script subset checks for `MEMORY` (`ORIGIN`) and `SECTIONS` location-counter assignment
+- Script subset checks for `SECTIONS` output-address forms and multi-line block parsing
 - Script directive checks for `OUTPUT_ARCH` and `AS_NEEDED` state scoping
+- Script `ENTRY(symbol)` required-symbol registration checks
 - Build-id mode and `-z` option semantic state checks
 - Dynamic unresolved-policy checks (`--no-undefined` and allow-shared-unresolved gate behavior)
 - Search-path state checks (`--sysroot`, `-rpath`, `-rpath-link`)
@@ -44,11 +46,13 @@ Both files define forge-based test procedures with this pattern:
 - Dynamic unresolved-policy CLI paths (`--no-undefined`, `--allow-shlib-undefined`) are parsed and wired to linker state.
 - Search-path CLI paths (`--sysroot`, `-rpath`, `-rpath-link`) are parsed and wired to linker state.
 - Dynamic tag and copy-needed policy flags are parsed and wired to linker state.
+- Shared-object symbol ingestion now includes ELF, PE, COFF, and Mach-O metadata paths.
+- Relocation handling coverage now includes additional x86_64 relocation IDs used in broader compatibility workflows.
 
 ## Current Limitations
 
 - Tests still focus on deterministic status behavior and MVP arithmetic helpers.
-- They do not yet validate full object parsing, relocation patching on byte buffers, section packing, or emitted file bytes.
+- They do not yet validate exhaustive byte-for-byte parity against `lld` across full flag/script/cross-format matrices.
 - Cross-platform host-link attempt ordering is not yet validated by integration tests.
 
 ## Suggested Next Additions

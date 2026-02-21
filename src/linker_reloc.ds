@@ -7,8 +7,15 @@ forge LinkerReloc {
     const R_X86_64_NONE: UInt32 = 0;
     const R_X86_64_64: UInt32 = 1;
     const R_X86_64_PC32: UInt32 = 2;
+    const R_X86_64_PLT32: UInt32 = 4;
+    const R_X86_64_GLOB_DAT: UInt32 = 6;
+    const R_X86_64_JUMP_SLOT: UInt32 = 7;
+    const R_X86_64_RELATIVE: UInt32 = 8;
+    const R_X86_64_GOTPCREL: UInt32 = 9;
     const R_X86_64_32: UInt32 = 10;
     const R_X86_64_32S: UInt32 = 11;
+    const R_X86_64_GOTPCRELX: UInt32 = 41;
+    const R_X86_64_REX_GOTPCRELX: UInt32 = 42;
 
     const ERR_OK: UInt32 = 0;
     const ERR_INVALID_SECTION: UInt32 = 3;
@@ -31,7 +38,35 @@ forge LinkerReloc {
                         if reloc_type == R_X86_64_32S {
                             return 1;
                         } else {
-                            return 0;
+                            if reloc_type == R_X86_64_PLT32 {
+                                return 1;
+                            } else {
+                                if reloc_type == R_X86_64_GLOB_DAT {
+                                    return 1;
+                                } else {
+                                    if reloc_type == R_X86_64_JUMP_SLOT {
+                                        return 1;
+                                    } else {
+                                        if reloc_type == R_X86_64_RELATIVE {
+                                            return 1;
+                                        } else {
+                                            if reloc_type == R_X86_64_GOTPCREL {
+                                                return 1;
+                                            } else {
+                                                if reloc_type == R_X86_64_GOTPCRELX {
+                                                    return 1;
+                                                } else {
+                                                    if reloc_type == R_X86_64_REX_GOTPCRELX {
+                                                        return 1;
+                                                    } else {
+                                                        return 0;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -52,7 +87,35 @@ forge LinkerReloc {
                     if reloc_type == R_X86_64_32S {
                         return 4;
                     } else {
-                        return 0;
+                        if reloc_type == R_X86_64_PLT32 {
+                            return 4;
+                        } else {
+                            if reloc_type == R_X86_64_GLOB_DAT {
+                                return 8;
+                            } else {
+                                if reloc_type == R_X86_64_JUMP_SLOT {
+                                    return 8;
+                                } else {
+                                    if reloc_type == R_X86_64_RELATIVE {
+                                        return 8;
+                                    } else {
+                                        if reloc_type == R_X86_64_GOTPCREL {
+                                            return 4;
+                                        } else {
+                                            if reloc_type == R_X86_64_GOTPCRELX {
+                                                return 4;
+                                            } else {
+                                                if reloc_type == R_X86_64_REX_GOTPCRELX {
+                                                    return 4;
+                                                } else {
+                                                    return 0;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -147,7 +210,35 @@ forge LinkerReloc {
                         if reloc_type == R_X86_64_32S {
                             return sum;
                         } else {
-                            return 0;
+                            if reloc_type == R_X86_64_PLT32 {
+                                return calculate_pcrel_offset(place_addr, sum, 0);
+                            } else {
+                                if reloc_type == R_X86_64_GLOB_DAT {
+                                    return sum;
+                                } else {
+                                    if reloc_type == R_X86_64_JUMP_SLOT {
+                                        return sum;
+                                    } else {
+                                        if reloc_type == R_X86_64_RELATIVE {
+                                            return sum;
+                                        } else {
+                                            if reloc_type == R_X86_64_GOTPCREL {
+                                                return calculate_pcrel_offset(place_addr, sum, 0);
+                                            } else {
+                                                if reloc_type == R_X86_64_GOTPCRELX {
+                                                    return calculate_pcrel_offset(place_addr, sum, 0);
+                                                } else {
+                                                    if reloc_type == R_X86_64_REX_GOTPCRELX {
+                                                        return calculate_pcrel_offset(place_addr, sum, 0);
+                                                    } else {
+                                                        return 0;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -168,7 +259,19 @@ forge LinkerReloc {
             if reloc_type == R_X86_64_64 {
                 return host_linker_patch_u64(section_index, offset, value);
             } else {
-                return host_linker_patch_u32(section_index, offset, value);
+                if reloc_type == R_X86_64_GLOB_DAT {
+                    return host_linker_patch_u64(section_index, offset, value);
+                } else {
+                    if reloc_type == R_X86_64_JUMP_SLOT {
+                        return host_linker_patch_u64(section_index, offset, value);
+                    } else {
+                        if reloc_type == R_X86_64_RELATIVE {
+                            return host_linker_patch_u64(section_index, offset, value);
+                        } else {
+                            return host_linker_patch_u32(section_index, offset, value);
+                        }
+                    }
+                }
             }
         }
     }

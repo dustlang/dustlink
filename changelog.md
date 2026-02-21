@@ -48,6 +48,10 @@
     - `host_linker_set_no_undefined`
     - `host_linker_get_no_undefined`
     - `host_linker_allow_dynamic_unresolved`
+- Cross-format shared-symbol ingestion additions:
+  - PE export table parsing for `.dll`-style shared symbol discovery
+  - COFF external-definition symbol ingest path for shared symbol discovery
+  - Mach-O external-definition symbol ingest path for shared symbol discovery (including underscore alias normalization)
 - Search-path and runtime loader parity additions:
   - host runtime search-path intrinsics:
     - `host_linker_set_sysroot` / `host_linker_get_sysroot`
@@ -74,6 +78,13 @@
   - search-path state tests for sysroot/rpath/rpath-link in `src/linker_buildid_z_tests.ds`
   - dynamic tag mode and copy-needed toggle tests in `src/linker_buildid_z_tests.ds`
   - CLI requires-value/no-value coverage for sysroot/rpath/rpath-link/new-dtags/copy-needed flags in `src/linker_host_cli_tests.ds`
+  - linker-script semantics tests for:
+    - `SECTIONS` output-address form (`.text 0x... : { ... }`)
+    - `ENTRY(symbol)` required-symbol registration
+    - multi-line `MEMORY`/`SECTIONS` block parsing
+- ELF/relocation parity additions in Dust modules:
+  - `EM_AARCH64` acceptance in ELF machine validator path
+  - relocation ID support additions: `PLT32`, `GLOB_DAT`, `JUMP_SLOT`, `RELATIVE`, `GOTPCREL`, `GOTPCRELX`, `REX_GOTPCRELX`
 
 ### Changed
 
@@ -92,6 +103,8 @@
   - target/sysroot default search roots
 - `--no-undefined` / `--error-unresolved-symbols` and `--allow-shlib-undefined` now drive unresolved-symbol policy state instead of being parse-only.
 - ELF writer now includes build-id note payload when configured, applies `-z execstack/noexecstack` to emitted segment flag policy, and emits runpath using new-dtags mode (`DT_RUNPATH` vs `DT_RPATH`).
+- shared-object ingestion for COFF and Mach-O is no longer treated as a no-op in host runtime linker paths.
+- script statement handling now uses block-aware splitting instead of naive `;`/newline splitting, reducing false splits inside structured linker-script blocks.
 
 ## 2026-02-20
 
