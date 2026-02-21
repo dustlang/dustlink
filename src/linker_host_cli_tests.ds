@@ -7,6 +7,12 @@ forge LinkerHostCliTests {
     const FORMAT_ELF64: UInt32 = 1;
     const FORMAT_BINARY: UInt32 = 2;
     const FORMAT_MBR: UInt32 = 3;
+    const FORMAT_PE64: UInt32 = 4;
+    const FORMAT_MACHO64: UInt32 = 5;
+
+    const TARGET_X86_64_LINUX: UInt32 = 1;
+    const TARGET_X86_64_WINDOWS: UInt32 = 2;
+    const TARGET_X86_64_MACOS: UInt32 = 3;
 
     proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
         if actual == expected {
@@ -53,6 +59,61 @@ forge LinkerHostCliTests {
         return expect_u32(FORMAT_MBR, 3);
     }
 
+    proc K::test_oformat_pe_alias() -> UInt32 {
+        let format = LinkerHostCli::K::resolve_oformat("pei-x86-64");
+        return expect_u32(format, FORMAT_PE64);
+    }
+
+    proc K::test_oformat_macho_alias() -> UInt32 {
+        let format = LinkerHostCli::K::resolve_oformat("macho-x86-64");
+        return expect_u32(format, FORMAT_MACHO64);
+    }
+
+    proc K::test_target_windows_alias() -> UInt32 {
+        let target = LinkerHostCli::K::resolve_target("x86_64-windows-msvc");
+        return expect_u32(target, TARGET_X86_64_WINDOWS);
+    }
+
+    proc K::test_target_macos_alias() -> UInt32 {
+        let target = LinkerHostCli::K::resolve_target("x86_64-apple-darwin");
+        return expect_u32(target, TARGET_X86_64_MACOS);
+    }
+
+    proc K::test_target_linux_alias() -> UInt32 {
+        let target = LinkerHostCli::K::resolve_target("elf_x86_64");
+        return expect_u32(target, TARGET_X86_64_LINUX);
+    }
+
+    proc K::test_default_format_for_windows_target() -> UInt32 {
+        let format = LinkerHostCli::K::default_format_for_target(TARGET_X86_64_WINDOWS);
+        return expect_u32(format, FORMAT_PE64);
+    }
+
+    proc K::test_default_format_for_macos_target() -> UInt32 {
+        let format = LinkerHostCli::K::default_format_for_target(TARGET_X86_64_MACOS);
+        return expect_u32(format, FORMAT_MACHO64);
+    }
+
+    proc K::test_inline_undefined_short_alias() -> UInt32 {
+        let token = LinkerHostCli::K::inline_undefined_value("-uputs");
+        return expect_u32(LinkerHost::K::str_eq(token, "puts"), 1);
+    }
+
+    proc K::test_undefined_flag_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--undefined");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_require_defined_flag_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--require-defined");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_no_undefined_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--no-undefined");
+        return expect_u32(required, 0);
+    }
+
     proc K::test_ok_constant() -> UInt32 {
         return expect_u32(ERR_OK, 0);
     }
@@ -67,6 +128,17 @@ forge LinkerHostCliTests {
             + test_oformat_elf64_constant()
             + test_oformat_binary_constant()
             + test_oformat_mbr_constant()
+            + test_oformat_pe_alias()
+            + test_oformat_macho_alias()
+            + test_target_windows_alias()
+            + test_target_macos_alias()
+            + test_target_linux_alias()
+            + test_default_format_for_windows_target()
+            + test_default_format_for_macos_target()
+            + test_inline_undefined_short_alias()
+            + test_undefined_flag_requires_value()
+            + test_require_defined_flag_requires_value()
+            + test_no_undefined_flag_no_value()
             + test_ok_constant();
         return passed;
     }

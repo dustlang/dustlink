@@ -31,7 +31,7 @@
   - Mach-O executable (minimal)
 - Script application:
   - `-T <script>` / `--script <script>`
-  - basic directives: `ENTRY`, `OUTPUT_FORMAT`, `SEARCH_DIR`, `INPUT`, `GROUP`
+  - directive support: `ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `EXTERN`, `PROVIDE`, `PROVIDE_HIDDEN`, `INCLUDE`
 - Link-mode controls:
   - `--gc-sections` / `--no-gc-sections` (GC-aware alloc section selection)
   - `--allow-multiple-definition`
@@ -63,6 +63,8 @@ Primary options:
 - `--defsym` / `--defsym=<name=value>`
 - `--target` / `--target=<triple>`
 - `-m` / `-m<emulation>`
+- `-u`, `--undefined`, `--require-defined`
+- `--no-undefined`, `--error-unresolved-symbols`
 - `--start-group`, `--end-group`
 - `--help`, `--version`
 

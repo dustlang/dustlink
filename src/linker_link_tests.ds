@@ -10,6 +10,9 @@ forge LinkerLinkTests {
     const ERR_UNSUPPORTED_TARGET: UInt32 = 14;
     const LINKER_INTERNAL_MVP: UInt32 = 1;
     const TARGET_X86_64_LINUX: UInt32 = 1;
+    const FORMAT_ELF64: UInt32 = 1;
+    const FORMAT_PE64: UInt32 = 4;
+    const FORMAT_MACHO64: UInt32 = 5;
 
     proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
         if actual == expected {
@@ -74,6 +77,21 @@ forge LinkerLinkTests {
         return expect_u32(result, LINKER_INTERNAL_MVP);
     }
 
+    proc K::test_format_elf_supported() -> UInt32 {
+        let result = LinkerLink::K::is_supported_format(FORMAT_ELF64);
+        return expect_u32(result, 1);
+    }
+
+    proc K::test_format_pe_supported() -> UInt32 {
+        let result = LinkerLink::K::is_supported_format(FORMAT_PE64);
+        return expect_u32(result, 1);
+    }
+
+    proc K::test_format_macho_supported() -> UInt32 {
+        let result = LinkerLink::K::is_supported_format(FORMAT_MACHO64);
+        return expect_u32(result, 1);
+    }
+
     proc K::test_q_rejected() -> UInt32 {
         let result = LinkerLink::Q::link();
         return expect_u32(result, 100);
@@ -97,6 +115,9 @@ forge LinkerLinkTests {
             + test_create_flat_binary_basic()
             + test_create_mbr_image_requires_kernel()
             + test_find_linker_prefers_internal()
+            + test_format_elf_supported()
+            + test_format_pe_supported()
+            + test_format_macho_supported()
             + test_q_rejected()
             + test_phi_rejected();
         return passed;

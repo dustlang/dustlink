@@ -1,0 +1,94 @@
+// Linker script behavior tests for parser semantics and state effects.
+
+forge LinkerScriptSemanticsTests {
+    const ERR_OK: UInt32 = 0;
+
+    const FORMAT_PE64: UInt32 = 4;
+    const FORMAT_MACHO64: UInt32 = 5;
+
+    proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
+        if actual == expected {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::expect_u64(actual: UInt64, expected: UInt64) -> UInt32 {
+        if actual == expected {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::test_script_output_format_directive() -> UInt32 {
+        let path = "dustlink_script_test_format.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "OUTPUT_FORMAT(pei-x86-64);");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let format = host_linker_get_output_format();
+            return expect_u32(format, FORMAT_PE64);
+        }
+    }
+
+    proc K::test_script_provide_symbol_definition() -> UInt32 {
+        let path = "dustlink_script_test_provide.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "PROVIDE(test_symbol=0x2000);");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let hash = LinkerFs::K::hash_name("test_symbol");
+            let defined = host_linker_global_symbol_defined(hash);
+            let address = host_linker_global_symbol_address(hash);
+            return expect_u32(defined, 1) * expect_u64(address, 8192);
+        }
+    }
+
+    proc K::test_script_extern_symbol_requirement() -> UInt32 {
+        let path = "dustlink_script_test_extern.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "EXTERN(missing_symbol);");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let required = host_linker_required_symbol_count();
+            return expect_u32(required, 1);
+        }
+    }
+
+    proc K::test_script_include_directive() -> UInt32 {
+        let child = "dustlink_script_test_include_child.ld";
+        let parent = "dustlink_script_test_include_parent.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(child);
+        LinkerFs::K::append_line(child, "OUTPUT_FORMAT(macho64);");
+        LinkerFs::K::clear_file(parent);
+        LinkerFs::K::append_line(parent, "INCLUDE(dustlink_script_test_include_child.ld);");
+        let status = DustLink::K::apply_script(parent);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let format = host_linker_get_output_format();
+            return expect_u32(format, FORMAT_MACHO64);
+        }
+    }
+
+    proc K::run_all_tests() -> UInt32 {
+        let passed =
+            test_script_output_format_directive()
+            + test_script_provide_symbol_definition()
+            + test_script_extern_symbol_requirement()
+            + test_script_include_directive();
+        return passed;
+    }
+}

@@ -225,6 +225,14 @@ forge DustLink {
         }
     }
 
+    proc K::require_symbol(name: UInt64) -> UInt32 {
+        if name == 0 {
+            return ERR_INVALID_FORMAT;
+        } else {
+            return host_linker_require_symbol(name);
+        }
+    }
+
     proc K::apply_script(path: UInt64) -> UInt32 {
         if path == 0 {
             return ERR_FILE_NOT_FOUND;
@@ -239,6 +247,10 @@ forge DustLink {
 
     proc K::get_error() -> UInt64 {
         return host_linker_last_error();
+    }
+
+    proc K::reset_state() -> UInt32 {
+        return host_linker_reset_state();
     }
 
     proc K::print_sections() -> UInt32 {

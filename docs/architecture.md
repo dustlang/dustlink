@@ -35,8 +35,9 @@ The Dust modules provide deterministic linker behavior for:
 - dynamic image-size planning for final emit
 - symbol/relocation resolution and patch application
 - symbol policy controls (`--defsym`, `--allow-multiple-definition`)
+- required-symbol controls (`-u`, `--undefined`, `--require-defined`)
 - section GC policy controls (`--gc-sections`, `--no-gc-sections`)
-- script application (basic directive set)
+- script application (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `EXTERN`, `PROVIDE`, `INCLUDE`)
 - top-level orchestrated status/error flow in `DustLink::K`
 
 `Q` and `Phi` remain domain-unavailable for operational paths and return `100`.

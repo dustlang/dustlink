@@ -292,10 +292,15 @@ forge LinkerSymbol {
     proc K::check_unresolved_globals() -> UInt32 {
         let unresolved = host_linker_unresolved_symbol_count();
         if unresolved == 0 {
-            return ERR_OK;
+            return host_linker_check_required_symbols();
         } else {
             let weak_fallbacks = host_linker_weak_fallback_count();
-            return resolve_undefined(unresolved, weak_fallbacks);
+            let unresolved_status = resolve_undefined(unresolved, weak_fallbacks);
+            if unresolved_status ! ERR_OK {
+                return unresolved_status;
+            } else {
+                return host_linker_check_required_symbols();
+            }
         }
     }
 }

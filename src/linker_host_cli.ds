@@ -216,6 +216,19 @@ forge LinkerHostCli {
         }
     }
 
+    proc K::is_undefined_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "-u") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--undefined") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--require-defined") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_no_undefined_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--no-undefined") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--error-unresolved-symbols") == 1 { return 1; }
+        return 0;
+    }
+
     proc K::is_group_marker_flag(arg: UInt64) -> UInt32 {
         if LinkerHost::K::str_eq(arg, "--start-group") == 1 {
             return 1;
@@ -277,10 +290,8 @@ forge LinkerHostCli {
         if LinkerHost::K::str_eq(arg, "--dynamic-linker") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--hash-style") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--build-id") == 1 { return 1; }
-        if is_defsym_flag(arg) == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--threads") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--thread-count") == 1 { return 1; }
-        if is_target_flag(arg) == 1 { return 1; }
         return 0;
     }
 
@@ -343,6 +354,9 @@ forge LinkerHostCli {
         LinkerHost::K::print_line("  --oformat <elf64|binary|mbr|pe|macho64>");
         LinkerHost::K::print_line("  -L/-l and --library-path/--library");
         LinkerHost::K::print_line("  -Map/--map-file");
+        LinkerHost::K::print_line("  --target=<triple> | -m<emulation>");
+        LinkerHost::K::print_line("  --defsym=name=value");
+        LinkerHost::K::print_line("  -u/--undefined/--require-defined <symbol>");
         return ERR_OK;
     }
 
@@ -447,6 +461,23 @@ forge LinkerHostCli {
         return 0;
     }
 
+    proc K::inline_undefined_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--undefined=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--undefined=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "--require-defined=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--require-defined=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "-u") == 1 {
+            if LinkerHost::K::str_eq(arg, "-u") == 1 {
+                return 0;
+            } else {
+                return LinkerHost::K::str_after_prefix(arg, "-u");
+            }
+        }
+        return 0;
+    }
+
     proc K::inline_library_path_value(arg: UInt64) -> UInt64 {
         if LinkerHost::K::str_starts_with(arg, "--library-path=") == 1 {
             return LinkerHost::K::str_after_prefix(arg, "--library-path=");
@@ -488,6 +519,9 @@ forge LinkerHostCli {
         if is_library_path_flag(arg) == 1 { return 1; }
         if is_library_flag(arg) == 1 { return 1; }
         if is_script_flag(arg) == 1 { return 1; }
+        if is_defsym_flag(arg) == 1 { return 1; }
+        if is_target_flag(arg) == 1 { return 1; }
+        if is_undefined_flag(arg) == 1 { return 1; }
         if is_compat_value_flag(arg) == 1 { return 1; }
         return 0;
     }
@@ -687,6 +721,12 @@ forge LinkerHostCli {
                 return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
             }
         }
+        let v_undefined = inline_undefined_value(arg);
+        if v_undefined ! 0 {
+            let rs = DustLink::K::require_symbol(v_undefined);
+            if rs ! ERR_OK { return rs; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
         let v_path = inline_library_path_value(arg);
         if v_path ! 0 {
             let p = DustLink::K::add_search_path(v_path);
@@ -757,6 +797,11 @@ forge LinkerHostCli {
                 if ts2 ! ERR_OK { return ts2; }
                 return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
             }
+            if is_undefined_flag(arg) == 1 {
+                let rs2 = DustLink::K::require_symbol(value);
+                if rs2 ! ERR_OK { return rs2; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
             if is_compat_value_flag(arg) == 1 {
                 return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
             }
@@ -781,6 +826,9 @@ forge LinkerHostCli {
         if is_allow_multiple_definition_flag(arg) == 1 {
             let am = DustLink::K::set_allow_multiple_definition(1);
             if am ! ERR_OK { return am; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_no_undefined_flag(arg) == 1 {
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
         if is_group_marker_flag(arg) == 1 {

@@ -5,6 +5,7 @@
 - `src/dustlink_tests.ds`
 - `src/linker_link_tests.ds`
 - `src/linker_host_cli_tests.ds`
+- `src/linker_script_semantics_tests.ds`
 
 ## Test Structure
 
@@ -21,6 +22,8 @@ Both files define forge-based test procedures with this pattern:
 - CLI compatibility helpers (flag normalization and missing-value error paths)
 - `Q` and `Phi` domain error-path expectations (`100`)
 - Linker-link integration surface coverage (`set_linker`, `set_target`, `create_flat_binary`, `find_linker`, etc.)
+- Cross-format compatibility checks (ELF/PE/Mach-O oformat and support routing)
+- Script semantic checks (`OUTPUT_FORMAT`, `PROVIDE`, `EXTERN`, `INCLUDE`)
 
 ## Recent Integration Checks
 
@@ -29,6 +32,7 @@ Both files define forge-based test procedures with this pattern:
 - COFF object ingestion path links into PE output.
 - Script path (`-T/--script`) applies basic directives and can override output format.
 - `-Map` output creation works on split form (`-Map file.map`).
+- Required-symbol CLI paths (`-u`, `--undefined`, `--require-defined`) are parsed and wired to enforcement checks.
 
 ## Current Limitations
 
