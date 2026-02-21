@@ -8,6 +8,7 @@ forge LinkerLinkTests {
     const ERR_WRITE_FAILED: UInt32 = 10;
     const ERR_UNSUPPORTED_FLAG: UInt32 = 12;
     const ERR_UNSUPPORTED_TARGET: UInt32 = 14;
+    const ERR_CONFLICTING_OPTIONS: UInt32 = 16;
     const LINKER_INTERNAL_MVP: UInt32 = 1;
     const TARGET_X86_64_LINUX: UInt32 = 1;
     const FORMAT_ELF64: UInt32 = 1;
@@ -92,6 +93,30 @@ forge LinkerLinkTests {
         return expect_u32(result, 1);
     }
 
+    proc K::test_group_push_pop_roundtrip() -> UInt32 {
+        DustLink::K::reset_state();
+        let s = DustLink::K::start_group();
+        if s ! ERR_OK {
+            return 0;
+        }
+        let depth_after_start = host_linker_group_depth();
+        if depth_after_start ! 1 {
+            return 0;
+        }
+        let e = DustLink::K::end_group_and_resolve();
+        if e ! ERR_OK {
+            return 0;
+        }
+        let depth_after_end = host_linker_group_depth();
+        return expect_u32(depth_after_end, 0);
+    }
+
+    proc K::test_end_group_without_start_rejected() -> UInt32 {
+        DustLink::K::reset_state();
+        let result = DustLink::K::end_group_and_resolve();
+        return expect_u32(result, ERR_CONFLICTING_OPTIONS);
+    }
+
     proc K::test_q_rejected() -> UInt32 {
         let result = LinkerLink::Q::link();
         return expect_u32(result, 100);
@@ -118,6 +143,8 @@ forge LinkerLinkTests {
             + test_format_elf_supported()
             + test_format_pe_supported()
             + test_format_macho_supported()
+            + test_group_push_pop_roundtrip()
+            + test_end_group_without_start_rejected()
             + test_q_rejected()
             + test_phi_rejected();
         return passed;

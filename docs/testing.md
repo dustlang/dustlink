@@ -29,6 +29,9 @@ Both files define forge-based test procedures with this pattern:
 - Script directive checks for `OUTPUT_ARCH` and `AS_NEEDED` state scoping
 - Build-id mode and `-z` option semantic state checks
 - Dynamic unresolved-policy checks (`--no-undefined` and allow-shared-unresolved gate behavior)
+- Search-path state checks (`--sysroot`, `-rpath`, `-rpath-link`)
+- Dynamic tag mode checks (`--enable-new-dtags`, `--disable-new-dtags`)
+- Copy-needed policy checks (`--copy-dt-needed-entries`, `--no-copy-dt-needed-entries`)
 
 ## Recent Integration Checks
 
@@ -39,6 +42,8 @@ Both files define forge-based test procedures with this pattern:
 - `-Map` output creation works on split form (`-Map file.map`).
 - Required-symbol CLI paths (`-u`, `--undefined`, `--require-defined`) are parsed and wired to enforcement checks.
 - Dynamic unresolved-policy CLI paths (`--no-undefined`, `--allow-shlib-undefined`) are parsed and wired to linker state.
+- Search-path CLI paths (`--sysroot`, `-rpath`, `-rpath-link`) are parsed and wired to linker state.
+- Dynamic tag and copy-needed policy flags are parsed and wired to linker state.
 
 ## Current Limitations
 

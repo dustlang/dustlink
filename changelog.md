@@ -48,6 +48,22 @@
     - `host_linker_set_no_undefined`
     - `host_linker_get_no_undefined`
     - `host_linker_allow_dynamic_unresolved`
+- Search-path and runtime loader parity additions:
+  - host runtime search-path intrinsics:
+    - `host_linker_set_sysroot` / `host_linker_get_sysroot`
+    - `host_linker_add_rpath` / `host_linker_rpath_count` / `host_linker_get_rpath`
+    - `host_linker_add_rpath_link` / `host_linker_rpath_link_count` / `host_linker_get_rpath_link`
+    - `host_linker_default_search_path_count` / `host_linker_get_default_search_path`
+  - CLI state wiring for `--sysroot`, `-rpath`/`--rpath`, `-rpath-link`/`--rpath-link`
+  - ELF dynamic runpath emission support
+- Dynamic-tag and transitive-needed parity additions:
+  - host runtime intrinsics:
+    - `host_linker_set_new_dtags` / `host_linker_get_new_dtags`
+    - `host_linker_set_copy_dt_needed_entries` / `host_linker_get_copy_dt_needed_entries`
+  - CLI state wiring for `--enable-new-dtags` / `--disable-new-dtags`
+  - CLI state wiring for `--copy-dt-needed-entries` / `--no-copy-dt-needed-entries`
+  - ELF dynamic tag mode support (`DT_RUNPATH` or `DT_RPATH`)
+  - ELF transitive `DT_NEEDED` parse/append path when copy-needed mode is enabled
 - Script subset additions:
   - `OUTPUT_ARCH(...)`
   - `AS_NEEDED(...)` and `NO_AS_NEEDED(...)` scoped token ingestion
@@ -55,6 +71,9 @@
   - dynamic unresolved-policy state tests in `src/linker_buildid_z_tests.ds`
   - `OUTPUT_ARCH` and `AS_NEEDED` script semantics tests in `src/linker_script_semantics_tests.ds`
   - `--allow-shlib-undefined` CLI-value behavior test in `src/linker_host_cli_tests.ds`
+  - search-path state tests for sysroot/rpath/rpath-link in `src/linker_buildid_z_tests.ds`
+  - dynamic tag mode and copy-needed toggle tests in `src/linker_buildid_z_tests.ds`
+  - CLI requires-value/no-value coverage for sysroot/rpath/rpath-link/new-dtags/copy-needed flags in `src/linker_host_cli_tests.ds`
 
 ### Changed
 
@@ -67,8 +86,12 @@
   - dynamic mode prefers shared libraries (`.so`, `.dylib`, `.dll`) before static archives
   - static mode resolves static archives
   - exact-name `-l:<file>` search tokens are handled
+- library resolution now includes deterministic fallback stages:
+  - explicit `-L` paths first
+  - `-rpath-link` paths (dynamic mode)
+  - target/sysroot default search roots
 - `--no-undefined` / `--error-unresolved-symbols` and `--allow-shlib-undefined` now drive unresolved-symbol policy state instead of being parse-only.
-- ELF writer now includes build-id note payload when configured, and applies `-z execstack/noexecstack` to emitted segment flag policy.
+- ELF writer now includes build-id note payload when configured, applies `-z execstack/noexecstack` to emitted segment flag policy, and emits runpath using new-dtags mode (`DT_RUNPATH` vs `DT_RPATH`).
 
 ## 2026-02-20
 

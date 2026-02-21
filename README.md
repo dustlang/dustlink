@@ -22,7 +22,7 @@
   - Mach-O 64-bit x86_64 objects
 - Archive ingestion:
   - `.a` and `.lib` search/ingest via `-L/-l` and `--library-path/--library`
-  - deterministic search path order
+  - deterministic search order: explicit `-L` paths, then `-rpath-link` (dynamic mode), then target/sysroot default library roots
   - dynamic-mode `-l` resolution prefers shared objects (`.so`/`.dylib`/`.dll`) before static archives
   - static-mode `-l` resolution uses static archives only
   - exact-name `-l:<file>` token support
@@ -41,7 +41,10 @@
   - `--allow-multiple-definition`
   - `--defsym name=value`
   - `--target=<triple>` / `-m<emulation>` target selection
+  - `--sysroot`, `-rpath`/`--rpath`, and `-rpath-link`/`--rpath-link`
   - dynamic-unresolved policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`
+  - dynamic-tag controls: `--enable-new-dtags` / `--disable-new-dtags`
+  - transitive `DT_NEEDED` policy controls: `--copy-dt-needed-entries` / `--no-copy-dt-needed-entries`
   - ELF shared-object dynsym ingest for exported symbol resolution
 
 ## Supported Targets and Relocations
@@ -61,6 +64,9 @@ Primary options:
 - `--oformat` (`elf64`, `binary`, `mbr`, `pe`, `macho64` plus aliases)
 - `-L`, `--library-path`
 - `-l`, `--library`
+- `--sysroot`
+- `-rpath`, `--rpath`
+- `-rpath-link`, `--rpath-link`
 - `-Map`, `--Map`, `--map-file`
 - `-s`, `--strip-debug`
 - `--gc-sections`
@@ -74,11 +80,13 @@ Primary options:
 - `-u`, `--undefined`, `--require-defined`
 - `--no-undefined`, `--error-unresolved-symbols`
 - `--allow-shlib-undefined`
+- `--enable-new-dtags`, `--disable-new-dtags`
+- `--copy-dt-needed-entries`, `--no-copy-dt-needed-entries`
 - `--start-group`, `--end-group`
 - `--help`, `--version`
 
-Accepted compatibility flags still consumed as no-op/value-skip include some common lld flags like `--threads=*` and related variants.  
-`--target`/`-m`, `--defsym`, `--build-id`, `-z`, required-symbol flags, and section-GC/multi-definition toggles are wired into linker state.
+Accepted compatibility flags still consumed as no-op/value-skip include common diagnostics/stat controls such as `--threads=*`.  
+`--target`/`-m`, `--defsym`, `--build-id`, `-z`, required-symbol flags, `--sysroot`, `-rpath`, `-rpath-link`, dynamic policy flags, and group/static/shared toggles are wired into linker state.
 
 ## Build
 

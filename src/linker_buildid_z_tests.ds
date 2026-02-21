@@ -215,6 +215,94 @@ forge LinkerBuildIdZTests {
         return expect_u32(before, 0) * expect_u32(during, 1) * expect_u32(forced, 0);
     }
 
+    proc K::test_whole_archive_toggle() -> UInt32 {
+        DustLink::K::reset_state();
+        let on = DustLink::K::set_whole_archive(1);
+        if on ! ERR_OK {
+            return 0;
+        }
+        let a = host_linker_get_whole_archive();
+        let off = DustLink::K::set_whole_archive(0);
+        if off ! ERR_OK {
+            return 0;
+        }
+        let b = host_linker_get_whole_archive();
+        return expect_u32(a, 1) * expect_u32(b, 0);
+    }
+
+    proc K::test_sysroot_roundtrip() -> UInt32 {
+        DustLink::K::reset_state();
+        let status = DustLink::K::set_sysroot("/opt/xdv-sysroot");
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let sysroot = host_linker_get_sysroot();
+            return expect_u32(LinkerFs::K::str_eq(sysroot, "/opt/xdv-sysroot"), 1);
+        }
+    }
+
+    proc K::test_rpath_roundtrip() -> UInt32 {
+        DustLink::K::reset_state();
+        let status = DustLink::K::add_rpath("/opt/runtime/lib");
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let count = host_linker_rpath_count();
+            if count ! 1 {
+                return 0;
+            } else {
+                let path = host_linker_get_rpath(0);
+                return expect_u32(LinkerFs::K::str_eq(path, "/opt/runtime/lib"), 1);
+            }
+        }
+    }
+
+    proc K::test_rpath_link_roundtrip() -> UInt32 {
+        DustLink::K::reset_state();
+        let status = DustLink::K::add_rpath_link("/opt/link/lib");
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let count = host_linker_rpath_link_count();
+            if count ! 1 {
+                return 0;
+            } else {
+                let path = host_linker_get_rpath_link(0);
+                return expect_u32(LinkerFs::K::str_eq(path, "/opt/link/lib"), 1);
+            }
+        }
+    }
+
+    proc K::test_new_dtags_toggle() -> UInt32 {
+        DustLink::K::reset_state();
+        let off = DustLink::K::set_new_dtags(0);
+        if off ! ERR_OK {
+            return 0;
+        }
+        let a = host_linker_get_new_dtags();
+        let on = DustLink::K::set_new_dtags(1);
+        if on ! ERR_OK {
+            return 0;
+        }
+        let b = host_linker_get_new_dtags();
+        return expect_u32(a, 0) * expect_u32(b, 1);
+    }
+
+    proc K::test_copy_dt_needed_entries_toggle() -> UInt32 {
+        DustLink::K::reset_state();
+        let on = DustLink::K::set_copy_dt_needed_entries(1);
+        if on ! ERR_OK {
+            return 0;
+        }
+        let a = host_linker_get_copy_dt_needed_entries();
+        let off = DustLink::K::set_copy_dt_needed_entries(0);
+        if off ! ERR_OK {
+            return 0;
+        }
+        let b = host_linker_get_copy_dt_needed_entries();
+        return expect_u32(a, 1) * expect_u32(b, 0);
+    }
+
     proc K::run_all_tests() -> UInt32 {
         let passed =
             test_build_id_default_mode()
@@ -230,7 +318,13 @@ forge LinkerBuildIdZTests {
             + test_as_needed_skips_unused_library()
             + test_static_mode_skips_needed_library()
             + test_no_undefined_toggle()
-            + test_dynamic_unresolved_policy_gate();
+            + test_dynamic_unresolved_policy_gate()
+            + test_whole_archive_toggle()
+            + test_sysroot_roundtrip()
+            + test_rpath_roundtrip()
+            + test_rpath_link_roundtrip()
+            + test_new_dtags_toggle()
+            + test_copy_dt_needed_entries_toggle();
         return passed;
     }
 }

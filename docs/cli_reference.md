@@ -30,12 +30,17 @@ The internal Dust linker profile recognizes canonical/alias families for:
 - script (`-T`, `--script`)
 - oformat (`--oformat`)
 - library path/library (`-L`, `--library-path`, `-l`, `--library`)
+- sysroot (`--sysroot`)
+- runtime search path (`-rpath`, `--rpath`)
+- link-time runtime search path (`-rpath-link`, `--rpath-link`)
 - strip (`-s`, `--strip-debug`)
 - section GC (`--gc-sections`)
 - multiple definition policy (`--allow-multiple-definition`)
 - group flags (`--start-group`, `--end-group`)
 - utility flags (`--help`, `--version`)
 - dynamic-policy flags (`--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`)
+- dynamic-tag mode flags (`--enable-new-dtags`, `--disable-new-dtags`)
+- transitive-needed flags (`--copy-dt-needed-entries`, `--no-copy-dt-needed-entries`)
 
 ### OFormat values
 
@@ -49,7 +54,7 @@ The internal Dust linker profile recognizes canonical/alias families for:
 
 ### Compatibility handling
 
-Several lld-style flags are accepted for compatibility and currently consumed as no-op/value-skip behaviors (for example `--threads=*`, `--sysroot=*`, and related diagnostics/stat flags).
+Several lld-style flags are accepted for compatibility and currently consumed as no-op/value-skip behaviors (for example `--threads=*` and related diagnostics/stat flags).
 
 State-wired (non-no-op) controls include:
 
@@ -61,5 +66,10 @@ State-wired (non-no-op) controls include:
 - `--no-undefined` / `--error-unresolved-symbols` / `--allow-shlib-undefined`
 - `-shared` / `-pie` / `--no-pie` / `-static` / `-Bstatic` / `-Bdynamic`
 - `--dynamic-linker` / `--soname`
+- `--sysroot`
+- `-rpath` / `--rpath`
+- `-rpath-link` / `--rpath-link`
+- `--enable-new-dtags` / `--disable-new-dtags`
+- `--copy-dt-needed-entries` / `--no-copy-dt-needed-entries`
 
 `linker_cli.ds` and `linker_host_cli.ds` return typed linker errors for unsupported flags and missing values.

@@ -60,7 +60,8 @@ Source: `src/linker_link.ds`
 
 - dynamic-mode shared-object preference for `-l` resolution,
 - static-mode archive-only resolution,
-- exact-name `-l:<file>` tokens.
+- exact-name `-l:<file>` tokens,
+- deterministic search order across explicit `-L`, dynamic `-rpath-link`, and target/sysroot defaults.
 
 `find_linker()` currently resolves to `LINKER_INTERNAL_MVP`.
 

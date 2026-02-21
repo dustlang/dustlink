@@ -181,6 +181,30 @@ forge DustLink {
         }
     }
 
+    proc K::set_sysroot(path: UInt64) -> UInt32 {
+        if path == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            return host_linker_set_sysroot(path);
+        }
+    }
+
+    proc K::add_rpath(path: UInt64) -> UInt32 {
+        if path == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            return host_linker_add_rpath(path);
+        }
+    }
+
+    proc K::add_rpath_link(path: UInt64) -> UInt32 {
+        if path == 0 {
+            return ERR_FILE_NOT_FOUND;
+        } else {
+            return host_linker_add_rpath_link(path);
+        }
+    }
+
     proc K::set_target(target: UInt32) -> UInt32 {
         if target == TARGET_X86_64_NONE {
             return LinkerLink::K::set_target(TARGET_X86_64_NONE);
@@ -279,6 +303,18 @@ forge DustLink {
 
     proc K::set_as_needed(enabled: UInt32) -> UInt32 {
         return host_linker_set_as_needed(enabled);
+    }
+
+    proc K::set_new_dtags(enabled: UInt32) -> UInt32 {
+        return host_linker_set_new_dtags(enabled);
+    }
+
+    proc K::set_copy_dt_needed_entries(enabled: UInt32) -> UInt32 {
+        return host_linker_set_copy_dt_needed_entries(enabled);
+    }
+
+    proc K::set_whole_archive(enabled: UInt32) -> UInt32 {
+        return host_linker_set_whole_archive(enabled);
     }
 
     proc K::set_no_undefined(enabled: UInt32) -> UInt32 {

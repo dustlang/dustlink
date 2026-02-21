@@ -119,6 +119,55 @@ forge LinkerHostCliTests {
         return expect_u32(required, 0);
     }
 
+    proc K::test_whole_archive_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--whole-archive");
+        return expect_u32(required, 0);
+    }
+
+    proc K::test_no_whole_archive_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--no-whole-archive");
+        return expect_u32(required, 0);
+    }
+
+    proc K::test_sysroot_flag_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--sysroot");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_rpath_flag_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("-rpath");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_rpath_link_flag_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("-rpath-link");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_inline_sysroot_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_sysroot_value("--sysroot=/opt/sysroot");
+        return expect_u32(LinkerHost::K::str_eq(value, "/opt/sysroot"), 1);
+    }
+
+    proc K::test_inline_rpath_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_rpath_value("-rpath/usr/lib");
+        return expect_u32(LinkerHost::K::str_eq(value, "/usr/lib"), 1);
+    }
+
+    proc K::test_inline_rpath_link_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_rpath_link_value("-rpath-link/usr/lib");
+        return expect_u32(LinkerHost::K::str_eq(value, "/usr/lib"), 1);
+    }
+
+    proc K::test_rpath_link_not_parsed_as_rpath() -> UInt32 {
+        let value = LinkerHostCli::K::inline_rpath_value("-rpath-link/usr/lib");
+        if value == 0 {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
     proc K::test_build_id_inline_value() -> UInt32 {
         let value = LinkerHostCli::K::inline_build_id_value("--build-id=sha1");
         return expect_u32(LinkerHost::K::str_eq(value, "sha1"), 1);
@@ -175,6 +224,26 @@ forge LinkerHostCliTests {
         return expect_u32(required, 0);
     }
 
+    proc K::test_enable_new_dtags_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--enable-new-dtags");
+        return expect_u32(required, 0);
+    }
+
+    proc K::test_disable_new_dtags_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--disable-new-dtags");
+        return expect_u32(required, 0);
+    }
+
+    proc K::test_copy_dt_needed_entries_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--copy-dt-needed-entries");
+        return expect_u32(required, 0);
+    }
+
+    proc K::test_no_copy_dt_needed_entries_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--no-copy-dt-needed-entries");
+        return expect_u32(required, 0);
+    }
+
     proc K::test_ok_constant() -> UInt32 {
         return expect_u32(ERR_OK, 0);
     }
@@ -201,6 +270,15 @@ forge LinkerHostCliTests {
             + test_require_defined_flag_requires_value()
             + test_no_undefined_flag_no_value()
             + test_allow_shlib_undefined_flag_no_value()
+            + test_whole_archive_flag_no_value()
+            + test_no_whole_archive_flag_no_value()
+            + test_sysroot_flag_requires_value()
+            + test_rpath_flag_requires_value()
+            + test_rpath_link_flag_requires_value()
+            + test_inline_sysroot_value()
+            + test_inline_rpath_value()
+            + test_inline_rpath_link_value()
+            + test_rpath_link_not_parsed_as_rpath()
             + test_build_id_inline_value()
             + test_build_id_bare_flag_no_required_value()
             + test_z_flag_requires_value()
@@ -212,6 +290,10 @@ forge LinkerHostCliTests {
             + test_soname_requires_value()
             + test_shared_flag_no_value()
             + test_pie_flag_no_value()
+            + test_enable_new_dtags_flag_no_value()
+            + test_disable_new_dtags_flag_no_value()
+            + test_copy_dt_needed_entries_flag_no_value()
+            + test_no_copy_dt_needed_entries_flag_no_value()
             + test_ok_constant();
         return passed;
     }

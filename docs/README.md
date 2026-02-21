@@ -35,9 +35,15 @@ This directory contains complete Markdown documentation for `dustlink`.
 - Object formats: ELF64, COFF x86_64, Mach-O 64-bit x86_64.
 - Output formats: ELF, flat, MBR, PE, Mach-O.
 - Archive/library resolution:
-  - deterministic `-L` search order
+  - deterministic `-L` + `-rpath-link` + target/sysroot default search order
   - dynamic-mode `-l` search prefers shared objects before static archives
   - static-mode `-l` search prefers static archives
   - exact-name `-l:<file>` token support
+- Dynamic loader/search state:
+  - `--sysroot` backed default search roots
+  - `-rpath` / `--rpath` emitted into ELF dynamic tags
+  - `-rpath-link` / `--rpath-link` dynamic resolution paths
+  - `--enable-new-dtags` / `--disable-new-dtags` (`DT_RUNPATH` vs `DT_RPATH`)
+  - `--copy-dt-needed-entries` / `--no-copy-dt-needed-entries`
 - Linker script support: directives (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `INCLUDE`) plus `MEMORY`/`SECTIONS` subset handling.
 - Dynamic-link policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`.

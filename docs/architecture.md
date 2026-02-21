@@ -31,6 +31,10 @@ The Dust modules provide deterministic linker behavior for:
 - target/format validation and routing
 - target/emulation CLI mapping (`--target`, `-m`) into linker target IDs
 - archive search (`.a`/`.lib`) over deterministic `-L` order
+- archive search (`.a`/`.lib`) over deterministic explicit/default path order
+  - explicit `-L` paths
+  - `-rpath-link` paths in dynamic mode
+  - target/sysroot default library roots
 - dynamic-mode library search preferring shared objects before static archives
 - static-mode library search constrained to static archives
 - exact-name library token handling (`-l:<file>`)
@@ -40,6 +44,9 @@ The Dust modules provide deterministic linker behavior for:
 - symbol policy controls (`--defsym`, `--allow-multiple-definition`)
 - required-symbol controls (`-u`, `--undefined`, `--require-defined`)
 - dynamic unresolved-policy controls (`--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`)
+- loader/search path controls (`--sysroot`, `-rpath`, `-rpath-link`)
+- dynamic tag mode controls (`--enable-new-dtags`, `--disable-new-dtags`)
+- transitive needed-entry controls (`--copy-dt-needed-entries`, `--no-copy-dt-needed-entries`)
 - build-id controls (`--build-id` with mode/value)
 - `-z` controls (`relro`/`norelro`, `now`/`lazy`, `execstack`/`noexecstack`)
 - section GC policy controls (`--gc-sections`, `--no-gc-sections`)

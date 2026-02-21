@@ -21,7 +21,12 @@ Source: `src/dustlink.ds`
 - `set_entry_point(addr) -> UInt32`
 - `set_base_address(addr) -> UInt32`
 - `add_search_path(path) -> UInt32`
+- `set_sysroot(path) -> UInt32`
+- `add_rpath(path) -> UInt32`
+- `add_rpath_link(path) -> UInt32`
 - `add_library(name) -> UInt32`
+- `set_new_dtags(enabled) -> UInt32`
+- `set_copy_dt_needed_entries(enabled) -> UInt32`
 - `apply_script(path) -> UInt32`
 - `run() -> UInt32`
 - `get_error() -> UInt64`
@@ -36,6 +41,7 @@ Source: `src/dustlink.ds`
 
 - argument validation and status propagation (`LinkerErrors`)
 - output/format/entry/base checks
+- dynamic loader/search state checks (`sysroot`, `rpath`, `rpath-link`)
 - link invocation contract checks
 - image sanity checks via deterministic layout expectations
 - script forwarding into `LinkerLink::K::link_with_script(...)`

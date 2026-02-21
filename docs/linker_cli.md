@@ -52,6 +52,9 @@ The module exposes:
 - `--gc-sections`
 - `--allow-multiple-definition`
 - `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`
+- `--sysroot`, `-rpath`, `--rpath`, `-rpath-link`, `--rpath-link`
+- `--enable-new-dtags`, `--disable-new-dtags`
+- `--copy-dt-needed-entries`, `--no-copy-dt-needed-entries`
 - `--help`
 - `--version`
 
