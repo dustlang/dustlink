@@ -100,6 +100,47 @@ forge LinkerBuildIdZTests {
         return expect_u32(status, ERR_UNSUPPORTED_FLAG);
     }
 
+    proc K::test_dynamic_mode_toggles() -> UInt32 {
+        DustLink::K::reset_state();
+        let s1 = DustLink::K::set_shared(1);
+        if s1 ! ERR_OK {
+            return 0;
+        }
+        let p1 = DustLink::K::set_pie(1);
+        if p1 ! ERR_OK {
+            return 0;
+        }
+        let st1 = DustLink::K::set_static(1);
+        if st1 ! ERR_OK {
+            return 0;
+        }
+        let as1 = DustLink::K::set_as_needed(1);
+        if as1 ! ERR_OK {
+            return 0;
+        }
+        let shared = host_linker_get_shared();
+        let pie = host_linker_get_pie();
+        let static_mode = host_linker_get_static();
+        let as_needed = host_linker_get_as_needed();
+        return expect_u32(shared, 1) * expect_u32(pie, 1) * expect_u32(static_mode, 1) * expect_u32(as_needed, 1);
+    }
+
+    proc K::test_dynamic_linker_and_soname_set() -> UInt32 {
+        DustLink::K::reset_state();
+        let d = DustLink::K::set_dynamic_linker("/lib64/ld-linux-x86-64.so.2");
+        if d ! ERR_OK {
+            return 0;
+        }
+        let s = DustLink::K::set_soname("libxdv.so");
+        if s ! ERR_OK {
+            return 0;
+        }
+        let dyn = host_linker_get_dynamic_linker();
+        let soname = host_linker_get_soname();
+        return expect_u32(LinkerFs::K::str_eq(dyn, "/lib64/ld-linux-x86-64.so.2"), 1)
+            * expect_u32(LinkerFs::K::str_eq(soname, "libxdv.so"), 1);
+    }
+
     proc K::run_all_tests() -> UInt32 {
         let passed =
             test_build_id_default_mode()
@@ -108,7 +149,9 @@ forge LinkerBuildIdZTests {
             + test_build_id_hex_mode()
             + test_z_relro_now_flags()
             + test_z_execstack_toggle()
-            + test_z_invalid_rejected();
+            + test_z_invalid_rejected()
+            + test_dynamic_mode_toggles()
+            + test_dynamic_linker_and_soname_set();
         return passed;
     }
 }

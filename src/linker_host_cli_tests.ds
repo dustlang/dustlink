@@ -134,6 +134,42 @@ forge LinkerHostCliTests {
         return expect_u32(LinkerHost::K::str_eq(token, "relro"), 1);
     }
 
+    proc K::test_group_markers_detected() -> UInt32 {
+        let a = LinkerHostCli::K::is_start_group_flag("--start-group");
+        let b = LinkerHostCli::K::is_end_group_flag("--end-group");
+        return expect_u32(a, 1) * expect_u32(b, 1);
+    }
+
+    proc K::test_inline_dynamic_linker_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_dynamic_linker_value("--dynamic-linker=/lib64/ld-linux-x86-64.so.2");
+        return expect_u32(LinkerHost::K::str_eq(value, "/lib64/ld-linux-x86-64.so.2"), 1);
+    }
+
+    proc K::test_inline_soname_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_soname_value("--soname=libdemo.so");
+        return expect_u32(LinkerHost::K::str_eq(value, "libdemo.so"), 1);
+    }
+
+    proc K::test_dynamic_linker_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--dynamic-linker");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_soname_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--soname");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_shared_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("-shared");
+        return expect_u32(required, 0);
+    }
+
+    proc K::test_pie_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("-pie");
+        return expect_u32(required, 0);
+    }
+
     proc K::test_ok_constant() -> UInt32 {
         return expect_u32(ERR_OK, 0);
     }
@@ -163,6 +199,13 @@ forge LinkerHostCliTests {
             + test_build_id_bare_flag_no_required_value()
             + test_z_flag_requires_value()
             + test_inline_z_short_alias()
+            + test_group_markers_detected()
+            + test_inline_dynamic_linker_value()
+            + test_inline_soname_value()
+            + test_dynamic_linker_requires_value()
+            + test_soname_requires_value()
+            + test_shared_flag_no_value()
+            + test_pie_flag_no_value()
             + test_ok_constant();
         return passed;
     }

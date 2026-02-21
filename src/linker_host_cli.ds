@@ -251,6 +251,14 @@ forge LinkerHostCli {
         }
     }
 
+    proc K::is_start_group_flag(arg: UInt64) -> UInt32 {
+        return LinkerHost::K::str_eq(arg, "--start-group");
+    }
+
+    proc K::is_end_group_flag(arg: UInt64) -> UInt32 {
+        return LinkerHost::K::str_eq(arg, "--end-group");
+    }
+
     proc K::is_help(arg: UInt64) -> UInt32 {
         if LinkerHost::K::str_eq(arg, "-h") == 1 {
             return 1;
@@ -279,6 +287,14 @@ forge LinkerHostCli {
         if LinkerHost::K::str_eq(arg, "--eh-frame-hdr") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--as-needed") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--no-as-needed") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "-shared") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--shared") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "-pie") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--pie") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--no-pie") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "-static") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "-Bstatic") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "-Bdynamic") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--whole-archive") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--no-whole-archive") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--fatal-warnings") == 1 { return 1; }
@@ -297,6 +313,8 @@ forge LinkerHostCli {
     proc K::is_compat_value_flag(arg: UInt64) -> UInt32 {
         if LinkerHost::K::str_eq(arg, "--sysroot") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--dynamic-linker") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--soname") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "-soname") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--hash-style") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--threads") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--thread-count") == 1 { return 1; }
@@ -365,6 +383,9 @@ forge LinkerHostCli {
         LinkerHost::K::print_line("  --target=<triple> | -m<emulation>");
         LinkerHost::K::print_line("  --defsym=name=value");
         LinkerHost::K::print_line("  -u/--undefined/--require-defined <symbol>");
+        LinkerHost::K::print_line("  --start-group ... --end-group");
+        LinkerHost::K::print_line("  -shared/-pie/--no-pie/-static/-Bstatic/-Bdynamic");
+        LinkerHost::K::print_line("  --dynamic-linker <path>  --soname <name>");
         LinkerHost::K::print_line("  --build-id[=<none|fast|md5|sha1|uuid|0x...>]");
         LinkerHost::K::print_line("  -z <relro|norelro|now|lazy|execstack|noexecstack>");
         return ERR_OK;
@@ -528,6 +549,23 @@ forge LinkerHostCli {
         return 0;
     }
 
+    proc K::inline_dynamic_linker_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--dynamic-linker=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--dynamic-linker=");
+        }
+        return 0;
+    }
+
+    proc K::inline_soname_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--soname=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--soname=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "-soname=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "-soname=");
+        }
+        return 0;
+    }
+
     proc K::parse_address_or_zero(raw: UInt64, is_base: UInt32) -> UInt64 {
         let parsed = LinkerHost::K::parse_u64(raw, 0);
         if parsed == 0 { return 0; }
@@ -653,6 +691,10 @@ forge LinkerHostCli {
             if saw_text_base == 1 {
                 if entry_addr < base_addr { return ERR_CONFLICTING_OPTIONS; }
             }
+        }
+        let group_status = DustLink::K::validate_no_open_groups();
+        if group_status ! ERR_OK {
+            return group_status;
         }
         if input_count == 0 { return ERR_EMPTY_INPUT; }
         let final_format = effective_target_format(output_format, saw_oformat);
@@ -794,6 +836,18 @@ forge LinkerHostCli {
             if l ! ERR_OK { return l; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
+        let v_dynamic_linker = inline_dynamic_linker_value(arg);
+        if v_dynamic_linker ! 0 {
+            let dl = DustLink::K::set_dynamic_linker(v_dynamic_linker);
+            if dl ! ERR_OK { return dl; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        let v_soname = inline_soname_value(arg);
+        if v_soname ! 0 {
+            let sn = DustLink::K::set_soname(v_soname);
+            if sn ! ERR_OK { return sn; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
 
         if requires_value(arg) == 1 {
             let next_idx = idx + 1;
@@ -863,6 +917,21 @@ forge LinkerHostCli {
                 if zs2 ! ERR_OK { return zs2; }
                 return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
             }
+            if LinkerHost::K::str_eq(arg, "--dynamic-linker") == 1 {
+                let dl2 = DustLink::K::set_dynamic_linker(value);
+                if dl2 ! ERR_OK { return dl2; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if LinkerHost::K::str_eq(arg, "--soname") == 1 {
+                let sn2 = DustLink::K::set_soname(value);
+                if sn2 ! ERR_OK { return sn2; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if LinkerHost::K::str_eq(arg, "-soname") == 1 {
+                let sn3 = DustLink::K::set_soname(value);
+                if sn3 ! ERR_OK { return sn3; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
             if is_compat_value_flag(arg) == 1 {
                 return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
             }
@@ -892,7 +961,64 @@ forge LinkerHostCli {
         if is_no_undefined_flag(arg) == 1 {
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
-        if is_group_marker_flag(arg) == 1 {
+        if is_start_group_flag(arg) == 1 {
+            let gs = DustLink::K::start_group();
+            if gs ! ERR_OK { return gs; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_end_group_flag(arg) == 1 {
+            let ge = DustLink::K::end_group_and_resolve();
+            if ge ! ERR_OK { return ge; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--as-needed") == 1 {
+            let an1 = DustLink::K::set_as_needed(1);
+            if an1 ! ERR_OK { return an1; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--no-as-needed") == 1 {
+            let an0 = DustLink::K::set_as_needed(0);
+            if an0 ! ERR_OK { return an0; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "-shared") == 1 {
+            let sh1 = DustLink::K::set_shared(1);
+            if sh1 ! ERR_OK { return sh1; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--shared") == 1 {
+            let sh2 = DustLink::K::set_shared(1);
+            if sh2 ! ERR_OK { return sh2; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "-pie") == 1 {
+            let pie1 = DustLink::K::set_pie(1);
+            if pie1 ! ERR_OK { return pie1; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--pie") == 1 {
+            let pie2 = DustLink::K::set_pie(1);
+            if pie2 ! ERR_OK { return pie2; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--no-pie") == 1 {
+            let pie0 = DustLink::K::set_pie(0);
+            if pie0 ! ERR_OK { return pie0; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "-static") == 1 {
+            let st1 = DustLink::K::set_static(1);
+            if st1 ! ERR_OK { return st1; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "-Bstatic") == 1 {
+            let bst1 = DustLink::K::set_static(1);
+            if bst1 ! ERR_OK { return bst1; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "-Bdynamic") == 1 {
+            let bst0 = DustLink::K::set_static(0);
+            if bst0 ! ERR_OK { return bst0; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
         if is_compat_no_value_flag(arg) == 1 {

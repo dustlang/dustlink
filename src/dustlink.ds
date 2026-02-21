@@ -209,6 +209,18 @@ forge DustLink {
         }
     }
 
+    proc K::start_group() -> UInt32 {
+        return LinkerArchive::K::start_group();
+    }
+
+    proc K::end_group_and_resolve() -> UInt32 {
+        return LinkerArchive::K::end_group_and_resolve();
+    }
+
+    proc K::validate_no_open_groups() -> UInt32 {
+        return LinkerArchive::K::validate_no_open_groups();
+    }
+
     proc K::set_gc_sections(enabled: UInt32) -> UInt32 {
         return host_linker_set_gc_sections(enabled);
     }
@@ -250,6 +262,38 @@ forge DustLink {
             return ERR_INVALID_FORMAT;
         } else {
             return host_linker_set_z_option(option);
+        }
+    }
+
+    proc K::set_shared(enabled: UInt32) -> UInt32 {
+        return host_linker_set_shared(enabled);
+    }
+
+    proc K::set_pie(enabled: UInt32) -> UInt32 {
+        return host_linker_set_pie(enabled);
+    }
+
+    proc K::set_static(enabled: UInt32) -> UInt32 {
+        return host_linker_set_static(enabled);
+    }
+
+    proc K::set_as_needed(enabled: UInt32) -> UInt32 {
+        return host_linker_set_as_needed(enabled);
+    }
+
+    proc K::set_dynamic_linker(path: UInt64) -> UInt32 {
+        if path == 0 {
+            return ERR_INVALID_FORMAT;
+        } else {
+            return host_linker_set_dynamic_linker(path);
+        }
+    }
+
+    proc K::set_soname(name: UInt64) -> UInt32 {
+        if name == 0 {
+            return ERR_INVALID_FORMAT;
+        } else {
+            return host_linker_set_soname(name);
         }
     }
 

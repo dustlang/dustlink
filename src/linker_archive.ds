@@ -4,6 +4,7 @@ forge LinkerArchive {
     const ERR_OK: UInt32 = 0;
     const ERR_FILE_NOT_FOUND: UInt32 = 1;
     const ERR_INVALID_FORMAT: UInt32 = 2;
+    const ERR_CONFLICTING_OPTIONS: UInt32 = 16;
     const ERR_NOT_IMPLEMENTED_YET: UInt32 = 17;
 
     proc K::is_archive_path(path: UInt64) -> UInt32 {
@@ -28,6 +29,42 @@ forge LinkerArchive {
 
     proc K::archive_extract_member_object(path: UInt64, index: UInt32) -> UInt64 {
         return host_archive_extract_member_object(path, index);
+    }
+
+    proc K::archive_member_matches_unresolved(path: UInt64, index: UInt32) -> UInt32 {
+        return host_archive_member_matches_unresolved(path, index);
+    }
+
+    proc K::archive_member_is_loaded(path: UInt64, index: UInt32) -> UInt32 {
+        return host_archive_member_is_loaded(path, index);
+    }
+
+    proc K::archive_member_mark_loaded(path: UInt64, index: UInt32) -> UInt32 {
+        return host_archive_member_mark_loaded(path, index);
+    }
+
+    proc K::archive_progress_reset() -> UInt32 {
+        return host_linker_archive_progress_reset();
+    }
+
+    proc K::archive_progress_add(delta: UInt32) -> UInt32 {
+        return host_linker_archive_progress_add(delta);
+    }
+
+    proc K::archive_progress_get() -> UInt32 {
+        return host_linker_archive_progress_get();
+    }
+
+    proc K::group_push_start() -> UInt32 {
+        return host_linker_group_push_start();
+    }
+
+    proc K::group_pop_start() -> UInt32 {
+        return host_linker_group_pop_start();
+    }
+
+    proc K::group_depth() -> UInt32 {
+        return host_linker_group_depth();
     }
 
     proc K::validate_archive(path: UInt64) -> UInt32 {
@@ -65,25 +102,80 @@ forge LinkerArchive {
         }
     }
 
+    proc K::ingest_archive_member_if_needed(path: UInt64, index: UInt32) -> UInt32 {
+        if archive_member_is_loaded(path, index) == 1 {
+            return ERR_OK;
+        } else {
+            let member_kind = archive_member_kind(path, index);
+            if member_kind == 0 {
+                return ERR_OK;
+            } else {
+                if archive_member_matches_unresolved(path, index) == 0 {
+                    return ERR_OK;
+                } else {
+                    let obj_path = archive_extract_member_object(path, index);
+                    if obj_path == 0 {
+                        return ERR_INVALID_FORMAT;
+                    } else {
+                        let ingest_status = ingest_object_file(obj_path);
+                        if ingest_status ! ERR_OK {
+                            return ingest_status;
+                        } else {
+                            let mark = archive_member_mark_loaded(path, index);
+                            if mark == 1 {
+                                let add = archive_progress_add(1);
+                                if add ! ERR_OK {
+                                    return add;
+                                } else {
+                                    return ERR_OK;
+                                }
+                            } else {
+                                return ERR_OK;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     proc K::ingest_archive_members(path: UInt64, index: UInt32, total: UInt32) -> UInt32 {
         if index >= total {
             return ERR_OK;
         } else {
-            let member_kind = archive_member_kind(path, index);
-            if member_kind ! 0 {
-                let obj_path = archive_extract_member_object(path, index);
-                if obj_path == 0 {
-                    return ERR_INVALID_FORMAT;
-                } else {
-                    let ingest_status = ingest_object_file(obj_path);
-                    if ingest_status ! ERR_OK {
-                        return ingest_status;
-                    } else {
-                        return ingest_archive_members(path, index + 1, total);
-                    }
-                }
+            let ingest_status = ingest_archive_member_if_needed(path, index);
+            if ingest_status ! ERR_OK {
+                return ingest_status;
             } else {
                 return ingest_archive_members(path, index + 1, total);
+            }
+        }
+    }
+
+    proc K::ingest_archive_fixpoint(path: UInt64, total: UInt32, round: UInt32) -> UInt32 {
+        if round >= total {
+            return ERR_OK;
+        } else {
+            let reset_status = archive_progress_reset();
+            if reset_status ! ERR_OK {
+                return reset_status;
+            } else {
+                let pass_status = ingest_archive_members(path, 0, total);
+                if pass_status ! ERR_OK {
+                    return pass_status;
+                } else {
+                    let added = archive_progress_get();
+                    if added == 0 {
+                        return ERR_OK;
+                    } else {
+                        let resolved = LinkerSymbol::K::resolve_loaded_symbols();
+                        if resolved ! ERR_OK {
+                            return resolved;
+                        } else {
+                            return ingest_archive_fixpoint(path, total, round + 1);
+                        }
+                    }
+                }
             }
         }
     }
@@ -101,9 +193,98 @@ forge LinkerArchive {
                 if register_status ! ERR_OK {
                     return register_status;
                 } else {
-                    return ingest_archive_members(path, 0, member_count);
+                    return ingest_archive_fixpoint(path, member_count, 0);
                 }
             }
+        }
+    }
+
+    proc K::resolve_registered_archives_pass(index: UInt32, start: UInt32, end: UInt32) -> UInt32 {
+        if index >= end {
+            return ERR_OK;
+        } else {
+            if index < start {
+                return resolve_registered_archives_pass(index + 1, start, end);
+            }
+            let archive_path = host_linker_get_archive(index);
+            if archive_path == 0 {
+                return resolve_registered_archives_pass(index + 1, start, end);
+            } else {
+                let member_count = archive_member_count(archive_path);
+                if member_count == 0 {
+                    return resolve_registered_archives_pass(index + 1, start, end);
+                } else {
+                    let status = ingest_archive_fixpoint(archive_path, member_count, 0);
+                    if status ! ERR_OK {
+                        return status;
+                    } else {
+                        return resolve_registered_archives_pass(index + 1, start, end);
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::resolve_registered_archives_fixpoint(start: UInt32, end: UInt32, round: UInt32) -> UInt32 {
+        if round >= 4096 {
+            return ERR_OK;
+        } else {
+            let before = host_linker_object_count();
+            let pass_status = resolve_registered_archives_pass(start, start, end);
+            if pass_status ! ERR_OK {
+                return pass_status;
+            } else {
+                let after = host_linker_object_count();
+                if after <= before {
+                    return ERR_OK;
+                } else {
+                    return resolve_registered_archives_fixpoint(start, end, round + 1);
+                }
+            }
+        }
+    }
+
+    proc K::resolve_registered_archives_range(start: UInt32, end: UInt32) -> UInt32 {
+        if start >= end {
+            return ERR_OK;
+        } else {
+            return resolve_registered_archives_fixpoint(start, end, 0);
+        }
+    }
+
+    proc K::resolve_registered_archives() -> UInt32 {
+        let count = host_linker_archive_count();
+        if count == 0 {
+            return ERR_OK;
+        } else {
+            return resolve_registered_archives_range(0, count);
+        }
+    }
+
+    proc K::start_group() -> UInt32 {
+        return group_push_start();
+    }
+
+    proc K::end_group_and_resolve() -> UInt32 {
+        let depth = group_depth();
+        if depth == 0 {
+            return ERR_CONFLICTING_OPTIONS;
+        } else {
+            let start = group_pop_start();
+            if start == 4294967295 {
+                return ERR_CONFLICTING_OPTIONS;
+            } else {
+                let end = host_linker_archive_count();
+                return resolve_registered_archives_range(start, end);
+            }
+        }
+    }
+
+    proc K::validate_no_open_groups() -> UInt32 {
+        if group_depth() == 0 {
+            return ERR_OK;
+        } else {
+            return ERR_CONFLICTING_OPTIONS;
         }
     }
 
