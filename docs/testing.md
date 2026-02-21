@@ -29,6 +29,8 @@ Both files define forge-based test procedures with this pattern:
 - Script subset checks for `SECTIONS` output-address forms and multi-line block parsing
 - Script directive checks for `OUTPUT_ARCH` and `AS_NEEDED` state scoping
 - Script `ENTRY(symbol)` required-symbol registration checks
+- Script checks for sysroot-aware `SEARCH_DIR(=...)` resolution
+- Script checks for `INPUT(-L...)` search-path updates and `INPUT(-l...)` needed-library recording
 - Build-id mode and `-z` option semantic state checks
 - Dynamic unresolved-policy checks (`--no-undefined` and allow-shared-unresolved gate behavior)
 - Search-path state checks (`--sysroot`, `-rpath`, `-rpath-link`)
@@ -48,6 +50,7 @@ Both files define forge-based test procedures with this pattern:
 - Dynamic tag and copy-needed policy flags are parsed and wired to linker state.
 - Shared-object symbol ingestion now includes ELF, PE, COFF, and Mach-O metadata paths.
 - Relocation handling coverage now includes additional x86_64 relocation IDs used in broader compatibility workflows.
+- CLI compatibility state controls (`--hash-style`, `--threads`, `--thread-count`) are parsed in inline and split flag forms.
 
 ## Current Limitations
 

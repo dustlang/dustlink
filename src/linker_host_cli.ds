@@ -352,16 +352,6 @@ forge LinkerHostCli {
 
     proc K::is_compat_no_value_flag(arg: UInt64) -> UInt32 {
         if LinkerHost::K::str_eq(arg, "--eh-frame-hdr") == 1 { return 1; }
-        if LinkerHost::K::str_eq(arg, "--as-needed") == 1 { return 1; }
-        if LinkerHost::K::str_eq(arg, "--no-as-needed") == 1 { return 1; }
-        if LinkerHost::K::str_eq(arg, "-shared") == 1 { return 1; }
-        if LinkerHost::K::str_eq(arg, "--shared") == 1 { return 1; }
-        if LinkerHost::K::str_eq(arg, "-pie") == 1 { return 1; }
-        if LinkerHost::K::str_eq(arg, "--pie") == 1 { return 1; }
-        if LinkerHost::K::str_eq(arg, "--no-pie") == 1 { return 1; }
-        if LinkerHost::K::str_eq(arg, "-static") == 1 { return 1; }
-        if LinkerHost::K::str_eq(arg, "-Bstatic") == 1 { return 1; }
-        if LinkerHost::K::str_eq(arg, "-Bdynamic") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--fatal-warnings") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--no-fatal-warnings") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--color-diagnostics") == 1 { return 1; }
@@ -376,9 +366,6 @@ forge LinkerHostCli {
     }
 
     proc K::is_compat_value_flag(arg: UInt64) -> UInt32 {
-        if LinkerHost::K::str_eq(arg, "--dynamic-linker") == 1 { return 1; }
-        if LinkerHost::K::str_eq(arg, "--soname") == 1 { return 1; }
-        if LinkerHost::K::str_eq(arg, "-soname") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--hash-style") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--threads") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--thread-count") == 1 { return 1; }
@@ -669,6 +656,38 @@ forge LinkerHostCli {
             return LinkerHost::K::str_after_prefix(arg, "-soname=");
         }
         return 0;
+    }
+
+    proc K::inline_hash_style_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--hash-style=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--hash-style=");
+        }
+        return 0;
+    }
+
+    proc K::inline_thread_count_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--threads=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--threads=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "--thread-count=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--thread-count=");
+        }
+        return 0;
+    }
+
+    proc K::parse_thread_count_or_invalid(raw: UInt64) -> UInt32 {
+        let parsed = LinkerHost::K::parse_u64(raw, 10);
+        if parsed == 0 {
+            if LinkerHost::K::str_eq(raw, "0") == 1 {
+                return 0;
+            } else {
+                return 4294967295;
+            }
+        }
+        if parsed > 4294967295 {
+            return 4294967295;
+        }
+        return parsed;
     }
 
     proc K::parse_address_or_zero(raw: UInt64, is_base: UInt32) -> UInt64 {
@@ -974,6 +993,20 @@ forge LinkerHostCli {
             if sn ! ERR_OK { return sn; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
+        let v_hash_style = inline_hash_style_value(arg);
+        if v_hash_style ! 0 {
+            let hs = DustLink::K::set_hash_style(v_hash_style);
+            if hs ! ERR_OK { return hs; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        let v_thread_count = inline_thread_count_value(arg);
+        if v_thread_count ! 0 {
+            let tc = parse_thread_count_or_invalid(v_thread_count);
+            if tc == 4294967295 { return ERR_INVALID_FORMAT; }
+            let ts = DustLink::K::set_thread_count(tc);
+            if ts ! ERR_OK { return ts; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
 
         if requires_value(arg) == 1 {
             let next_idx = idx + 1;
@@ -1071,6 +1104,25 @@ forge LinkerHostCli {
             if LinkerHost::K::str_eq(arg, "-soname") == 1 {
                 let sn3 = DustLink::K::set_soname(value);
                 if sn3 ! ERR_OK { return sn3; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if LinkerHost::K::str_eq(arg, "--hash-style") == 1 {
+                let hs2 = DustLink::K::set_hash_style(value);
+                if hs2 ! ERR_OK { return hs2; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if LinkerHost::K::str_eq(arg, "--threads") == 1 {
+                let tc2 = parse_thread_count_or_invalid(value);
+                if tc2 == 4294967295 { return ERR_INVALID_FORMAT; }
+                let ts2 = DustLink::K::set_thread_count(tc2);
+                if ts2 ! ERR_OK { return ts2; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if LinkerHost::K::str_eq(arg, "--thread-count") == 1 {
+                let tc3 = parse_thread_count_or_invalid(value);
+                if tc3 == 4294967295 { return ERR_INVALID_FORMAT; }
+                let ts3 = DustLink::K::set_thread_count(tc3);
+                if ts3 ! ERR_OK { return ts3; }
                 return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
             }
             if is_compat_value_flag(arg) == 1 {
@@ -1199,14 +1251,57 @@ forge LinkerHostCli {
             if wa0 ! ERR_OK { return wa0; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
+        if LinkerHost::K::str_eq(arg, "--eh-frame-hdr") == 1 {
+            let eh = DustLink::K::set_eh_frame_hdr(1);
+            if eh ! ERR_OK { return eh; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--fatal-warnings") == 1 {
+            let fw1 = DustLink::K::set_fatal_warnings(1);
+            if fw1 ! ERR_OK { return fw1; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--no-fatal-warnings") == 1 {
+            let fw0 = DustLink::K::set_fatal_warnings(0);
+            if fw0 ! ERR_OK { return fw0; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--color-diagnostics") == 1 {
+            let cd1 = DustLink::K::set_color_diagnostics(1);
+            if cd1 ! ERR_OK { return cd1; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--no-color-diagnostics") == 1 {
+            let cd0 = DustLink::K::set_color_diagnostics(0);
+            if cd0 ! ERR_OK { return cd0; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--print-gc-sections") == 1 {
+            let pg1 = DustLink::K::set_print_gc_sections(1);
+            if pg1 ! ERR_OK { return pg1; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--no-print-gc-sections") == 1 {
+            let pg0 = DustLink::K::set_print_gc_sections(0);
+            if pg0 ! ERR_OK { return pg0; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--icf=none") == 1 {
+            let icf0 = DustLink::K::set_icf_mode(0);
+            if icf0 ! ERR_OK { return icf0; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--icf=safe") == 1 {
+            let icf1 = DustLink::K::set_icf_mode(1);
+            if icf1 ! ERR_OK { return icf1; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if LinkerHost::K::str_eq(arg, "--icf=all") == 1 {
+            let icf2 = DustLink::K::set_icf_mode(2);
+            if icf2 ! ERR_OK { return icf2; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
         if is_compat_no_value_flag(arg) == 1 {
-            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
-        }
-
-        if LinkerHost::K::str_starts_with(arg, "--threads=") == 1 {
-            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
-        }
-        if LinkerHost::K::str_starts_with(arg, "--thread-count=") == 1 {
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
         if LinkerHost::K::str_starts_with(arg, "-m") == 1 {

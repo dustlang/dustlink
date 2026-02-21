@@ -243,19 +243,18 @@ forge LinkerLink {
     }
 
     proc K::ensure_loaded_inputs(expected: UInt32) -> UInt32 {
-        let loaded = host_linker_object_count();
-        if loaded >= expected {
-            return ERR_OK;
+        let cli_load_status = host_linker_ingest_cli_inputs();
+        if cli_load_status ! ERR_OK {
+            return cli_load_status;
         } else {
-            let cli_load_status = host_linker_ingest_cli_inputs();
-            if cli_load_status ! ERR_OK {
-                return cli_load_status;
+            let loaded_after = host_linker_object_count();
+            if loaded_after == 0 {
+                return ERR_EMPTY_INPUT;
             } else {
-                let loaded_after = host_linker_object_count();
-                if loaded_after == 0 {
-                    return ERR_EMPTY_INPUT;
-                } else {
+                if loaded_after >= expected {
                     return ERR_OK;
+                } else {
+                    return ERR_EMPTY_INPUT;
                 }
             }
         }

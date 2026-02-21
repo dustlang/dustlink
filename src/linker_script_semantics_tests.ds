@@ -188,6 +188,76 @@ forge LinkerScriptSemanticsTests {
         }
     }
 
+    proc K::test_script_search_dir_equals_uses_sysroot() -> UInt32 {
+        let path = "dustlink_script_test_search_dir.ld";
+        DustLink::K::reset_state();
+        DustLink::K::set_sysroot("sysroot-root");
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "SEARCH_DIR(=/lib);");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let count = host_linker_search_path_count();
+            if count == 0 {
+                return 0;
+            } else {
+                let path_text = host_linker_get_search_path(count - 1);
+                let ok_unix = LinkerFs::K::str_ends_with(path_text, "sysroot-root/lib");
+                let ok_win = LinkerFs::K::str_ends_with(path_text, "sysroot-root\\lib");
+                if ok_unix == 1 {
+                    return 1;
+                } else {
+                    return ok_win;
+                }
+            }
+        }
+    }
+
+    proc K::test_script_input_library_path_flag_adds_search_path() -> UInt32 {
+        let path = "dustlink_script_test_input_L.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "INPUT(-Lthird_party/libs);");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let count = host_linker_search_path_count();
+            if count == 0 {
+                return 0;
+            } else {
+                let path_text = host_linker_get_search_path(count - 1);
+                let ok_unix = LinkerFs::K::str_ends_with(path_text, "third_party/libs");
+                let ok_win = LinkerFs::K::str_ends_with(path_text, "third_party\\libs");
+                if ok_unix == 1 {
+                    return 1;
+                } else {
+                    return ok_win;
+                }
+            }
+        }
+    }
+
+    proc K::test_script_input_l_token_records_needed() -> UInt32 {
+        let path = "dustlink_script_test_input_l.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "INPUT(-ldemo);");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let count = host_linker_needed_library_count();
+            if count == 0 {
+                return 0;
+            } else {
+                let name = host_linker_get_needed_library(0);
+                return expect_u32(LinkerFs::K::str_eq(name, "libdemo.so"), 1);
+            }
+        }
+    }
+
     proc K::run_all_tests() -> UInt32 {
         let passed =
             test_script_output_format_directive()
@@ -200,7 +270,10 @@ forge LinkerScriptSemanticsTests {
             + test_script_entry_symbol_marks_required()
             + test_script_multiline_memory_sections_blocks()
             + test_script_output_arch_sets_target()
-            + test_script_as_needed_scope_restores_state();
+            + test_script_as_needed_scope_restores_state()
+            + test_script_search_dir_equals_uses_sysroot()
+            + test_script_input_library_path_flag_adds_search_path()
+            + test_script_input_l_token_records_needed();
         return passed;
     }
 }

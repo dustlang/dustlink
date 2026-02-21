@@ -51,5 +51,6 @@ This directory contains complete Markdown documentation for `dustlink`.
   - COFF external definitions
   - Mach-O external definitions
 - Linker script support: directives (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `INCLUDE`) plus `MEMORY`/`SECTIONS` subset handling.
-- Script parser now uses block-aware statement splitting and supports `SECTIONS` output-address forms.
+- Script parser now uses block-aware statement splitting, supports `SECTIONS` output-address forms, resolves `SEARCH_DIR(=...)` against `--sysroot`, and recognizes `INPUT` token forms `-L` / `-l`.
 - Dynamic-link policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`.
+- Compatibility-state controls: hash-style/thread settings, eh-frame-header toggle, diagnostics toggles, print-gc toggle, and `--icf=*` mode.

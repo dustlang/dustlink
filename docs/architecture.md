@@ -52,8 +52,11 @@ The Dust modules provide deterministic linker behavior for:
 - section GC policy controls (`--gc-sections`, `--no-gc-sections`)
 - shared-symbol ingestion across ELF, PE, COFF, and Mach-O metadata paths
 - script application (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `INCLUDE`, `MEMORY`, `SECTIONS` subset including location-counter and output-address forms)
+- script `SEARCH_DIR(=...)` sysroot-aware resolution and script-token handling for `-L`/`-l` forms
 - block-aware script statement splitting for multi-line linker scripts
 - expanded relocation handling in Dust modules (`PLT32`, `GLOB_DAT`, `JUMP_SLOT`, `RELATIVE`, `GOTPCREL`, `GOTPCRELX`, `REX_GOTPCRELX`) and ELF machine validator acceptance for `EM_AARCH64`
+- compatibility-state control wiring for hash/thread/eh-frame/diagnostic/print-gc/icf flags
+- ELF staged writer flow now performs complete image emission with section-stream index validation on emit callbacks
 - top-level orchestrated status/error flow in `DustLink::K`
 
 `Q` and `Phi` remain domain-unavailable for operational paths and return `100`.

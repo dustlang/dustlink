@@ -313,6 +313,38 @@ forge DustLink {
         return host_linker_set_copy_dt_needed_entries(enabled);
     }
 
+    proc K::set_hash_style(style: UInt64) -> UInt32 {
+        if style == 0 {
+            return ERR_INVALID_FORMAT;
+        } else {
+            return host_linker_set_hash_style(style);
+        }
+    }
+
+    proc K::set_thread_count(count: UInt32) -> UInt32 {
+        return host_linker_set_thread_count(count);
+    }
+
+    proc K::set_eh_frame_hdr(enabled: UInt32) -> UInt32 {
+        return host_linker_set_eh_frame_hdr(enabled);
+    }
+
+    proc K::set_fatal_warnings(enabled: UInt32) -> UInt32 {
+        return host_linker_set_fatal_warnings(enabled);
+    }
+
+    proc K::set_color_diagnostics(enabled: UInt32) -> UInt32 {
+        return host_linker_set_color_diagnostics(enabled);
+    }
+
+    proc K::set_print_gc_sections(enabled: UInt32) -> UInt32 {
+        return host_linker_set_print_gc_sections(enabled);
+    }
+
+    proc K::set_icf_mode(mode: UInt32) -> UInt32 {
+        return host_linker_set_icf_mode(mode);
+    }
+
     proc K::set_whole_archive(enabled: UInt32) -> UInt32 {
         return host_linker_set_whole_archive(enabled);
     }

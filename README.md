@@ -27,15 +27,17 @@
   - static-mode `-l` resolution uses static archives only
   - exact-name `-l:<file>` token support
 - Output writers:
-  - ELF executable (minimal)
+  - ELF executable
   - flat binary
   - MBR image
-  - PE executable (minimal)
-  - Mach-O executable (minimal)
+  - PE executable
+  - Mach-O executable
 - Script application:
   - `-T <script>` / `--script <script>`
   - directive support: `ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `PROVIDE_HIDDEN`, `INCLUDE`
   - subset coverage: `MEMORY` (`ORIGIN`, `LENGTH`), `SECTIONS` location-counter assignment (`. = <addr>`), and `SECTIONS` output-address form (`.text 0x... : { ... }`)
+  - `SEARCH_DIR(=...)` resolves through configured `--sysroot` when present
+  - `INPUT` family token handling recognizes `-L` and `-l` forms
   - block-aware script statement splitting for multi-line `MEMORY`/`SECTIONS` blocks
   - `ENTRY(symbol)` now registers required-symbol intent when symbol resolution is deferred
 - Link-mode controls:
@@ -47,6 +49,7 @@
   - dynamic-unresolved policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`
   - dynamic-tag controls: `--enable-new-dtags` / `--disable-new-dtags`
   - transitive `DT_NEEDED` policy controls: `--copy-dt-needed-entries` / `--no-copy-dt-needed-entries`
+  - compatibility-state controls: `--hash-style`, `--threads`, `--thread-count`, `--eh-frame-hdr`, `--fatal-warnings`, `--color-diagnostics`, `--print-gc-sections`, `--icf=*`
   - shared-object symbol ingestion for exported symbol resolution across ELF, PE, COFF, and Mach-O metadata paths
 
 ## Supported Targets and Relocations
@@ -92,8 +95,8 @@ Primary options:
 - `--start-group`, `--end-group`
 - `--help`, `--version`
 
-Accepted compatibility flags still consumed as no-op/value-skip include common diagnostics/stat controls such as `--threads=*`.  
-`--target`/`-m`, `--defsym`, `--build-id`, `-z`, required-symbol flags, `--sysroot`, `-rpath`, `-rpath-link`, dynamic policy flags, and group/static/shared toggles are wired into linker state.
+Compatibility spellings for common ld/lld flags are accepted.  
+Core linker-affecting paths (`--target`/`-m`, `--defsym`, `--build-id`, `-z`, required-symbol flags, sysroot/rpath/rpath-link, dynamic policy flags, group/static/shared toggles, and hash/thread/icf-related compatibility controls) are wired to internal linker state.
 
 ## Build
 

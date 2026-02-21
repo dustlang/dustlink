@@ -85,6 +85,23 @@
 - ELF/relocation parity additions in Dust modules:
   - `EM_AARCH64` acceptance in ELF machine validator path
   - relocation ID support additions: `PLT32`, `GLOB_DAT`, `JUMP_SLOT`, `RELATIVE`, `GOTPCREL`, `GOTPCRELX`, `REX_GOTPCRELX`
+- Additional compatibility-state intrinsics:
+  - `host_linker_set_hash_style` / `host_linker_get_hash_style`
+  - `host_linker_set_thread_count` / `host_linker_get_thread_count`
+  - `host_linker_set_eh_frame_hdr`
+  - `host_linker_set_fatal_warnings`
+  - `host_linker_set_color_diagnostics`
+  - `host_linker_set_print_gc_sections`
+  - `host_linker_set_icf_mode` / `host_linker_get_icf_mode`
+- Script semantic additions:
+  - `SEARCH_DIR(=...)` resolves against `--sysroot` when present
+  - `INPUT`/`GROUP`/`AS_NEEDED` token handling recognizes `-L` and `-l` tokens directly
+  - script argument tokenizer upgraded to quote/paren-aware token splitting
+- Test additions:
+  - script semantic checks for sysroot-backed `SEARCH_DIR(=...)`
+  - script semantic checks for `INPUT(-L...)` search-path updates
+  - script semantic checks for `INPUT(-l...)` needed-library recording
+  - host CLI checks for inline/value handling of `--hash-style`, `--threads`, and `--thread-count`
 
 ### Changed
 
@@ -105,6 +122,8 @@
 - ELF writer now includes build-id note payload when configured, applies `-z execstack/noexecstack` to emitted segment flag policy, and emits runpath using new-dtags mode (`DT_RUNPATH` vs `DT_RPATH`).
 - shared-object ingestion for COFF and Mach-O is no longer treated as a no-op in host runtime linker paths.
 - script statement handling now uses block-aware splitting instead of naive `;`/newline splitting, reducing false splits inside structured linker-script blocks.
+- compatibility flags previously consumed through generic no-op paths now route into explicit linker state updates (`hash-style`, thread count, eh-frame header, diagnostics, print-gc, and icf mode).
+- staged ELF write path now performs complete image emission in the header/finalize sequence, and per-section emit callbacks validate section stream bounds.
 
 ## 2026-02-20
 

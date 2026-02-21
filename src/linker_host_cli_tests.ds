@@ -214,6 +214,26 @@ forge LinkerHostCliTests {
         return expect_u32(required, 1);
     }
 
+    proc K::test_hash_style_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--hash-style");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_inline_hash_style_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_hash_style_value("--hash-style=gnu");
+        return expect_u32(LinkerHost::K::str_eq(value, "gnu"), 1);
+    }
+
+    proc K::test_inline_threads_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_thread_count_value("--threads=8");
+        return expect_u32(LinkerHost::K::str_eq(value, "8"), 1);
+    }
+
+    proc K::test_inline_thread_count_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_thread_count_value("--thread-count=16");
+        return expect_u32(LinkerHost::K::str_eq(value, "16"), 1);
+    }
+
     proc K::test_shared_flag_no_value() -> UInt32 {
         let required = LinkerHostCli::K::requires_value("-shared");
         return expect_u32(required, 0);
@@ -288,6 +308,10 @@ forge LinkerHostCliTests {
             + test_inline_soname_value()
             + test_dynamic_linker_requires_value()
             + test_soname_requires_value()
+            + test_hash_style_requires_value()
+            + test_inline_hash_style_value()
+            + test_inline_threads_value()
+            + test_inline_thread_count_value()
             + test_shared_flag_no_value()
             + test_pie_flag_no_value()
             + test_enable_new_dtags_flag_no_value()

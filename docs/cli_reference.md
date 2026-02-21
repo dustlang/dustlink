@@ -54,7 +54,7 @@ The internal Dust linker profile recognizes canonical/alias families for:
 
 ### Compatibility handling
 
-Several lld-style flags are accepted for compatibility and currently consumed as no-op/value-skip behaviors (for example `--threads=*` and related diagnostics/stat flags).
+Compatibility spellings are accepted for common ld/lld flag families. Most linker-affecting compatibility flags are now state-wired instead of being generic no-op/value-skip paths.
 
 State-wired (non-no-op) controls include:
 
@@ -71,5 +71,12 @@ State-wired (non-no-op) controls include:
 - `-rpath-link` / `--rpath-link`
 - `--enable-new-dtags` / `--disable-new-dtags`
 - `--copy-dt-needed-entries` / `--no-copy-dt-needed-entries`
+- `--hash-style`
+- `--threads` / `--thread-count`
+- `--eh-frame-hdr`
+- `--fatal-warnings` / `--no-fatal-warnings`
+- `--color-diagnostics` / `--no-color-diagnostics`
+- `--print-gc-sections` / `--no-print-gc-sections`
+- `--icf=none` / `--icf=safe` / `--icf=all`
 
 `linker_cli.ds` and `linker_host_cli.ds` return typed linker errors for unsupported flags and missing values.
