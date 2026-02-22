@@ -495,6 +495,13 @@ forge LinkerReloc {
         return 0;
     }
 
+    proc K::aarch64_is_tls_data_reloc(reloc_type: UInt32) -> UInt32 {
+        if reloc_type == R_AARCH64_TLS_DTPMOD { return 1; }
+        if reloc_type == R_AARCH64_TLS_DTPREL { return 1; }
+        if reloc_type == R_AARCH64_TLS_TPREL { return 1; }
+        return 0;
+    }
+
     proc K::aarch64_page_delta_bytes(symbol_plus_addend: UInt64, place_addr: UInt64) -> UInt64 {
         let page_mask = 0 - 4096;
         let sym_page = symbol_plus_addend & page_mask;
@@ -1534,15 +1541,25 @@ forge LinkerReloc {
         if validate_status ! ERR_OK {
             return validate_status;
         } else {
-            let symbol_defined = host_linker_object_symbol_defined(object_index, sym_index);
-            let symbol_addr = host_linker_resolved_symbol_address(object_index, sym_index);
             if machine == EM_AARCH64 {
+                if aarch64_is_tls_data_reloc(reloc_type) == 1 {
+                    let tls_value = host_linker_aarch64_tls_data_reloc_value(object_index, sym_index, reloc_type, addend);
+                    let tls_status = host_linker_last_error();
+                    if tls_status ! ERR_OK {
+                        return tls_status;
+                    } else {
+                        return apply_relocation_value(target_section, offset, reloc_type, machine, tls_value);
+                    }
+                }
                 if aarch64_is_tls_family_reloc(reloc_type) == 1 {
-                    // AArch64 TLS relocations require TLS block/layout/module metadata not yet surfaced
-                    // through the current Dust host linker runtime ABI.
+                    // AArch64 TLS instruction/descriptor relocations still require additional
+                    // TLSDESC/GOT metadata and relaxation semantics not yet surfaced through
+                    // the current Dust host linker runtime ABI.
                     return ERR_NOT_IMPLEMENTED_YET;
                 }
             }
+            let symbol_defined = host_linker_object_symbol_defined(object_index, sym_index);
+            let symbol_addr = host_linker_resolved_symbol_address(object_index, sym_index);
             if symbol_defined == 0 {
                 if symbol_addr == 0 {
                     if is_dynamic_placeholder_reloc(reloc_type, machine) == 1 {

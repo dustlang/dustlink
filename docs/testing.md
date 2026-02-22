@@ -73,7 +73,7 @@ Both files define forge-based test procedures with this pattern:
 - Linker core tests include AArch64 target acceptance in internal target validation.
 - `dust check src` passes for current Dust-source linker modules (host CLI + runtime parity changes).
 - `dust check src` passes after AArch64 relocation parity expansions (MOVW, `ADR_PREL_LO21`, and starter TLS relocation plumbing).
-- `dust check src` passes after stricter AArch64 TLS-family relocation handling (explicit `ERR_NOT_IMPLEMENTED_YET` apply path until TLS metadata support) and shared-ingest error propagation tightening.
+- `dust check src` passes after AArch64 TLS data-reloc host-helper wiring (non-shared links), stricter TLS instruction-family `ERR_NOT_IMPLEMENTED_YET` handling, and shared-ingest error propagation/format strictness tightening.
 
 ## Current Limitations
 

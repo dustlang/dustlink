@@ -46,7 +46,9 @@ Source: `src/linker_reloc.ds`
 
 `K` domain validates relocation records, computes relocation values, and applies patch operations through host runtime patch intrinsics (`host_linker_patch_u32`/`host_linker_patch_u64`).
 Current AArch64 support includes instruction bitfield patching for branch/literal/ADR/ADRP/ADD/LDST relocations and MOVW family relocations.
-AArch64 TLS-family relocations are recognized/validated in this module, but application currently returns `ERR_NOT_IMPLEMENTED_YET` until TLS layout/module metadata is exposed by the host linker runtime ABI.
+AArch64 TLS-family relocations are recognized/validated in this module.
+AArch64 TLS data relocs (`TLS_DTPMOD`, `TLS_DTPREL`, `TLS_TPREL`) are applied through a host-runtime helper that computes values from object TLS section metadata for non-shared links.
+AArch64 TLS instruction/descriptor-family relocations still return `ERR_NOT_IMPLEMENTED_YET` until full TLS descriptor/GOT metadata and relaxation semantics are exposed by the host linker runtime ABI.
 `R_AARCH64_TLSDESC_CALL` helper now validates `BLR` instruction encoding before preserving the instruction word.
 
 ## `Q` and `Phi`

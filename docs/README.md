@@ -62,7 +62,10 @@ This directory contains complete Markdown documentation for `dustlink`.
 - `--dependency-file` and `--emit-relocs` are state-wired (depfile output + relocation map-row reporting).
 - ELF writer now consumes `--hash-style` state for dynamic hash-tag emission and host runtime consumes `--print-gc-sections` for GC drop diagnostics.
 - AArch64 ELF relocation coverage now includes instruction bitfield patching (branches/literals/ADR/ADRP/ADD/LDST, including `LDST128`) and MOVW relocation families.
-- AArch64 TLS-family relocation IDs (`TLSGD`/`TLSLD`/`TLSDESC`, `TLS_DTPMOD`/`TLS_DTPREL`/`TLS_TPREL`) are recognized/validated, but relocation application is currently strict `ERR_NOT_IMPLEMENTED_YET` pending TLS layout/module metadata in the host linker runtime ABI.
+- AArch64 TLS-family relocation IDs (`TLSGD`/`TLSLD`/`TLSDESC`, `TLS_DTPMOD`/`TLS_DTPREL`/`TLS_TPREL`) are recognized/validated.
+- AArch64 TLS data relocs (`TLS_DTPMOD`/`TLS_DTPREL`/`TLS_TPREL`) now use host-runtime TLS layout metadata helpers in non-shared links.
+- AArch64 TLS instruction/descriptor-family relocation application remains strict `ERR_NOT_IMPLEMENTED_YET` pending full TLS descriptor/GOT metadata and relaxation semantics.
 - Shared-library ingest now propagates shared-object ingest failures directly (no Dust-side `ERR_NOT_IMPLEMENTED_YET` swallow).
+- Host shared-object ingest also fails on unknown/unsupported payload formats (`ERR_INVALID_FORMAT`) instead of silently succeeding.
 - `lld-link` spellings: `/OUT`, `/ENTRY`, `/MACHINE`, `/LIBPATH`, `/DEFAULTLIB`, `/MAP`, `/DLL`, `/SUBSYSTEM`, `/OPT`, `/WX`, `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, `/LARGEADDRESSAWARE`.
 - soft-compatibility flag-family acceptance for broader ld/lld/lld-link compatibility while preserving deterministic internal link behavior.
