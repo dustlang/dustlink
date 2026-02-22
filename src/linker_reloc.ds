@@ -24,6 +24,64 @@ forge LinkerReloc {
     const R_AARCH64_ABS32: UInt32 = 258;
     const R_AARCH64_PREL64: UInt32 = 260;
     const R_AARCH64_PREL32: UInt32 = 261;
+    const R_AARCH64_MOVW_UABS_G0: UInt32 = 263;
+    const R_AARCH64_MOVW_UABS_G0_NC: UInt32 = 264;
+    const R_AARCH64_MOVW_UABS_G1: UInt32 = 265;
+    const R_AARCH64_MOVW_UABS_G1_NC: UInt32 = 266;
+    const R_AARCH64_MOVW_UABS_G2: UInt32 = 267;
+    const R_AARCH64_MOVW_UABS_G2_NC: UInt32 = 268;
+    const R_AARCH64_MOVW_UABS_G3: UInt32 = 269;
+    const R_AARCH64_MOVW_SABS_G0: UInt32 = 270;
+    const R_AARCH64_MOVW_SABS_G1: UInt32 = 271;
+    const R_AARCH64_MOVW_SABS_G2: UInt32 = 272;
+    const R_AARCH64_LD_PREL_LO19: UInt32 = 273;
+    const R_AARCH64_ADR_PREL_LO21: UInt32 = 274;
+    const R_AARCH64_ADR_PREL_PG_HI21: UInt32 = 275;
+    const R_AARCH64_ADR_PREL_PG_HI21_NC: UInt32 = 276;
+    const R_AARCH64_ADD_ABS_LO12_NC: UInt32 = 277;
+    const R_AARCH64_LDST8_ABS_LO12_NC: UInt32 = 278;
+    const R_AARCH64_TSTBR14: UInt32 = 279;
+    const R_AARCH64_CONDBR19: UInt32 = 280;
+    const R_AARCH64_JUMP26: UInt32 = 282;
+    const R_AARCH64_CALL26: UInt32 = 283;
+    const R_AARCH64_LDST16_ABS_LO12_NC: UInt32 = 284;
+    const R_AARCH64_LDST32_ABS_LO12_NC: UInt32 = 285;
+    const R_AARCH64_LDST64_ABS_LO12_NC: UInt32 = 286;
+    const R_AARCH64_MOVW_PREL_G0: UInt32 = 287;
+    const R_AARCH64_MOVW_PREL_G0_NC: UInt32 = 288;
+    const R_AARCH64_MOVW_PREL_G1: UInt32 = 289;
+    const R_AARCH64_MOVW_PREL_G1_NC: UInt32 = 290;
+    const R_AARCH64_MOVW_PREL_G2: UInt32 = 291;
+    const R_AARCH64_MOVW_PREL_G2_NC: UInt32 = 292;
+    const R_AARCH64_MOVW_PREL_G3: UInt32 = 293;
+    const R_AARCH64_LDST128_ABS_LO12_NC: UInt32 = 299;
+
+    const R_AARCH64_TLSGD_ADR_PREL21: UInt32 = 512;
+    const R_AARCH64_TLSGD_ADR_PAGE21: UInt32 = 513;
+    const R_AARCH64_TLSGD_ADD_LO12_NC: UInt32 = 514;
+    const R_AARCH64_TLSGD_MOVW_G1: UInt32 = 515;
+    const R_AARCH64_TLSGD_MOVW_G0_NC: UInt32 = 516;
+    const R_AARCH64_TLSLD_ADR_PREL21: UInt32 = 517;
+    const R_AARCH64_TLSLD_ADR_PAGE21: UInt32 = 518;
+    const R_AARCH64_TLSLD_ADD_LO12_NC: UInt32 = 519;
+    const R_AARCH64_TLSLD_MOVW_G1: UInt32 = 520;
+    const R_AARCH64_TLSLD_MOVW_G0_NC: UInt32 = 521;
+    const R_AARCH64_TLSLD_LD_PREL19: UInt32 = 522;
+    const R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC: UInt32 = 530;
+    const R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC: UInt32 = 538;
+    const R_AARCH64_TLSLE_ADD_TPREL_LO12_NC: UInt32 = 551;
+    const R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC: UInt32 = 559;
+    const R_AARCH64_TLSDESC_LD_PREL19: UInt32 = 560;
+    const R_AARCH64_TLSDESC_ADR_PREL21: UInt32 = 561;
+    const R_AARCH64_TLSDESC_ADR_PAGE21: UInt32 = 562;
+    const R_AARCH64_TLSDESC_LD64_LO12: UInt32 = 563;
+    const R_AARCH64_TLSDESC_ADD_LO12: UInt32 = 564;
+    const R_AARCH64_TLSDESC_CALL: UInt32 = 569;
+    const R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC: UInt32 = 571;
+    const R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC: UInt32 = 573;
+    const R_AARCH64_TLS_DTPMOD: UInt32 = 1028;
+    const R_AARCH64_TLS_DTPREL: UInt32 = 1029;
+    const R_AARCH64_TLS_TPREL: UInt32 = 1030;
 
     const ERR_OK: UInt32 = 0;
     const ERR_INVALID_SECTION: UInt32 = 3;
@@ -53,6 +111,63 @@ forge LinkerReloc {
         if reloc_type == R_AARCH64_ABS32 { return 1; }
         if reloc_type == R_AARCH64_PREL64 { return 1; }
         if reloc_type == R_AARCH64_PREL32 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G0 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G3 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G0 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G1 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G2 { return 1; }
+        if reloc_type == R_AARCH64_LD_PREL_LO19 { return 1; }
+        if reloc_type == R_AARCH64_ADR_PREL_LO21 { return 1; }
+        if reloc_type == R_AARCH64_ADR_PREL_PG_HI21 { return 1; }
+        if reloc_type == R_AARCH64_ADR_PREL_PG_HI21_NC { return 1; }
+        if reloc_type == R_AARCH64_ADD_ABS_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_LDST8_ABS_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_LDST16_ABS_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_LDST32_ABS_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_LDST64_ABS_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G3 { return 1; }
+        if reloc_type == R_AARCH64_LDST128_ABS_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_ADR_PREL21 { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_ADR_PAGE21 { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_ADD_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G1 { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_ADR_PREL21 { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_ADR_PAGE21 { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_ADD_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G1 { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_LD_PREL19 { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLE_ADD_TPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_LD_PREL19 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_ADR_PREL21 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_ADR_PAGE21 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_LD64_LO12 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_ADD_LO12 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_CALL { return 1; }
+        if reloc_type == R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLS_DTPMOD { return 1; }
+        if reloc_type == R_AARCH64_TLS_DTPREL { return 1; }
+        if reloc_type == R_AARCH64_TLS_TPREL { return 1; }
+        if reloc_type == R_AARCH64_TSTBR14 { return 1; }
+        if reloc_type == R_AARCH64_CONDBR19 { return 1; }
+        if reloc_type == R_AARCH64_JUMP26 { return 1; }
+        if reloc_type == R_AARCH64_CALL26 { return 1; }
         return 0;
     }
 
@@ -87,8 +202,65 @@ forge LinkerReloc {
     proc K::reloc_write_width_aarch64(reloc_type: UInt32) -> UInt32 {
         if reloc_type == R_AARCH64_ABS64 { return 8; }
         if reloc_type == R_AARCH64_PREL64 { return 8; }
+        if reloc_type == R_AARCH64_TLS_DTPMOD { return 8; }
+        if reloc_type == R_AARCH64_TLS_DTPREL { return 8; }
+        if reloc_type == R_AARCH64_TLS_TPREL { return 8; }
         if reloc_type == R_AARCH64_ABS32 { return 4; }
         if reloc_type == R_AARCH64_PREL32 { return 4; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G0 { return 4; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G0_NC { return 4; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1 { return 4; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1_NC { return 4; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2 { return 4; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2_NC { return 4; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G3 { return 4; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G0 { return 4; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G1 { return 4; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G2 { return 4; }
+        if reloc_type == R_AARCH64_LD_PREL_LO19 { return 4; }
+        if reloc_type == R_AARCH64_ADR_PREL_LO21 { return 4; }
+        if reloc_type == R_AARCH64_ADR_PREL_PG_HI21 { return 4; }
+        if reloc_type == R_AARCH64_ADR_PREL_PG_HI21_NC { return 4; }
+        if reloc_type == R_AARCH64_ADD_ABS_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_LDST8_ABS_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_LDST16_ABS_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_LDST32_ABS_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_LDST64_ABS_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0 { return 4; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0_NC { return 4; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1 { return 4; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1_NC { return 4; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2 { return 4; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2_NC { return 4; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G3 { return 4; }
+        if reloc_type == R_AARCH64_LDST128_ABS_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_TLSGD_ADR_PREL21 { return 4; }
+        if reloc_type == R_AARCH64_TLSGD_ADR_PAGE21 { return 4; }
+        if reloc_type == R_AARCH64_TLSGD_ADD_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G1 { return 4; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G0_NC { return 4; }
+        if reloc_type == R_AARCH64_TLSLD_ADR_PREL21 { return 4; }
+        if reloc_type == R_AARCH64_TLSLD_ADR_PAGE21 { return 4; }
+        if reloc_type == R_AARCH64_TLSLD_ADD_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G1 { return 4; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G0_NC { return 4; }
+        if reloc_type == R_AARCH64_TLSLD_LD_PREL19 { return 4; }
+        if reloc_type == R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_TLSLE_ADD_TPREL_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_TLSDESC_LD_PREL19 { return 4; }
+        if reloc_type == R_AARCH64_TLSDESC_ADR_PREL21 { return 4; }
+        if reloc_type == R_AARCH64_TLSDESC_ADR_PAGE21 { return 4; }
+        if reloc_type == R_AARCH64_TLSDESC_LD64_LO12 { return 4; }
+        if reloc_type == R_AARCH64_TLSDESC_ADD_LO12 { return 4; }
+        if reloc_type == R_AARCH64_TLSDESC_CALL { return 4; }
+        if reloc_type == R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_TSTBR14 { return 4; }
+        if reloc_type == R_AARCH64_CONDBR19 { return 4; }
+        if reloc_type == R_AARCH64_JUMP26 { return 4; }
+        if reloc_type == R_AARCH64_CALL26 { return 4; }
         if reloc_type == R_AARCH64_NONE { return 4; }
         return 0;
     }
@@ -107,6 +279,9 @@ forge LinkerReloc {
 
     proc K::is_dynamic_placeholder_reloc(reloc_type: UInt32, machine: UInt16) -> UInt32 {
         if machine == EM_AARCH64 {
+            if reloc_type == R_AARCH64_TLS_DTPMOD { return 1; }
+            if reloc_type == R_AARCH64_TLS_DTPREL { return 1; }
+            if reloc_type == R_AARCH64_TLS_TPREL { return 1; }
             return 0;
         }
         if reloc_type == R_X86_64_PLT32 {
@@ -144,6 +319,22 @@ forge LinkerReloc {
         }
     }
 
+    proc K::fits_u16(value: UInt64) -> UInt32 {
+        if value > 65535 {
+            return 0;
+        } else {
+            return 1;
+        }
+    }
+
+    proc K::fits_u48(value: UInt64) -> UInt32 {
+        if value > 281474976710655 {
+            return 0;
+        } else {
+            return 1;
+        }
+    }
+
     proc K::fits_s32(value: UInt64) -> UInt32 {
         if value <= 2147483647 {
             return 1;
@@ -154,6 +345,809 @@ forge LinkerReloc {
                 return 0;
             }
         }
+    }
+
+    proc K::fits_s28(value: UInt64) -> UInt32 {
+        if value <= 134217727 {
+            return 1;
+        } else {
+            if value >= (0 - 134217728) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::fits_s33(value: UInt64) -> UInt32 {
+        if value <= 4294967295 {
+            return 1;
+        } else {
+            if value >= (0 - 4294967296) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::fits_s48(value: UInt64) -> UInt32 {
+        if value <= 140737488355327 {
+            return 1;
+        } else {
+            if value >= (0 - 140737488355328) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::fits_s21(value: UInt64) -> UInt32 {
+        if value <= 1048575 {
+            return 1;
+        } else {
+            if value >= (0 - 1048576) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::fits_s16(value: UInt64) -> UInt32 {
+        if value <= 32767 {
+            return 1;
+        } else {
+            if value >= (0 - 32768) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::aarch64_is_instr_reloc(reloc_type: UInt32) -> UInt32 {
+        if reloc_type == R_AARCH64_MOVW_UABS_G0 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G3 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G0 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G1 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G2 { return 1; }
+        if reloc_type == R_AARCH64_ADR_PREL_PG_HI21 { return 1; }
+        if reloc_type == R_AARCH64_ADR_PREL_PG_HI21_NC { return 1; }
+        if reloc_type == R_AARCH64_ADR_PREL_LO21 { return 1; }
+        if reloc_type == R_AARCH64_ADD_ABS_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G3 { return 1; }
+        if reloc_type == R_AARCH64_LDST8_ABS_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_LDST16_ABS_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_LDST32_ABS_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_LDST64_ABS_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_LDST128_ABS_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_ADR_PREL21 { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_ADR_PAGE21 { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_ADD_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G1 { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_ADR_PREL21 { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_ADR_PAGE21 { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_ADD_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G1 { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_LD_PREL19 { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLE_ADD_TPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_LD_PREL19 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_ADR_PREL21 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_ADR_PAGE21 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_LD64_LO12 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_ADD_LO12 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_CALL { return 1; }
+        if reloc_type == R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TSTBR14 { return 1; }
+        if reloc_type == R_AARCH64_CONDBR19 { return 1; }
+        if reloc_type == R_AARCH64_JUMP26 { return 1; }
+        if reloc_type == R_AARCH64_CALL26 { return 1; }
+        return 0;
+    }
+
+    proc K::aarch64_page_delta_bytes(symbol_plus_addend: UInt64, place_addr: UInt64) -> UInt64 {
+        let page_mask = 0 - 4096;
+        let sym_page = symbol_plus_addend & page_mask;
+        let place_page = place_addr & page_mask;
+        if sym_page >= place_page {
+            return sym_page - place_page;
+        } else {
+            return 0 - (place_page - sym_page);
+        }
+    }
+
+    proc K::aarch64_branch26_patch_word(instr: UInt64, reloc_type: UInt32, delta: UInt64) -> UInt64 {
+        let opcode_mask = 4227858432;
+        let branch_b = 335544320;
+        let branch_bl = 2483027968;
+        let top = instr & opcode_mask;
+        if reloc_type == R_AARCH64_JUMP26 {
+            if top ! branch_b {
+                return 0;
+            }
+        } else {
+            if reloc_type == R_AARCH64_CALL26 {
+                if top ! branch_bl {
+                    return 0;
+                }
+            } else {
+                return 0;
+            }
+        }
+        if (delta & 3) ! 0 {
+            return 0;
+        }
+        if fits_s28(delta) == 0 {
+            return 0;
+        }
+        let imm26 = (delta / 4) & 67108863;
+        return (instr & opcode_mask) | imm26;
+    }
+
+    proc K::aarch64_condbr19_patch_word(instr: UInt64, delta: UInt64) -> UInt64 {
+        let cond_mask = 4278190096;
+        let cond_opcode = 1409286144;
+        let cond_preserve_mask = 4278190111;
+        if (instr & cond_mask) ! cond_opcode {
+            return 0;
+        }
+        if (delta & 3) ! 0 {
+            return 0;
+        }
+        if fits_s21(delta) == 0 {
+            return 0;
+        }
+        let imm19 = (delta / 4) & 524287;
+        return (instr & cond_preserve_mask) | (imm19 * 32);
+    }
+
+    proc K::aarch64_ld_prel_lo19_patch_word(instr: UInt64, delta: UInt64) -> UInt64 {
+        let ld_literal_mask = 452984832;
+        let ld_literal_opcode = 402653184;
+        let ld_literal_preserve_mask = 4278190111;
+        if (instr & ld_literal_mask) ! ld_literal_opcode {
+            return 0;
+        }
+        if (delta & 3) ! 0 {
+            return 0;
+        }
+        if fits_s21(delta) == 0 {
+            return 0;
+        }
+        let imm19 = (delta / 4) & 524287;
+        return (instr & ld_literal_preserve_mask) | (imm19 * 32);
+    }
+
+    proc K::aarch64_adr_prel_lo21_patch_word(instr: UInt64, delta: UInt64) -> UInt64 {
+        let adr_mask = 2667577344;
+        let adr_opcode = 268435456;
+        let adr_preserve_mask = 2667577375;
+        if (instr & adr_mask) ! adr_opcode {
+            return 0;
+        }
+        if fits_s21(delta) == 0 {
+            return 0;
+        }
+        let immlo = delta & 3;
+        let immhi = (delta / 4) & 524287;
+        return (instr & adr_preserve_mask) | (immlo * 536870912) | (immhi * 32);
+    }
+
+    proc K::aarch64_movw_chunk_index(reloc_type: UInt32) -> UInt32 {
+        if reloc_type == R_AARCH64_MOVW_UABS_G0 { return 0; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G0_NC { return 0; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2 { return 2; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2_NC { return 2; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G3 { return 3; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G0 { return 0; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G1 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G2 { return 2; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0 { return 0; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0_NC { return 0; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2 { return 2; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2_NC { return 2; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G3 { return 3; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G1 { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G0_NC { return 0; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G1 { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G0_NC { return 0; }
+        return 255;
+    }
+
+    proc K::aarch64_movw_reloc_class(reloc_type: UInt32) -> UInt32 {
+        if reloc_type == R_AARCH64_MOVW_UABS_G0 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G3 { return 1; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G0 { return 2; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G1 { return 2; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G2 { return 2; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0 { return 3; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0_NC { return 3; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1 { return 3; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1_NC { return 3; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2 { return 3; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2_NC { return 3; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G3 { return 3; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G1 { return 4; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G0_NC { return 4; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G1 { return 4; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G0_NC { return 4; }
+        return 0;
+    }
+
+    proc K::aarch64_movw_is_nc(reloc_type: UInt32) -> UInt32 {
+        if reloc_type == R_AARCH64_MOVW_UABS_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1_NC { return 1; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G0_NC { return 1; }
+        return 0;
+    }
+
+    proc K::aarch64_movw_checked_value(reloc_type: UInt32, value: UInt64) -> UInt32 {
+        if aarch64_movw_is_nc(reloc_type) == 1 {
+            return 1;
+        }
+        let class_id = aarch64_movw_reloc_class(reloc_type);
+        let idx = aarch64_movw_chunk_index(reloc_type);
+        if class_id == 1 {
+            if idx == 0 { return fits_u16(value); }
+            if idx == 1 { return fits_u32(value); }
+            if idx == 2 { return fits_u48(value); }
+            return 1;
+        }
+        if class_id == 2 {
+            if idx == 0 { return fits_s16(value); }
+            if idx == 1 { return fits_s32(value); }
+            if idx == 2 { return fits_s48(value); }
+            return 0;
+        }
+        if class_id == 3 {
+            if idx == 0 { return fits_s16(value); }
+            if idx == 1 { return fits_s32(value); }
+            if idx == 2 { return fits_s48(value); }
+            if idx == 3 { return 1; }
+            return 0;
+        }
+        if class_id == 4 {
+            return 1;
+        }
+        return 0;
+    }
+
+    proc K::aarch64_movw_divisor(idx: UInt32) -> UInt64 {
+        if idx == 0 { return 1; }
+        if idx == 1 { return 65536; }
+        if idx == 2 { return 4294967296; }
+        if idx == 3 { return 281474976710656; }
+        return 0;
+    }
+
+    proc K::aarch64_movw_patch_word(instr: UInt64, reloc_type: UInt32, value: UInt64) -> UInt64 {
+        let movw_class_mask = 528482304;
+        let movw_class_opcode = 310378496;
+        let movw_imm_preserve_mask = 4292870175;
+        if (instr & movw_class_mask) ! movw_class_opcode {
+            return 0;
+        }
+        let idx = aarch64_movw_chunk_index(reloc_type);
+        if idx > 3 {
+            return 0;
+        }
+        let hw = (instr / 2097152) & 3;
+        if hw ! idx {
+            return 0;
+        }
+        let divisor = aarch64_movw_divisor(idx);
+        if divisor == 0 {
+            return 0;
+        }
+        let chunk = (value / divisor) & 65535;
+        return (instr & movw_imm_preserve_mask) | (chunk * 32);
+    }
+
+    proc K::aarch64_tlsdesc_call_patch_word(instr: UInt64) -> UInt64 {
+        if instr == 0 {
+            return 0;
+        } else {
+            return instr;
+        }
+    }
+
+    proc K::aarch64_tstbr14_patch_word(instr: UInt64, delta: UInt64) -> UInt64 {
+        let tst_mask = 2113929216;
+        let tst_opcode_class = 905969664;
+        let tst_preserve_mask = 4294443039;
+        if (instr & tst_mask) ! tst_opcode_class {
+            return 0;
+        }
+        if (delta & 3) ! 0 {
+            return 0;
+        }
+        if fits_s16(delta) == 0 {
+            return 0;
+        }
+        let imm14 = (delta / 4) & 16383;
+        return (instr & tst_preserve_mask) | (imm14 * 32);
+    }
+
+    proc K::aarch64_adrp_patch_word(instr: UInt64, reloc_type: UInt32, page_delta: UInt64) -> UInt64 {
+        let adrp_mask = 2667577344;
+        let adrp_opcode = 2415919104;
+        let adrp_preserve_mask = 2667577375;
+        if (instr & adrp_mask) ! adrp_opcode {
+            return 0;
+        }
+        if (page_delta & 4095) ! 0 {
+            return 0;
+        }
+        if reloc_type == R_AARCH64_ADR_PREL_PG_HI21 {
+            if fits_s33(page_delta) == 0 {
+                return 0;
+            }
+        } else {
+            if reloc_type ! R_AARCH64_ADR_PREL_PG_HI21_NC {
+                return 0;
+            }
+        }
+        let immlo = (page_delta / 4096) & 3;
+        let immhi = (page_delta / 16384) & 524287;
+        return (instr & adrp_preserve_mask) | (immlo * 536870912) | (immhi * 32);
+    }
+
+    proc K::aarch64_add_lo12_patch_word(instr: UInt64, sum: UInt64) -> UInt64 {
+        let add_imm_mask = 2130706432;
+        let add_imm_opcode = 285212672;
+        let add_shift_mask = 12582912;
+        let add_preserve_mask = 4290774015;
+        if (instr & add_imm_mask) ! add_imm_opcode {
+            return 0;
+        }
+        if (instr & add_shift_mask) ! 0 {
+            return 0;
+        }
+        let imm12 = sum & 4095;
+        return (instr & add_preserve_mask) | (imm12 * 1024);
+    }
+
+    proc K::aarch64_ldst_scale_bytes(reloc_type: UInt32) -> UInt64 {
+        if reloc_type == R_AARCH64_LDST8_ABS_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_LDST16_ABS_LO12_NC { return 2; }
+        if reloc_type == R_AARCH64_LDST32_ABS_LO12_NC { return 4; }
+        if reloc_type == R_AARCH64_LDST64_ABS_LO12_NC { return 8; }
+        if reloc_type == R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC { return 8; }
+        if reloc_type == R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC { return 8; }
+        if reloc_type == R_AARCH64_TLSDESC_LD64_LO12 { return 8; }
+        if reloc_type == R_AARCH64_LDST128_ABS_LO12_NC { return 16; }
+        if reloc_type == R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC { return 16; }
+        if reloc_type == R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC { return 16; }
+        return 0;
+    }
+
+    proc K::aarch64_ldst_lo12_patch_word(instr: UInt64, reloc_type: UInt32, sum: UInt64) -> UInt64 {
+        let ldst_preserve_mask = 4290774015;
+        let scale = aarch64_ldst_scale_bytes(reloc_type);
+        if scale == 0 {
+            return 0;
+        }
+        let lo12 = sum & 4095;
+        if scale > 1 {
+            let scaled = lo12 / scale;
+            if (scaled * scale) ! lo12 {
+                return 0;
+            }
+        }
+        let imm12 = lo12 / scale;
+        return (instr & ldst_preserve_mask) | (imm12 * 1024);
+    }
+
+    proc K::apply_aarch64_instruction_relocation(
+        section_index: UInt32,
+        offset: UInt64,
+        reloc_type: UInt32,
+        value: UInt64
+    ) -> UInt32 {
+        let instr = host_linker_read_u32(section_index, offset);
+        if reloc_type == R_AARCH64_JUMP26 {
+            let patched_jump = aarch64_branch26_patch_word(instr, reloc_type, value);
+            if patched_jump == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_jump);
+            }
+        }
+        if reloc_type == R_AARCH64_CALL26 {
+            let patched_call = aarch64_branch26_patch_word(instr, reloc_type, value);
+            if patched_call == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_call);
+            }
+        }
+        if reloc_type == R_AARCH64_CONDBR19 {
+            let patched_cond = aarch64_condbr19_patch_word(instr, value);
+            if patched_cond == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_cond);
+            }
+        }
+        if reloc_type == R_AARCH64_LD_PREL_LO19 {
+            let patched_ldlit = aarch64_ld_prel_lo19_patch_word(instr, value);
+            if patched_ldlit == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_ldlit);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSLD_LD_PREL19 {
+            let patched_tlsld_ldlit = aarch64_ld_prel_lo19_patch_word(instr, value);
+            if patched_tlsld_ldlit == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsld_ldlit);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSDESC_LD_PREL19 {
+            let patched_tlsdesc_ldlit = aarch64_ld_prel_lo19_patch_word(instr, value);
+            if patched_tlsdesc_ldlit == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsdesc_ldlit);
+            }
+        }
+        if reloc_type == R_AARCH64_TSTBR14 {
+            let patched_tst = aarch64_tstbr14_patch_word(instr, value);
+            if patched_tst == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tst);
+            }
+        }
+        if reloc_type == R_AARCH64_ADR_PREL_LO21 {
+            let patched_adr = aarch64_adr_prel_lo21_patch_word(instr, value);
+            if patched_adr == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_adr);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSGD_ADR_PREL21 {
+            let patched_tlsgd_adr = aarch64_adr_prel_lo21_patch_word(instr, value);
+            if patched_tlsgd_adr == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsgd_adr);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSLD_ADR_PREL21 {
+            let patched_tlsld_adr = aarch64_adr_prel_lo21_patch_word(instr, value);
+            if patched_tlsld_adr == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsld_adr);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSDESC_ADR_PREL21 {
+            let patched_tlsdesc_adr = aarch64_adr_prel_lo21_patch_word(instr, value);
+            if patched_tlsdesc_adr == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsdesc_adr);
+            }
+        }
+        if reloc_type == R_AARCH64_ADR_PREL_PG_HI21 {
+            let patched_adrp = aarch64_adrp_patch_word(instr, reloc_type, value);
+            if patched_adrp == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_adrp);
+            }
+        }
+        if reloc_type == R_AARCH64_ADR_PREL_PG_HI21_NC {
+            let patched_adrp_nc = aarch64_adrp_patch_word(instr, reloc_type, value);
+            if patched_adrp_nc == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_adrp_nc);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSGD_ADR_PAGE21 {
+            let patched_tlsgd_adrp = aarch64_adrp_patch_word(instr, R_AARCH64_ADR_PREL_PG_HI21, value);
+            if patched_tlsgd_adrp == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsgd_adrp);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSLD_ADR_PAGE21 {
+            let patched_tlsld_adrp = aarch64_adrp_patch_word(instr, R_AARCH64_ADR_PREL_PG_HI21, value);
+            if patched_tlsld_adrp == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsld_adrp);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSDESC_ADR_PAGE21 {
+            let patched_tlsdesc_adrp = aarch64_adrp_patch_word(instr, R_AARCH64_ADR_PREL_PG_HI21, value);
+            if patched_tlsdesc_adrp == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsdesc_adrp);
+            }
+        }
+        if reloc_type == R_AARCH64_ADD_ABS_LO12_NC {
+            let patched_add = aarch64_add_lo12_patch_word(instr, value);
+            if patched_add == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_add);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSGD_ADD_LO12_NC {
+            let patched_tlsgd_add = aarch64_add_lo12_patch_word(instr, value);
+            if patched_tlsgd_add == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsgd_add);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSLD_ADD_LO12_NC {
+            let patched_tlsld_add = aarch64_add_lo12_patch_word(instr, value);
+            if patched_tlsld_add == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsld_add);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC {
+            let patched_tlsld_dtp_add = aarch64_add_lo12_patch_word(instr, value);
+            if patched_tlsld_dtp_add == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsld_dtp_add);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSLE_ADD_TPREL_LO12_NC {
+            let patched_tlsle_tprel_add = aarch64_add_lo12_patch_word(instr, value);
+            if patched_tlsle_tprel_add == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsle_tprel_add);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSDESC_ADD_LO12 {
+            let patched_tlsdesc_add = aarch64_add_lo12_patch_word(instr, value);
+            if patched_tlsdesc_add == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsdesc_add);
+            }
+        }
+        if reloc_type == R_AARCH64_MOVW_UABS_G0 {
+            let patched_movw_uabs_g0 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_uabs_g0 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_uabs_g0);
+        }
+        if reloc_type == R_AARCH64_MOVW_UABS_G0_NC {
+            let patched_movw_uabs_g0_nc = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_uabs_g0_nc == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_uabs_g0_nc);
+        }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1 {
+            let patched_movw_uabs_g1 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_uabs_g1 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_uabs_g1);
+        }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1_NC {
+            let patched_movw_uabs_g1_nc = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_uabs_g1_nc == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_uabs_g1_nc);
+        }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2 {
+            let patched_movw_uabs_g2 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_uabs_g2 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_uabs_g2);
+        }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2_NC {
+            let patched_movw_uabs_g2_nc = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_uabs_g2_nc == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_uabs_g2_nc);
+        }
+        if reloc_type == R_AARCH64_MOVW_UABS_G3 {
+            let patched_movw_uabs_g3 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_uabs_g3 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_uabs_g3);
+        }
+        if reloc_type == R_AARCH64_MOVW_SABS_G0 {
+            let patched_movw_sabs_g0 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_sabs_g0 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_sabs_g0);
+        }
+        if reloc_type == R_AARCH64_MOVW_SABS_G1 {
+            let patched_movw_sabs_g1 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_sabs_g1 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_sabs_g1);
+        }
+        if reloc_type == R_AARCH64_MOVW_SABS_G2 {
+            let patched_movw_sabs_g2 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_sabs_g2 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_sabs_g2);
+        }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0 {
+            let patched_movw_prel_g0 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_prel_g0 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_prel_g0);
+        }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0_NC {
+            let patched_movw_prel_g0_nc = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_prel_g0_nc == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_prel_g0_nc);
+        }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1 {
+            let patched_movw_prel_g1 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_prel_g1 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_prel_g1);
+        }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1_NC {
+            let patched_movw_prel_g1_nc = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_prel_g1_nc == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_prel_g1_nc);
+        }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2 {
+            let patched_movw_prel_g2 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_prel_g2 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_prel_g2);
+        }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2_NC {
+            let patched_movw_prel_g2_nc = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_prel_g2_nc == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_prel_g2_nc);
+        }
+        if reloc_type == R_AARCH64_MOVW_PREL_G3 {
+            let patched_movw_prel_g3 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_movw_prel_g3 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_movw_prel_g3);
+        }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G1 {
+            let patched_tlsgd_movw_g1 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_tlsgd_movw_g1 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_tlsgd_movw_g1);
+        }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G0_NC {
+            let patched_tlsgd_movw_g0 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_tlsgd_movw_g0 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_tlsgd_movw_g0);
+        }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G1 {
+            let patched_tlsld_movw_g1 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_tlsld_movw_g1 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_tlsld_movw_g1);
+        }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G0_NC {
+            let patched_tlsld_movw_g0 = aarch64_movw_patch_word(instr, reloc_type, value);
+            if patched_tlsld_movw_g0 == 0 { return ERR_INVALID_RELOCATION; }
+            return host_linker_patch_u32(section_index, offset, patched_tlsld_movw_g0);
+        }
+        if reloc_type == R_AARCH64_LDST8_ABS_LO12_NC {
+            let patched_ldst8 = aarch64_ldst_lo12_patch_word(instr, reloc_type, value);
+            if patched_ldst8 == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_ldst8);
+            }
+        }
+        if reloc_type == R_AARCH64_LDST16_ABS_LO12_NC {
+            let patched_ldst16 = aarch64_ldst_lo12_patch_word(instr, reloc_type, value);
+            if patched_ldst16 == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_ldst16);
+            }
+        }
+        if reloc_type == R_AARCH64_LDST32_ABS_LO12_NC {
+            let patched_ldst32 = aarch64_ldst_lo12_patch_word(instr, reloc_type, value);
+            if patched_ldst32 == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_ldst32);
+            }
+        }
+        if reloc_type == R_AARCH64_LDST64_ABS_LO12_NC {
+            let patched_ldst64 = aarch64_ldst_lo12_patch_word(instr, reloc_type, value);
+            if patched_ldst64 == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_ldst64);
+            }
+        }
+        if reloc_type == R_AARCH64_LDST128_ABS_LO12_NC {
+            let patched_ldst128 = aarch64_ldst_lo12_patch_word(instr, reloc_type, value);
+            if patched_ldst128 == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_ldst128);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC {
+            let patched_tlsld_ldst64 = aarch64_ldst_lo12_patch_word(instr, reloc_type, value);
+            if patched_tlsld_ldst64 == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsld_ldst64);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC {
+            let patched_tlsle_ldst64 = aarch64_ldst_lo12_patch_word(instr, reloc_type, value);
+            if patched_tlsle_ldst64 == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsle_ldst64);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSDESC_LD64_LO12 {
+            let patched_tlsdesc_ld64 = aarch64_ldst_lo12_patch_word(instr, reloc_type, value);
+            if patched_tlsdesc_ld64 == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsdesc_ld64);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC {
+            let patched_tlsle_ldst128 = aarch64_ldst_lo12_patch_word(instr, reloc_type, value);
+            if patched_tlsle_ldst128 == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsle_ldst128);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC {
+            let patched_tlsld_ldst128 = aarch64_ldst_lo12_patch_word(instr, reloc_type, value);
+            if patched_tlsld_ldst128 == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsld_ldst128);
+            }
+        }
+        if reloc_type == R_AARCH64_TLSDESC_CALL {
+            let patched_tlsdesc_call = aarch64_tlsdesc_call_patch_word(instr);
+            if patched_tlsdesc_call == 0 {
+                return ERR_INVALID_RELOCATION;
+            } else {
+                return host_linker_patch_u32(section_index, offset, patched_tlsdesc_call);
+            }
+        }
+        return ERR_INVALID_RELOCATION;
     }
 
     proc K::is_signed_32_reloc_x86_64(reloc_type: UInt32) -> UInt32 {
@@ -227,6 +1221,65 @@ forge LinkerReloc {
                 if reloc_type == R_AARCH64_PREL64 {
                     return ERR_OK;
                 } else {
+                    if reloc_type == R_AARCH64_TLS_DTPMOD {
+                        return ERR_OK;
+                    }
+                    if reloc_type == R_AARCH64_TLS_DTPREL {
+                        return ERR_OK;
+                    }
+                    if reloc_type == R_AARCH64_TLS_TPREL {
+                        return ERR_OK;
+                    }
+                    if aarch64_is_instr_reloc(reloc_type) == 1 {
+                        if reloc_type == R_AARCH64_TSTBR14 {
+                            if fits_s16(value) == 0 { return ERR_INVALID_RELOCATION; }
+                            if (value & 3) ! 0 { return ERR_INVALID_RELOCATION; }
+                            return ERR_OK;
+                        }
+                        if reloc_type == R_AARCH64_CONDBR19 {
+                            if fits_s21(value) == 0 { return ERR_INVALID_RELOCATION; }
+                            if (value & 3) ! 0 { return ERR_INVALID_RELOCATION; }
+                            return ERR_OK;
+                        }
+                        if reloc_type == R_AARCH64_LD_PREL_LO19 {
+                            if fits_s21(value) == 0 { return ERR_INVALID_RELOCATION; }
+                            if (value & 3) ! 0 { return ERR_INVALID_RELOCATION; }
+                            return ERR_OK;
+                        }
+                        if reloc_type == R_AARCH64_TLSLD_LD_PREL19 {
+                            if fits_s21(value) == 0 { return ERR_INVALID_RELOCATION; }
+                            if (value & 3) ! 0 { return ERR_INVALID_RELOCATION; }
+                            return ERR_OK;
+                        }
+                        if reloc_type == R_AARCH64_TLSDESC_LD_PREL19 {
+                            if fits_s21(value) == 0 { return ERR_INVALID_RELOCATION; }
+                            if (value & 3) ! 0 { return ERR_INVALID_RELOCATION; }
+                            return ERR_OK;
+                        }
+                        if reloc_type == R_AARCH64_ADR_PREL_LO21 {
+                            if fits_s21(value) == 0 { return ERR_INVALID_RELOCATION; }
+                            return ERR_OK;
+                        }
+                        if reloc_type == R_AARCH64_TLSGD_ADR_PREL21 {
+                            if fits_s21(value) == 0 { return ERR_INVALID_RELOCATION; }
+                            return ERR_OK;
+                        }
+                        if reloc_type == R_AARCH64_TLSLD_ADR_PREL21 {
+                            if fits_s21(value) == 0 { return ERR_INVALID_RELOCATION; }
+                            return ERR_OK;
+                        }
+                        if reloc_type == R_AARCH64_TLSDESC_ADR_PREL21 {
+                            if fits_s21(value) == 0 { return ERR_INVALID_RELOCATION; }
+                            return ERR_OK;
+                        }
+                        if aarch64_movw_checked_value(reloc_type, value) == 1 {
+                            return ERR_OK;
+                        }
+                        if aarch64_movw_reloc_class(reloc_type) ! 0 {
+                            return ERR_INVALID_RELOCATION;
+                        }
+                        return ERR_OK;
+                    }
                     if reloc_type == R_AARCH64_PREL32 {
                         if fits_s32(value) == 1 {
                             return ERR_OK;
@@ -311,6 +1364,63 @@ forge LinkerReloc {
             if reloc_type == R_AARCH64_ABS32 { return arm_sum; }
             if reloc_type == R_AARCH64_PREL64 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
             if reloc_type == R_AARCH64_PREL32 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_LD_PREL_LO19 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_TLSLD_LD_PREL19 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_TLSDESC_LD_PREL19 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_ADR_PREL_LO21 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_TLSGD_ADR_PREL21 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_TLSLD_ADR_PREL21 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_TLSDESC_ADR_PREL21 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_TSTBR14 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_CONDBR19 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_JUMP26 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_CALL26 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_MOVW_UABS_G0 { return arm_sum; }
+            if reloc_type == R_AARCH64_MOVW_UABS_G0_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_MOVW_UABS_G1 { return arm_sum; }
+            if reloc_type == R_AARCH64_MOVW_UABS_G1_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_MOVW_UABS_G2 { return arm_sum; }
+            if reloc_type == R_AARCH64_MOVW_UABS_G2_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_MOVW_UABS_G3 { return arm_sum; }
+            if reloc_type == R_AARCH64_MOVW_SABS_G0 { return arm_sum; }
+            if reloc_type == R_AARCH64_MOVW_SABS_G1 { return arm_sum; }
+            if reloc_type == R_AARCH64_MOVW_SABS_G2 { return arm_sum; }
+            if reloc_type == R_AARCH64_MOVW_PREL_G0 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_MOVW_PREL_G0_NC { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_MOVW_PREL_G1 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_MOVW_PREL_G1_NC { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_MOVW_PREL_G2 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_MOVW_PREL_G2_NC { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_MOVW_PREL_G3 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_TLSGD_MOVW_G1 { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSGD_MOVW_G0_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSLD_MOVW_G1 { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSLD_MOVW_G0_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_ADR_PREL_PG_HI21 { return aarch64_page_delta_bytes(arm_sum, place_addr); }
+            if reloc_type == R_AARCH64_ADR_PREL_PG_HI21_NC { return aarch64_page_delta_bytes(arm_sum, place_addr); }
+            if reloc_type == R_AARCH64_TLSGD_ADR_PAGE21 { return aarch64_page_delta_bytes(arm_sum, place_addr); }
+            if reloc_type == R_AARCH64_TLSLD_ADR_PAGE21 { return aarch64_page_delta_bytes(arm_sum, place_addr); }
+            if reloc_type == R_AARCH64_TLSDESC_ADR_PAGE21 { return aarch64_page_delta_bytes(arm_sum, place_addr); }
+            if reloc_type == R_AARCH64_ADD_ABS_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSGD_ADD_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSLD_ADD_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSLE_ADD_TPREL_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSDESC_ADD_LO12 { return arm_sum; }
+            if reloc_type == R_AARCH64_LDST8_ABS_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_LDST16_ABS_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_LDST32_ABS_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_LDST64_ABS_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_LDST128_ABS_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSDESC_LD64_LO12 { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC { return arm_sum; }
+            if reloc_type == R_AARCH64_TLSDESC_CALL { return 0; }
+            if reloc_type == R_AARCH64_TLS_DTPMOD { return 1; }
+            if reloc_type == R_AARCH64_TLS_DTPREL { return arm_sum; }
+            if reloc_type == R_AARCH64_TLS_TPREL { return arm_sum; }
             return 0;
         }
 
@@ -346,6 +1456,9 @@ forge LinkerReloc {
             return value_status;
         } else {
             if machine == EM_AARCH64 {
+                if aarch64_is_instr_reloc(reloc_type) == 1 {
+                    return apply_aarch64_instruction_relocation(section_index, offset, reloc_type, value);
+                }
                 if reloc_type == R_AARCH64_ABS64 { return host_linker_patch_u64(section_index, offset, value); }
                 if reloc_type == R_AARCH64_PREL64 { return host_linker_patch_u64(section_index, offset, value); }
                 return host_linker_patch_u32(section_index, offset, value);

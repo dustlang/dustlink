@@ -10,6 +10,23 @@ forge LinkerMathTests {
     const R_X86_64_32: UInt32 = 10;
     const R_X86_64_GLOB_DAT: UInt32 = 6;
     const R_AARCH64_PREL32: UInt32 = 261;
+    const R_AARCH64_MOVW_UABS_G0: UInt32 = 263;
+    const R_AARCH64_MOVW_SABS_G0: UInt32 = 270;
+    const R_AARCH64_LD_PREL_LO19: UInt32 = 273;
+    const R_AARCH64_ADR_PREL_LO21: UInt32 = 274;
+    const R_AARCH64_ADR_PREL_PG_HI21: UInt32 = 275;
+    const R_AARCH64_ADD_ABS_LO12_NC: UInt32 = 277;
+    const R_AARCH64_LDST8_ABS_LO12_NC: UInt32 = 278;
+    const R_AARCH64_TSTBR14: UInt32 = 279;
+    const R_AARCH64_CONDBR19: UInt32 = 280;
+    const R_AARCH64_JUMP26: UInt32 = 282;
+    const R_AARCH64_CALL26: UInt32 = 283;
+    const R_AARCH64_LDST16_ABS_LO12_NC: UInt32 = 284;
+    const R_AARCH64_LDST32_ABS_LO12_NC: UInt32 = 285;
+    const R_AARCH64_LDST64_ABS_LO12_NC: UInt32 = 286;
+    const R_AARCH64_LDST128_ABS_LO12_NC: UInt32 = 299;
+    const R_AARCH64_TLS_DTPMOD: UInt32 = 1028;
+    const R_AARCH64_TLS_TPREL: UInt32 = 1030;
 
     proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
         if actual == expected {
@@ -84,6 +101,105 @@ forge LinkerMathTests {
         return expect_u32(status, ERR_OK);
     }
 
+    proc K::test_aarch64_branch26_patch_word_forward() -> UInt32 {
+        let insn_b = 335544320;
+        let patched = LinkerReloc::K::aarch64_branch26_patch_word(insn_b, R_AARCH64_JUMP26, 16);
+        return expect_u64(patched, 335544324);
+    }
+
+    proc K::test_aarch64_branch26_patch_word_backward() -> UInt32 {
+        let insn_bl = 2483027968;
+        let patched = LinkerReloc::K::aarch64_branch26_patch_word(insn_bl, R_AARCH64_CALL26, 0 - 4);
+        return expect_u64(patched, 4026531839);
+    }
+
+    proc K::test_aarch64_adrp_patch_word_page_delta() -> UInt32 {
+        let adrp = 2415919104;
+        let patched = LinkerReloc::K::aarch64_adrp_patch_word(adrp, R_AARCH64_ADR_PREL_PG_HI21, 12288);
+        return expect_u64(patched, 4026531840);
+    }
+
+    proc K::test_aarch64_add_lo12_patch_word() -> UInt32 {
+        let add_imm = 2432696320;
+        let patched = LinkerReloc::K::aarch64_add_lo12_patch_word(add_imm, 2748);
+        return expect_u64(patched, 2435510272);
+    }
+
+    proc K::test_aarch64_condbr19_patch_word_forward() -> UInt32 {
+        let bcond = 1409286144;
+        let patched = LinkerReloc::K::aarch64_condbr19_patch_word(bcond, 16);
+        return expect_u64(patched, 1409286272);
+    }
+
+    proc K::test_aarch64_tstbr14_patch_word_forward() -> UInt32 {
+        let tbz = 905969664;
+        let patched = LinkerReloc::K::aarch64_tstbr14_patch_word(tbz, 16);
+        return expect_u64(patched, 905969792);
+    }
+
+    proc K::test_aarch64_ld_prel_lo19_patch_word_forward() -> UInt32 {
+        let ldr_lit = 1476395008;
+        let patched = LinkerReloc::K::aarch64_ld_prel_lo19_patch_word(ldr_lit, 16);
+        return expect_u64(patched, 1476395136);
+    }
+
+    proc K::test_aarch64_adr_prel_lo21_patch_word_forward() -> UInt32 {
+        let adr = 268435456;
+        let patched = LinkerReloc::K::aarch64_adr_prel_lo21_patch_word(adr, 16);
+        return expect_u64(patched, 268435584);
+    }
+
+    proc K::test_aarch64_movw_uabs_g0_patch_word() -> UInt32 {
+        let movw = 310378496;
+        let patched = LinkerReloc::K::aarch64_movw_patch_word(movw, R_AARCH64_MOVW_UABS_G0, 4660);
+        return expect_u64(patched, 310527616);
+    }
+
+    proc K::test_aarch64_movw_uabs_g0_validate_overflow_rejects() -> UInt32 {
+        let status = LinkerReloc::K::validate_relocation_value(R_AARCH64_MOVW_UABS_G0, EM_AARCH64, 65536);
+        return expect_u32(status, ERR_INVALID_RELOCATION);
+    }
+
+    proc K::test_aarch64_movw_sabs_g0_accepts_negative() -> UInt32 {
+        let minus_one = 0 - 1;
+        let status = LinkerReloc::K::validate_relocation_value(R_AARCH64_MOVW_SABS_G0, EM_AARCH64, minus_one);
+        return expect_u32(status, ERR_OK);
+    }
+
+    proc K::test_aarch64_ldst_lo12_patch_word_scaled() -> UInt32 {
+        let ldr_x = 4160749568;
+        let patched = LinkerReloc::K::aarch64_ldst_lo12_patch_word(ldr_x, R_AARCH64_LDST64_ABS_LO12_NC, 24);
+        return expect_u64(patched, 4160752640);
+    }
+
+    proc K::test_aarch64_ldst128_lo12_patch_word_scaled() -> UInt32 {
+        let ldr_q = 1040187392;
+        let patched = LinkerReloc::K::aarch64_ldst_lo12_patch_word(ldr_q, R_AARCH64_LDST128_ABS_LO12_NC, 32);
+        return expect_u64(patched, 1040189440);
+    }
+
+    proc K::test_aarch64_ldst_lo12_patch_word_alignment_rejects() -> UInt32 {
+        let ldr_w = 3103784960;
+        let patched = LinkerReloc::K::aarch64_ldst_lo12_patch_word(ldr_w, R_AARCH64_LDST32_ABS_LO12_NC, 3);
+        return expect_u64(patched, 0);
+    }
+
+    proc K::test_aarch64_ldst128_lo12_patch_word_alignment_rejects() -> UInt32 {
+        let ldr_q = 1040187392;
+        let patched = LinkerReloc::K::aarch64_ldst_lo12_patch_word(ldr_q, R_AARCH64_LDST128_ABS_LO12_NC, 8);
+        return expect_u64(patched, 0);
+    }
+
+    proc K::test_aarch64_tls_dtpmod_accepts_64bit_value() -> UInt32 {
+        let status = LinkerReloc::K::validate_relocation_value(R_AARCH64_TLS_DTPMOD, EM_AARCH64, 4294967296);
+        return expect_u32(status, ERR_OK);
+    }
+
+    proc K::test_aarch64_tls_tprel_accepts_64bit_value() -> UInt32 {
+        let status = LinkerReloc::K::validate_relocation_value(R_AARCH64_TLS_TPREL, EM_AARCH64, 4294967296);
+        return expect_u32(status, ERR_OK);
+    }
+
     proc K::run_all_tests() -> UInt32 {
         let passed =
             test_sections_align_forward_identity()
@@ -96,7 +212,24 @@ forge LinkerMathTests {
             + test_u32_reloc_value_rejects_overflow()
             + test_x86_64_pc32_accepts_negative_delta()
             + test_x86_64_glob_dat_accepts_64bit_value()
-            + test_aarch64_prel32_accepts_negative_delta();
+            + test_aarch64_prel32_accepts_negative_delta()
+            + test_aarch64_branch26_patch_word_forward()
+            + test_aarch64_branch26_patch_word_backward()
+            + test_aarch64_adrp_patch_word_page_delta()
+            + test_aarch64_add_lo12_patch_word()
+            + test_aarch64_condbr19_patch_word_forward()
+            + test_aarch64_tstbr14_patch_word_forward()
+            + test_aarch64_ld_prel_lo19_patch_word_forward()
+            + test_aarch64_adr_prel_lo21_patch_word_forward()
+            + test_aarch64_movw_uabs_g0_patch_word()
+            + test_aarch64_movw_uabs_g0_validate_overflow_rejects()
+            + test_aarch64_movw_sabs_g0_accepts_negative()
+            + test_aarch64_ldst_lo12_patch_word_scaled()
+            + test_aarch64_ldst128_lo12_patch_word_scaled()
+            + test_aarch64_ldst_lo12_patch_word_alignment_rejects()
+            + test_aarch64_ldst128_lo12_patch_word_alignment_rejects()
+            + test_aarch64_tls_dtpmod_accepts_64bit_value()
+            + test_aarch64_tls_tprel_accepts_64bit_value();
         return passed;
     }
 }

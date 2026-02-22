@@ -42,6 +42,11 @@ Both files define forge-based test procedures with this pattern:
 - Search-path state checks (`--sysroot`, `-rpath`, `-rpath-link`)
 - Dynamic tag mode checks (`--enable-new-dtags`, `--disable-new-dtags`)
 - Copy-needed policy checks (`--copy-dt-needed-entries`, `--no-copy-dt-needed-entries`)
+- AArch64 relocation helper/validation checks for:
+  - branch/literal/ADR/ADRP/ADD/LDST bitfield patch helpers
+  - `LDST128` scaling/alignment behavior
+  - `ADR_PREL_LO21` and MOVW patch/validation paths
+  - starter AArch64 TLS data relocation value validation (`TLS_DTPMOD`, `TLS_TPREL`)
 
 ## Recent Integration Checks
 
@@ -66,6 +71,7 @@ Both files define forge-based test procedures with this pattern:
 - Host CLI tests now include musl/Windows GNU/bare-metal target alias coverage.
 - Linker core tests include AArch64 target acceptance in internal target validation.
 - `dust check src` passes for current Dust-source linker modules (host CLI + runtime parity changes).
+- `dust check src` passes after AArch64 relocation parity expansions (MOVW, `ADR_PREL_LO21`, and starter TLS relocation plumbing).
 
 ## Current Limitations
 

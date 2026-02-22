@@ -63,6 +63,63 @@ forge ElfFormat {
     const R_AARCH64_ABS32: UInt32 = 258;
     const R_AARCH64_PREL64: UInt32 = 260;
     const R_AARCH64_PREL32: UInt32 = 261;
+    const R_AARCH64_MOVW_UABS_G0: UInt32 = 263;
+    const R_AARCH64_MOVW_UABS_G0_NC: UInt32 = 264;
+    const R_AARCH64_MOVW_UABS_G1: UInt32 = 265;
+    const R_AARCH64_MOVW_UABS_G1_NC: UInt32 = 266;
+    const R_AARCH64_MOVW_UABS_G2: UInt32 = 267;
+    const R_AARCH64_MOVW_UABS_G2_NC: UInt32 = 268;
+    const R_AARCH64_MOVW_UABS_G3: UInt32 = 269;
+    const R_AARCH64_MOVW_SABS_G0: UInt32 = 270;
+    const R_AARCH64_MOVW_SABS_G1: UInt32 = 271;
+    const R_AARCH64_MOVW_SABS_G2: UInt32 = 272;
+    const R_AARCH64_LD_PREL_LO19: UInt32 = 273;
+    const R_AARCH64_ADR_PREL_LO21: UInt32 = 274;
+    const R_AARCH64_ADR_PREL_PG_HI21: UInt32 = 275;
+    const R_AARCH64_ADR_PREL_PG_HI21_NC: UInt32 = 276;
+    const R_AARCH64_ADD_ABS_LO12_NC: UInt32 = 277;
+    const R_AARCH64_LDST8_ABS_LO12_NC: UInt32 = 278;
+    const R_AARCH64_TSTBR14: UInt32 = 279;
+    const R_AARCH64_CONDBR19: UInt32 = 280;
+    const R_AARCH64_JUMP26: UInt32 = 282;
+    const R_AARCH64_CALL26: UInt32 = 283;
+    const R_AARCH64_LDST16_ABS_LO12_NC: UInt32 = 284;
+    const R_AARCH64_LDST32_ABS_LO12_NC: UInt32 = 285;
+    const R_AARCH64_LDST64_ABS_LO12_NC: UInt32 = 286;
+    const R_AARCH64_MOVW_PREL_G0: UInt32 = 287;
+    const R_AARCH64_MOVW_PREL_G0_NC: UInt32 = 288;
+    const R_AARCH64_MOVW_PREL_G1: UInt32 = 289;
+    const R_AARCH64_MOVW_PREL_G1_NC: UInt32 = 290;
+    const R_AARCH64_MOVW_PREL_G2: UInt32 = 291;
+    const R_AARCH64_MOVW_PREL_G2_NC: UInt32 = 292;
+    const R_AARCH64_MOVW_PREL_G3: UInt32 = 293;
+    const R_AARCH64_LDST128_ABS_LO12_NC: UInt32 = 299;
+    const R_AARCH64_TLSGD_ADR_PREL21: UInt32 = 512;
+    const R_AARCH64_TLSGD_ADR_PAGE21: UInt32 = 513;
+    const R_AARCH64_TLSGD_ADD_LO12_NC: UInt32 = 514;
+    const R_AARCH64_TLSGD_MOVW_G1: UInt32 = 515;
+    const R_AARCH64_TLSGD_MOVW_G0_NC: UInt32 = 516;
+    const R_AARCH64_TLSLD_ADR_PREL21: UInt32 = 517;
+    const R_AARCH64_TLSLD_ADR_PAGE21: UInt32 = 518;
+    const R_AARCH64_TLSLD_ADD_LO12_NC: UInt32 = 519;
+    const R_AARCH64_TLSLD_MOVW_G1: UInt32 = 520;
+    const R_AARCH64_TLSLD_MOVW_G0_NC: UInt32 = 521;
+    const R_AARCH64_TLSLD_LD_PREL19: UInt32 = 522;
+    const R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC: UInt32 = 530;
+    const R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC: UInt32 = 538;
+    const R_AARCH64_TLSLE_ADD_TPREL_LO12_NC: UInt32 = 551;
+    const R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC: UInt32 = 559;
+    const R_AARCH64_TLSDESC_LD_PREL19: UInt32 = 560;
+    const R_AARCH64_TLSDESC_ADR_PREL21: UInt32 = 561;
+    const R_AARCH64_TLSDESC_ADR_PAGE21: UInt32 = 562;
+    const R_AARCH64_TLSDESC_LD64_LO12: UInt32 = 563;
+    const R_AARCH64_TLSDESC_ADD_LO12: UInt32 = 564;
+    const R_AARCH64_TLSDESC_CALL: UInt32 = 569;
+    const R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC: UInt32 = 571;
+    const R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC: UInt32 = 573;
+    const R_AARCH64_TLS_DTPMOD: UInt32 = 1028;
+    const R_AARCH64_TLS_DTPREL: UInt32 = 1029;
+    const R_AARCH64_TLS_TPREL: UInt32 = 1030;
 
     const ELF64_HEADER_SIZE: UInt32 = 64;
     const ELF64_SECTION_HEADER_SIZE: UInt32 = 64;
@@ -454,27 +511,69 @@ forge ElfFormat {
     }
 
     proc K::validate_relocation_type_aarch64(reloc_type: UInt32) -> UInt32 {
-        if reloc_type == R_AARCH64_NONE {
-            return 0;
-        } else {
-            if reloc_type == R_AARCH64_ABS64 {
-                return 0;
-            } else {
-                if reloc_type == R_AARCH64_ABS32 {
-                    return 0;
-                } else {
-                    if reloc_type == R_AARCH64_PREL64 {
-                        return 0;
-                    } else {
-                        if reloc_type == R_AARCH64_PREL32 {
-                        return 0;
-                    } else {
-                        return 6;
-                    }
-                    }
-                }
-            }
-        }
+        if reloc_type == R_AARCH64_NONE { return 0; }
+        if reloc_type == R_AARCH64_ABS64 { return 0; }
+        if reloc_type == R_AARCH64_ABS32 { return 0; }
+        if reloc_type == R_AARCH64_PREL64 { return 0; }
+        if reloc_type == R_AARCH64_PREL32 { return 0; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G0 { return 0; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G0_NC { return 0; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1 { return 0; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G1_NC { return 0; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2 { return 0; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G2_NC { return 0; }
+        if reloc_type == R_AARCH64_MOVW_UABS_G3 { return 0; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G0 { return 0; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G1 { return 0; }
+        if reloc_type == R_AARCH64_MOVW_SABS_G2 { return 0; }
+        if reloc_type == R_AARCH64_LD_PREL_LO19 { return 0; }
+        if reloc_type == R_AARCH64_ADR_PREL_LO21 { return 0; }
+        if reloc_type == R_AARCH64_ADR_PREL_PG_HI21 { return 0; }
+        if reloc_type == R_AARCH64_ADR_PREL_PG_HI21_NC { return 0; }
+        if reloc_type == R_AARCH64_ADD_ABS_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_LDST8_ABS_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_LDST16_ABS_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_LDST32_ABS_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_LDST64_ABS_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0 { return 0; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G0_NC { return 0; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1 { return 0; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G1_NC { return 0; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2 { return 0; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G2_NC { return 0; }
+        if reloc_type == R_AARCH64_MOVW_PREL_G3 { return 0; }
+        if reloc_type == R_AARCH64_LDST128_ABS_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_TLSGD_ADR_PREL21 { return 0; }
+        if reloc_type == R_AARCH64_TLSGD_ADR_PAGE21 { return 0; }
+        if reloc_type == R_AARCH64_TLSGD_ADD_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G1 { return 0; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G0_NC { return 0; }
+        if reloc_type == R_AARCH64_TLSLD_ADR_PREL21 { return 0; }
+        if reloc_type == R_AARCH64_TLSLD_ADR_PAGE21 { return 0; }
+        if reloc_type == R_AARCH64_TLSLD_ADD_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G1 { return 0; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G0_NC { return 0; }
+        if reloc_type == R_AARCH64_TLSLD_LD_PREL19 { return 0; }
+        if reloc_type == R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_TLSLE_ADD_TPREL_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_TLSDESC_LD_PREL19 { return 0; }
+        if reloc_type == R_AARCH64_TLSDESC_ADR_PREL21 { return 0; }
+        if reloc_type == R_AARCH64_TLSDESC_ADR_PAGE21 { return 0; }
+        if reloc_type == R_AARCH64_TLSDESC_LD64_LO12 { return 0; }
+        if reloc_type == R_AARCH64_TLSDESC_ADD_LO12 { return 0; }
+        if reloc_type == R_AARCH64_TLSDESC_CALL { return 0; }
+        if reloc_type == R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC { return 0; }
+        if reloc_type == R_AARCH64_TLS_DTPMOD { return 0; }
+        if reloc_type == R_AARCH64_TLS_DTPREL { return 0; }
+        if reloc_type == R_AARCH64_TLS_TPREL { return 0; }
+        if reloc_type == R_AARCH64_TSTBR14 { return 0; }
+        if reloc_type == R_AARCH64_CONDBR19 { return 0; }
+        if reloc_type == R_AARCH64_JUMP26 { return 0; }
+        if reloc_type == R_AARCH64_CALL26 { return 0; }
+        return 6;
     }
 
     proc K::validate_relocation_type(reloc_type: UInt32, machine: UInt16) -> UInt32 {

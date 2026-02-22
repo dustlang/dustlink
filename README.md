@@ -77,7 +77,15 @@
   - `R_X86_64_GLOB_DAT`, `R_X86_64_JUMP_SLOT`, `R_X86_64_RELATIVE`
   - `R_X86_64_GOTPCREL`, `R_X86_64_32`, `R_X86_64_32S`
   - `R_X86_64_GOTPCRELX`, `R_X86_64_REX_GOTPCRELX`
-  - AArch64 baseline: `R_AARCH64_NONE`, `R_AARCH64_ABS64`, `R_AARCH64_ABS32`, `R_AARCH64_PREL32`
+  - AArch64 core + instruction forms:
+    - `R_AARCH64_NONE`, `R_AARCH64_ABS64`, `R_AARCH64_ABS32`, `R_AARCH64_PREL64`, `R_AARCH64_PREL32`
+    - `R_AARCH64_CALL26`, `R_AARCH64_JUMP26`, `R_AARCH64_CONDBR19`, `R_AARCH64_TSTBR14`
+    - `R_AARCH64_LD_PREL_LO19`, `R_AARCH64_ADR_PREL_LO21`, `R_AARCH64_ADR_PREL_PG_HI21`, `R_AARCH64_ADR_PREL_PG_HI21_NC`
+    - `R_AARCH64_ADD_ABS_LO12_NC`, `R_AARCH64_LDST8/16/32/64/128_ABS_LO12_NC`
+    - MOVW families: `R_AARCH64_MOVW_UABS_*`, `R_AARCH64_MOVW_SABS_*`, `R_AARCH64_MOVW_PREL_*`
+  - AArch64 TLS starter coverage:
+    - `TLSGD` / `TLSLD` / `TLSDESC` instruction-form relocations (ADR/ADRP/ADD/LD literal/LD lo12/CALL subset)
+    - `R_AARCH64_TLS_DTPMOD`, `R_AARCH64_TLS_DTPREL`, `R_AARCH64_TLS_TPREL`
 
 ## CLI Compatibility Surface
 
@@ -134,6 +142,7 @@ These compatibility no-op paths now emit diagnostics, and become hard failures w
 - `--hash-style` now affects ELF dynamic-tag emission (`DT_HASH` / `DT_GNU_HASH`) in Dust runtime host writer output.
 - `--print-gc-sections` now prints section-drop diagnostics during GC-aware alloc-section selection.
 - Unsupported flag/target failures now emit explicit diagnostics instead of returning only status codes.
+- AArch64 ELF relocation coverage now includes instruction bitfield patching (`ADR_PREL_LO21`, MOVW families, `LD/ST` lo12 variants, branch/literal forms) and starter TLS relocation plumbing (`TLSGD`/`TLSLD`/`TLSDESC`, `TLS_DTPMOD`/`TLS_DTPREL`/`TLS_TPREL`).
 
 ## Build
 
