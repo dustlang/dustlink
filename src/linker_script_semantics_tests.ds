@@ -3,11 +3,13 @@
 forge LinkerScriptSemanticsTests {
     const ERR_OK: UInt32 = 0;
     const ERR_INVALID_FORMAT: UInt32 = 2;
+    const ERR_UNSUPPORTED_FLAG: UInt32 = 12;
     const ERR_CONFLICTING_OPTIONS: UInt32 = 16;
 
     const FORMAT_PE64: UInt32 = 4;
     const FORMAT_MACHO64: UInt32 = 5;
     const TARGET_X86_64_WINDOWS: UInt32 = 2;
+    const TARGET_AARCH64_LINUX: UInt32 = 4;
 
     proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
         if actual == expected {
@@ -52,6 +54,22 @@ forge LinkerScriptSemanticsTests {
             let defined = host_linker_global_symbol_defined(hash);
             let address = host_linker_global_symbol_address(hash);
             return expect_u32(defined, 1) * expect_u64(address, 8192);
+        }
+    }
+
+    proc K::test_script_symbol_assignment_definition() -> UInt32 {
+        let path = "dustlink_script_test_assign.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "kernel_base = 0x1000 + (0x20 * 4);");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let hash = LinkerFs::K::hash_name("kernel_base");
+            let defined = host_linker_global_symbol_defined(hash);
+            let address = host_linker_global_symbol_address(hash);
+            return expect_u32(defined, 1) * expect_u64(address, 4224);
         }
     }
 
@@ -175,6 +193,20 @@ forge LinkerScriptSemanticsTests {
         }
     }
 
+    proc K::test_script_output_arch_sets_aarch64_target() -> UInt32 {
+        let path = "dustlink_script_test_output_arch_arm64.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "OUTPUT_ARCH(aarch64-unknown-linux-gnu);");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let target = host_linker_get_target();
+            return expect_u32(target, TARGET_AARCH64_LINUX);
+        }
+    }
+
     proc K::test_script_as_needed_scope_restores_state() -> UInt32 {
         let path = "dustlink_script_test_as_needed.ld";
         DustLink::K::reset_state();
@@ -275,6 +307,20 @@ forge LinkerScriptSemanticsTests {
         }
     }
 
+    proc K::test_script_expression_shift_and_bitwise() -> UInt32 {
+        let path = "dustlink_script_test_expr_ops.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "SECTIONS { . = (0x1000 << 1) + (0x20 | 0x1); }");
+        let status = DustLink::K::apply_script(path);
+        if status ! ERR_OK {
+            return 0;
+        } else {
+            let image_base = host_linker_get_image_base();
+            return expect_u64(image_base, 8225);
+        }
+    }
+
     proc K::test_script_assert_failure_returns_conflict() -> UInt32 {
         let path = "dustlink_script_test_assert.ld";
         DustLink::K::reset_state();
@@ -312,10 +358,20 @@ forge LinkerScriptSemanticsTests {
         return expect_u32(status, ERR_INVALID_FORMAT);
     }
 
+    proc K::test_script_unknown_directive_rejected() -> UInt32 {
+        let path = "dustlink_script_test_unknown.ld";
+        DustLink::K::reset_state();
+        LinkerFs::K::clear_file(path);
+        LinkerFs::K::append_line(path, "UNKNOWN_DIRECTIVE(foo);");
+        let status = DustLink::K::apply_script(path);
+        return expect_u32(status, ERR_UNSUPPORTED_FLAG);
+    }
+
     proc K::run_all_tests() -> UInt32 {
         let passed =
             test_script_output_format_directive()
             + test_script_provide_symbol_definition()
+            + test_script_symbol_assignment_definition()
             + test_script_extern_symbol_requirement()
             + test_script_include_directive()
             + test_script_memory_origin_sets_image_base()
@@ -324,15 +380,18 @@ forge LinkerScriptSemanticsTests {
             + test_script_entry_symbol_marks_required()
             + test_script_multiline_memory_sections_blocks()
             + test_script_output_arch_sets_target()
+            + test_script_output_arch_sets_aarch64_target()
             + test_script_as_needed_scope_restores_state()
             + test_script_search_dir_equals_uses_sysroot()
             + test_script_input_library_path_flag_adds_search_path()
             + test_script_input_l_token_records_needed()
             + test_script_origin_length_expression_sets_image_base()
+            + test_script_expression_shift_and_bitwise()
             + test_script_assert_failure_returns_conflict()
             + test_script_phdrs_and_version_blocks_accepted()
             + test_script_phdrs_block_malformed_rejected()
-            + test_script_version_block_malformed_rejected();
+            + test_script_version_block_malformed_rejected()
+            + test_script_unknown_directive_rejected();
         return passed;
     }
 }

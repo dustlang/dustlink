@@ -57,6 +57,10 @@ forge ElfFormat {
     const R_X86_64_32S: UInt32 = 11;
     const R_X86_64_GOTPCRELX: UInt32 = 41;
     const R_X86_64_REX_GOTPCRELX: UInt32 = 42;
+    const R_AARCH64_NONE: UInt32 = 0;
+    const R_AARCH64_ABS64: UInt32 = 257;
+    const R_AARCH64_ABS32: UInt32 = 258;
+    const R_AARCH64_PREL32: UInt32 = 261;
 
     const ELF64_HEADER_SIZE: UInt32 = 64;
     const ELF64_SECTION_HEADER_SIZE: UInt32 = 64;
@@ -171,7 +175,7 @@ forge ElfFormat {
         }
     }
 
-    proc K::validate_relocation_type(reloc_type: UInt32) -> UInt32 {
+    proc K::validate_relocation_type_x86_64(reloc_type: UInt32) -> UInt32 {
         if reloc_type == R_X86_64_NONE {
             return 0;
         } else {
@@ -421,12 +425,13 @@ forge ElfFormat {
     proc K::parse_relocation_record_fields(
         offset: UInt64,
         reloc_type: UInt32,
+        machine: UInt16,
         sym_index: UInt32,
         addend: UInt64,
         section_size: UInt64,
         symbol_count: UInt32
     ) -> UInt32 {
-        let reloc_status = validate_relocation_type(reloc_type);
+        let reloc_status = validate_relocation_type(reloc_type, machine);
         if reloc_status ! 0 {
             return reloc_status;
         } else {
@@ -442,6 +447,38 @@ forge ElfFormat {
                         return 0;
                     }
                 }
+            }
+        }
+    }
+
+    proc K::validate_relocation_type_aarch64(reloc_type: UInt32) -> UInt32 {
+        if reloc_type == R_AARCH64_NONE {
+            return 0;
+        } else {
+            if reloc_type == R_AARCH64_ABS64 {
+                return 0;
+            } else {
+                if reloc_type == R_AARCH64_ABS32 {
+                    return 0;
+                } else {
+                    if reloc_type == R_AARCH64_PREL32 {
+                        return 0;
+                    } else {
+                        return 6;
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::validate_relocation_type(reloc_type: UInt32, machine: UInt16) -> UInt32 {
+        if machine == EM_X86_64 {
+            return validate_relocation_type_x86_64(reloc_type);
+        } else {
+            if machine == EM_AARCH64 {
+                return validate_relocation_type_aarch64(reloc_type);
+            } else {
+                return 14;
             }
         }
     }
@@ -587,6 +624,7 @@ forge ElfFormat {
 
     proc K::ingest_relocation_records(
         path: UInt64,
+        machine: UInt16,
         reloc_off: UInt64,
         reloc_entsize: UInt64,
         reloc_count: UInt32,
@@ -608,6 +646,7 @@ forge ElfFormat {
             let validate_status = parse_relocation_record_fields(
                 r_offset,
                 reloc_type,
+                machine,
                 sym_index,
                 r_addend,
                 target_section_size,
@@ -628,6 +667,7 @@ forge ElfFormat {
                 } else {
                     return ingest_relocation_records(
                         path,
+                        machine,
                         reloc_off,
                         reloc_entsize,
                         reloc_count,
@@ -643,6 +683,7 @@ forge ElfFormat {
 
     proc K::ingest_section_records(
         path: UInt64,
+        machine: UInt16,
         file_size: UInt64,
         shoff: UInt64,
         shentsize: UInt16,
@@ -709,6 +750,7 @@ forge ElfFormat {
                             let reloc_count = symbol_record_count(sec_size, sec_entsize);
                             let reloc_status = ingest_relocation_records(
                                 path,
+                                machine,
                                 sec_offset,
                                 sec_entsize,
                                 reloc_count,
@@ -729,6 +771,7 @@ forge ElfFormat {
                                 let reloc_count_rel = symbol_record_count(sec_size, sec_entsize);
                                 let reloc_status_rel = ingest_relocation_records(
                                     path,
+                                    machine,
                                     sec_offset,
                                     sec_entsize,
                                     reloc_count_rel,
@@ -744,7 +787,7 @@ forge ElfFormat {
                         }
                     }
 
-                    return ingest_section_records(path, file_size, shoff, shentsize, shnum, index + 1);
+                    return ingest_section_records(path, machine, file_size, shoff, shentsize, shnum, index + 1);
                 }
             }
         }
@@ -795,6 +838,7 @@ forge ElfFormat {
                         } else {
                             let section_status = ingest_section_records(
                                 path,
+                                machine,
                                 file_size,
                                 shoff,
                                 shentsize,

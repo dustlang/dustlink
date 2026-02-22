@@ -28,12 +28,16 @@ Both files define forge-based test procedures with this pattern:
 - Script subset checks for `MEMORY` (`ORIGIN`) and `SECTIONS` location-counter assignment
 - Script subset checks for `SECTIONS` output-address forms and multi-line block parsing
 - Script directive checks for `OUTPUT_ARCH` and `AS_NEEDED` state scoping
+- Script directive checks for `OUTPUT_ARCH` AArch64 target mapping
 - Script `ENTRY(symbol)` required-symbol registration checks
 - Script checks for sysroot-aware `SEARCH_DIR(=...)` resolution
 - Script checks for `INPUT(-L...)` search-path updates and `INPUT(-l...)` needed-library recording
 - Script expression checks (`ORIGIN/LENGTH` arithmetic) and `ASSERT(...)` failure path checks
+- Script expression checks for shift/bitwise operator evaluation and direct symbol-assignment statements
 - Script compatibility-block acceptance checks for `PHDRS` and `VERSION`
+- Script strictness checks for unknown-directive rejection
 - Build-id mode and `-z` option semantic state checks
+- PE compatibility-state checks for `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, `/LARGEADDRESSAWARE`
 - Dynamic unresolved-policy checks (`--no-undefined` and allow-shared-unresolved gate behavior)
 - Search-path state checks (`--sysroot`, `-rpath`, `-rpath-link`)
 - Dynamic tag mode checks (`--enable-new-dtags`, `--disable-new-dtags`)
@@ -58,10 +62,15 @@ Both files define forge-based test procedures with this pattern:
 - Extended CLI compatibility controls (`--version-script`, `--dynamic-list`, `--trace-symbol`, `--dependency-file`, `--print-map`, `--start-lib`, `--end-lib`) are parsed in inline/split or no-value forms as applicable.
 - `lld-link` compatibility parser helpers (`/OUT`, `/ENTRY`, `/MACHINE`, `/LIBPATH`, `/DEFAULTLIB`, `/MAP`, `/DLL`, and compatibility inline/no-value families) have explicit host-CLI unit coverage.
 - Linker script tests now include malformed `PHDRS`/`VERSION` block rejection coverage.
+- Host CLI tests now include ARM64 `/MACHINE` mapping and soft-compatibility flag-family detection (`--time-trace-file=*`, `/GUARD:*`).
+- Host CLI tests now include musl/Windows GNU/bare-metal target alias coverage.
+- Linker core tests include AArch64 target acceptance in internal target validation.
+- `dust check src` passes for current Dust-source linker modules (host CLI + runtime parity changes).
 
 ## Current Limitations
 
 - Tests still focus on deterministic status behavior and arithmetic/helper semantics.
+- Compatibility no-op diagnostics and fatal-warning escalation behavior are only partially covered by unit-style Dust tests and need broader CLI integration assertions.
 - They do not yet validate exhaustive byte-for-byte parity against `lld` across full flag/script/cross-format matrices.
 - Cross-platform host-link attempt ordering is not yet validated by integration tests.
 

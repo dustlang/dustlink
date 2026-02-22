@@ -11,6 +11,7 @@ forge LinkerLinkTests {
     const ERR_CONFLICTING_OPTIONS: UInt32 = 16;
     const LINKER_INTERNAL: UInt32 = 1;
     const TARGET_X86_64_LINUX: UInt32 = 1;
+    const TARGET_AARCH64_LINUX: UInt32 = 4;
     const FORMAT_ELF64: UInt32 = 1;
     const FORMAT_PE64: UInt32 = 4;
     const FORMAT_MACHO64: UInt32 = 5;
@@ -40,6 +41,11 @@ forge LinkerLinkTests {
 
     proc K::test_target_linux_supported() -> UInt32 {
         let result = LinkerLink::K::set_target(TARGET_X86_64_LINUX);
+        return expect_u32(result, ERR_OK);
+    }
+
+    proc K::test_target_aarch64_linux_supported() -> UInt32 {
+        let result = LinkerLink::K::set_target(TARGET_AARCH64_LINUX);
         return expect_u32(result, ERR_OK);
     }
 
@@ -133,6 +139,7 @@ forge LinkerLinkTests {
             + test_set_linker_internal_ok()
             + test_set_linker_invalid_rejected()
             + test_target_linux_supported()
+            + test_target_aarch64_linux_supported()
             + test_target_invalid_rejected()
             + test_set_output_requires_path()
             + test_entry_requires_nonzero()

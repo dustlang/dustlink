@@ -34,6 +34,7 @@ This directory contains complete Markdown documentation for `dustlink`.
 
 - Object formats: ELF64, COFF64 (`x86_64` + `arm64` machine IDs), Mach-O 64-bit (`x86_64` + `arm64` CPU IDs).
 - Output formats: ELF, flat, MBR, PE, Mach-O.
+- Output writers now stamp architecture-correct headers for both `x86_64` and `aarch64/arm64` targets (ELF machine, PE machine/characteristics, Mach-O CPU type).
 - PE/Mach-O writer paths now emit sectionized images from real alloc chunks instead of single synthetic payload sections.
 - Archive/library resolution:
   - deterministic `-L` + `-rpath-link` + target/sysroot default search order
@@ -53,7 +54,12 @@ This directory contains complete Markdown documentation for `dustlink`.
   - Mach-O external definitions
 - Linker script support: directives (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `INCLUDE`, `ASSERT`) plus `PHDRS`/`VERSION` compatibility blocks with block-shape validation.
 - Script parser now uses block-aware statement splitting, supports expression evaluation (`ORIGIN/LENGTH/ADDR/LOADADDR/SIZEOF/ALIGN` + `+/-`), supports `SECTIONS` output-address and `AT(...)` forms, resolves `SEARCH_DIR(=...)` against `--sysroot`, and recognizes `INPUT` token forms `-L` / `-l`.
+- Script parser now also supports direct symbol assignments (`SYMBOL = <expr>`), rejects unknown directive heads, and evaluates unary/multiplicative/shift/bitwise operators.
 - Dynamic-link policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`, `--no-allow-shlib-undefined`.
 - `-z` token coverage includes relro/now/execstack families plus `defs`/`undefs` and accepted compatibility tokens `text`/`notext`/`origin`.
 - Compatibility-state controls: hash-style/thread settings, eh-frame-header toggle, diagnostics toggles, print-gc toggle, and `--icf=*` mode.
+- Compatibility no-op families now emit diagnostics and can hard-fail under `--fatal-warnings` / `/WX`.
+- `--dependency-file` and `--emit-relocs` are state-wired (depfile output + relocation map-row reporting).
+- ELF writer now consumes `--hash-style` state for dynamic hash-tag emission and host runtime consumes `--print-gc-sections` for GC drop diagnostics.
 - `lld-link` spellings: `/OUT`, `/ENTRY`, `/MACHINE`, `/LIBPATH`, `/DEFAULTLIB`, `/MAP`, `/DLL`, `/SUBSYSTEM`, `/OPT`, `/WX`, `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, `/LARGEADDRESSAWARE`.
+- soft-compatibility flag-family acceptance for broader ld/lld/lld-link compatibility while preserving deterministic internal link behavior.

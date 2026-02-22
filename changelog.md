@@ -1,5 +1,86 @@
 # dustlink Changelog
 
+## 2026-02-22
+
+### Added
+
+- Architecture-aware target IDs across Dust linker modules and host runtime state:
+  - `none`
+  - `x86_64-linux`, `x86_64-windows`, `x86_64-macos`
+  - `aarch64-linux`, `aarch64-windows`, `aarch64-macos`
+- CLI target/machine alias expansion now preserves ARM64/AArch64 architecture in:
+  - `--target=<triple>` and `-m<emulation>`
+  - `/MACHINE:ARM64`
+  - script `OUTPUT_ARCH(...)` target mapping for AArch64 Linux.
+- Machine-aware ELF relocation ingest validation for `EM_X86_64` and `EM_AARCH64`.
+- Baseline AArch64 relocation handling in Dust relocation pipeline:
+  - `R_AARCH64_NONE`
+  - `R_AARCH64_ABS64`
+  - `R_AARCH64_ABS32`
+  - `R_AARCH64_PREL32`
+- Host runtime linker intrinsic:
+  - `host_linker_object_machine`
+- PE compatibility-state intrinsics and state wiring:
+  - `/NOENTRY`
+  - `/DYNAMICBASE`
+  - `/NXCOMPAT`
+  - `/LARGEADDRESSAWARE`
+- Additional compatibility acceptance families to reduce strict hard-fail behavior for common lld/lld-link options:
+  - `--warn-*`, `--error-limit=*`, `--reproduce=*`
+  - `--time-trace*`, `--lto-*`
+  - `--undefined-glob=*`, `--shuffle-sections=*`
+  - `/GUARD:*`, `/TIMESTAMP:*`, `/ORDER:*`, `/MERGE:*`, `/SECTION:*`, `/ALIGN:*`, `/CETCOMPAT`, `/BREPRO`
+- New/expanded Dust tests for:
+  - AArch64 target and machine mapping
+  - AArch64 `OUTPUT_ARCH(...)` script mapping
+  - soft compatibility flag-family detection
+  - PE compatibility-state toggles.
+- Additional host-CLI alias coverage for:
+  - musl target triples (`x86_64-*linux-musl`, `aarch64-*linux-musl`)
+  - Windows GNU triples (`x86_64-pc-windows-gnu`, `aarch64-pc-windows-gnu`)
+  - bare-metal aliases (`*-unknown-none-elf`, `*-pc-none-elf`)
+- Host runtime linker intrinsics/state wiring for:
+  - `host_linker_get_fatal_warnings`
+  - `host_linker_get_color_diagnostics`
+  - `host_linker_get_print_gc_sections`
+  - `host_linker_set_dependency_file` / `host_linker_get_dependency_file` / `host_linker_write_dependency_file`
+  - `host_linker_set_emit_relocs` / `host_linker_get_emit_relocs`
+- Linker script semantic additions:
+  - direct symbol assignment statements (`SYMBOL = <expr>`)
+  - strict rejection for unknown directive heads
+  - expanded expression operators (unary, multiply/divide/mod, shifts, bitwise)
+- Additional Dust tests for:
+  - musl/Windows GNU/bare-metal target alias parsing
+  - script symbol assignment
+  - script bitwise/shift expression evaluation
+  - script unknown-directive rejection
+
+### Changed
+
+- Output writers now emit architecture-correct format headers from resolved target:
+  - ELF `e_machine` set per target (`x86_64` vs `aarch64`)
+  - PE machine field set per target (`x86_64` vs `arm64`)
+  - Mach-O `cpu_type/cpu_subtype` set per target.
+- ELF default dynamic-linker path now resolves to `/lib/ld-linux-aarch64.so.1` for AArch64 Linux targets.
+- PE writer characteristics and entry behavior now follow compatibility-state toggles:
+  - `/NOENTRY` controls `AddressOfEntryPoint`
+  - `/DYNAMICBASE` and `/NXCOMPAT` control PE DLL characteristics
+  - `/LARGEADDRESSAWARE` controls COFF characteristics.
+- Compatibility no-op flag families are no longer silently consumed:
+  - they now emit diagnostics
+  - they become hard errors when `--fatal-warnings` or `/WX` is enabled
+- `--dependency-file` now emits a depfile after successful links instead of being parse-only compatibility handling.
+- `--emit-relocs` now affects map-row output by including relocation rows when enabled.
+- `--hash-style` now affects ELF writer dynamic-tag emission (`DT_HASH`, `DT_GNU_HASH`).
+- `--print-gc-sections` now emits drop diagnostics during GC-based section pruning.
+- COFF and Mach-O object ingest relocation mapping is now machine-aware/refined instead of coarse fallback-only classification.
+
+### Fixed
+
+- Unsupported flag/target failures now print explicit diagnostics instead of returning a status code with no CLI context.
+- Linker script parser no longer silently accepts unknown directive heads.
+- Linker script `OUTPUT_FORMAT`, `TARGET`, and `OUTPUT_ARCH` invalid values now fail with explicit invalid/unsupported statuses instead of silently succeeding.
+
 ## 2026-02-21
 
 ### Added

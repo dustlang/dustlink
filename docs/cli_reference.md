@@ -24,7 +24,7 @@ The internal Dust linker profile recognizes canonical/alias families for:
 - output (`-o`, `--output`)
 - entry (`-e`, `--entry`, `--entry-point`)
 - map (`-Map`, `--Map`, `--map-file`)
-- machine (`-m` class via canonical IDs)
+- machine (`-m` class via canonical IDs, including `x86_64` and `aarch64/arm64` paths)
 - image base (`--image-base`)
 - text address (`-Ttext`)
 - script (`-T`, `--script`)
@@ -54,6 +54,16 @@ The internal Dust linker profile recognizes canonical/alias families for:
 - `mbr`
 - `pe`, `pei-x86-64`, `pe-x86-64`
 - `macho64`, `mach-o`, `macho-x86-64`
+
+### Target families
+
+Architecture-aware target IDs are used throughout Dust modules and host runtime:
+
+- `none`
+- `x86_64-linux`, `x86_64-windows`, `x86_64-macos`
+- `aarch64-linux`, `aarch64-windows`, `aarch64-macos`
+
+Machine alias mapping includes ARM64/AArch64 forms for both GNU-style and `lld-link` surfaces, plus musl variants, Windows GNU triples, and bare-metal `*-none[-elf]` aliases.
 
 ### Compatibility handling
 
@@ -94,5 +104,22 @@ State-wired (non-no-op) controls include:
 - `/NOENTRY` / `/DYNAMICBASE` / `/NXCOMPAT` / `/LARGEADDRESSAWARE`
 
 Accepted compatibility/no-op controls now also include common `lld-link` metadata families (`/PDB:`, `/IMPLIB:`, `/MANIFEST:`, `/EXPORT:`, `/NODEFAULTLIB[:...]`, `/INCLUDE:`) and long-form inline options such as `--plugin-opt=*`, `--mllvm=*`, and `--thinlto-*`.
+These no-op compatibility paths now emit diagnostics by default and become hard errors when fatal warnings are enabled (`--fatal-warnings` or `/WX`).
+
+Accepted soft-compatibility flag families also include:
+
+- `--warn-*`, `--error-limit=*`, `--reproduce=*`
+- `--time-trace`, `--time-trace-file=*`, `--time-trace-granularity=*`
+- `--lto-*`, `--undefined-glob=*`, `--shuffle-sections=*`
+- `--symbol-ordering-file=*`, `--call-graph-ordering-file=*`
+- `/GUARD:*`, `/TIMESTAMP:*`, `/DEPENDENTLOADFLAG:*`, `/FUNCTIONPADMIN:*`
+- `/ORDER:*`, `/MERGE:*`, `/SECTION:*`, `/ALIGN:*`, `/CETCOMPAT`, `/BREPRO`
+
+For PE output, `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, and `/LARGEADDRESSAWARE` are state-wired into emitted header fields (entry point and characteristics), not parse-only compatibility toggles.
+For ELF output, `--hash-style` is state-wired into dynamic hash-tag emission (`DT_HASH` / `DT_GNU_HASH`).
+`--dependency-file` is state-wired and writes a depfile after a successful link.
+`--emit-relocs` is state-wired and expands map-row output with relocation rows.
+`--print-gc-sections` is state-wired and emits GC drop diagnostics during section pruning.
 
 `linker_cli.ds` and `linker_host_cli.ds` return typed linker errors for unsupported flags and missing values.
+Unsupported flag/target failures now also emit explicit diagnostics in the host CLI path.

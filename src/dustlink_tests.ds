@@ -69,6 +69,11 @@ forge DustLinkTests {
         return expect_u32(result, ERR_MISSING_FLAG_VALUE);
     }
 
+    proc K::test_cli_machine_aarch64_supported() -> UInt32 {
+        let supported = LinkerCli::K::machine_supported(4);
+        return expect_u32(supported, 1);
+    }
+
     proc K::test_q_domain_rejected() -> UInt32 {
         let result = DustLink::Q::link(1, 1, 1);
         return expect_u32(result, 100);
@@ -91,6 +96,7 @@ forge DustLinkTests {
             + test_verify_image_default_layout()
             + test_cli_alias_normalization()
             + test_cli_missing_flag_value_error()
+            + test_cli_machine_aarch64_supported()
             + test_q_domain_rejected()
             + test_phi_domain_rejected();
         return passed;

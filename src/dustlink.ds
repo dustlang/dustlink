@@ -10,10 +10,13 @@ forge DustLink {
     const FORMAT_PE64: UInt32 = 4;
     const FORMAT_MACHO64: UInt32 = 5;
 
-    const TARGET_X86_64_NONE: UInt32 = 0;
+    const TARGET_NONE: UInt32 = 0;
     const TARGET_X86_64_LINUX: UInt32 = 1;
     const TARGET_X86_64_WINDOWS: UInt32 = 2;
     const TARGET_X86_64_MACOS: UInt32 = 3;
+    const TARGET_AARCH64_LINUX: UInt32 = 4;
+    const TARGET_AARCH64_WINDOWS: UInt32 = 5;
+    const TARGET_AARCH64_MACOS: UInt32 = 6;
 
     const ERR_OK: UInt32 = 0;
     const ERR_FILE_NOT_FOUND: UInt32 = 1;
@@ -69,7 +72,7 @@ forge DustLink {
             return link_internal(
                 object_count,
                 format,
-                TARGET_X86_64_NONE,
+                TARGET_NONE,
                 output_file,
                 entry,
                 base
@@ -206,8 +209,8 @@ forge DustLink {
     }
 
     proc K::set_target(target: UInt32) -> UInt32 {
-        if target == TARGET_X86_64_NONE {
-            return LinkerLink::K::set_target(TARGET_X86_64_NONE);
+        if target == TARGET_NONE {
+            return LinkerLink::K::set_target(TARGET_NONE);
         } else {
             if target == TARGET_X86_64_LINUX {
                 return LinkerLink::K::set_target(TARGET_X86_64_LINUX);
@@ -218,7 +221,19 @@ forge DustLink {
                     if target == TARGET_X86_64_MACOS {
                         return LinkerLink::K::set_target(TARGET_X86_64_MACOS);
                     } else {
-                        return LinkerLink::K::set_target(target);
+                        if target == TARGET_AARCH64_LINUX {
+                            return LinkerLink::K::set_target(TARGET_AARCH64_LINUX);
+                        } else {
+                            if target == TARGET_AARCH64_WINDOWS {
+                                return LinkerLink::K::set_target(TARGET_AARCH64_WINDOWS);
+                            } else {
+                                if target == TARGET_AARCH64_MACOS {
+                                    return LinkerLink::K::set_target(TARGET_AARCH64_MACOS);
+                                } else {
+                                    return LinkerLink::K::set_target(target);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -333,16 +348,60 @@ forge DustLink {
         return host_linker_set_fatal_warnings(enabled);
     }
 
+    proc K::get_fatal_warnings() -> UInt32 {
+        return host_linker_get_fatal_warnings();
+    }
+
     proc K::set_color_diagnostics(enabled: UInt32) -> UInt32 {
         return host_linker_set_color_diagnostics(enabled);
+    }
+
+    proc K::get_color_diagnostics() -> UInt32 {
+        return host_linker_get_color_diagnostics();
     }
 
     proc K::set_print_gc_sections(enabled: UInt32) -> UInt32 {
         return host_linker_set_print_gc_sections(enabled);
     }
 
+    proc K::get_print_gc_sections() -> UInt32 {
+        return host_linker_get_print_gc_sections();
+    }
+
+    proc K::set_dependency_file(path: UInt64) -> UInt32 {
+        return host_linker_set_dependency_file(path);
+    }
+
+    proc K::write_dependency_file() -> UInt32 {
+        return host_linker_write_dependency_file();
+    }
+
+    proc K::set_emit_relocs(enabled: UInt32) -> UInt32 {
+        return host_linker_set_emit_relocs(enabled);
+    }
+
+    proc K::get_emit_relocs() -> UInt32 {
+        return host_linker_get_emit_relocs();
+    }
+
     proc K::set_icf_mode(mode: UInt32) -> UInt32 {
         return host_linker_set_icf_mode(mode);
+    }
+
+    proc K::set_pe_no_entry(enabled: UInt32) -> UInt32 {
+        return host_linker_set_pe_no_entry(enabled);
+    }
+
+    proc K::set_pe_dynamic_base(enabled: UInt32) -> UInt32 {
+        return host_linker_set_pe_dynamic_base(enabled);
+    }
+
+    proc K::set_pe_nx_compat(enabled: UInt32) -> UInt32 {
+        return host_linker_set_pe_nx_compat(enabled);
+    }
+
+    proc K::set_pe_large_address_aware(enabled: UInt32) -> UInt32 {
+        return host_linker_set_pe_large_address_aware(enabled);
     }
 
     proc K::set_whole_archive(enabled: UInt32) -> UInt32 {

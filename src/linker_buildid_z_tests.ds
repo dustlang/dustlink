@@ -332,6 +332,26 @@ forge LinkerBuildIdZTests {
         return expect_u32(a, 1) * expect_u32(b, 0);
     }
 
+    proc K::test_pe_compat_toggle_state() -> UInt32 {
+        DustLink::K::reset_state();
+        let a = DustLink::K::set_pe_no_entry(1);
+        if a ! ERR_OK { return 0; }
+        let b = DustLink::K::set_pe_dynamic_base(1);
+        if b ! ERR_OK { return 0; }
+        let c = DustLink::K::set_pe_nx_compat(1);
+        if c ! ERR_OK { return 0; }
+        let d = DustLink::K::set_pe_large_address_aware(1);
+        if d ! ERR_OK { return 0; }
+        let no_entry = host_linker_get_pe_no_entry();
+        let dynamic_base = host_linker_get_pe_dynamic_base();
+        let nx = host_linker_get_pe_nx_compat();
+        let laa = host_linker_get_pe_large_address_aware();
+        return expect_u32(no_entry, 1)
+            * expect_u32(dynamic_base, 1)
+            * expect_u32(nx, 1)
+            * expect_u32(laa, 1);
+    }
+
     proc K::run_all_tests() -> UInt32 {
         let passed =
             test_build_id_default_mode()
@@ -355,7 +375,8 @@ forge LinkerBuildIdZTests {
             + test_rpath_roundtrip()
             + test_rpath_link_roundtrip()
             + test_new_dtags_toggle()
-            + test_copy_dt_needed_entries_toggle();
+            + test_copy_dt_needed_entries_toggle()
+            + test_pe_compat_toggle_state();
         return passed;
     }
 }

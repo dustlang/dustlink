@@ -32,11 +32,16 @@
   - MBR image
   - PE executable (multi-section, section-per-chunk emission)
   - Mach-O executable (multi-section segment/section emission)
+  - machine/cpu selection follows resolved target architecture (`x86_64` vs `aarch64/arm64`)
+  - PE compatibility-state toggles (`/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, `/LARGEADDRESSAWARE`) are emitted into real PE header fields
 - Script application:
   - `-T <script>` / `--script <script>`
   - directive support: `ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `PROVIDE_HIDDEN`, `INCLUDE`, `ASSERT`
   - compatibility blocks: `PHDRS`, `VERSION` (block-shape validated)
   - script expression coverage for `ORIGIN(...)`, `LENGTH(...)`, `ADDR(...)`, `LOADADDR(...)`, `SIZEOF(...)`, `ALIGN(...)`, plus additive/subtractive arithmetic
+  - script expression coverage also includes unary, `*`, `/`, `%`, shifts, and bitwise operators
+  - direct script symbol assignments (`SYMBOL = <expr>`) are supported
+  - unknown script directive heads are rejected (no silent acceptance)
   - `SECTIONS` coverage: location-counter assignment (`. = <expr>`), output-address forms (`.text <expr> : { ... }`), and `AT(<expr>)` load-address capture
   - `SEARCH_DIR(=...)` resolves through configured `--sysroot` when present
   - `INPUT` family token handling recognizes `-L` and `-l` forms
@@ -58,14 +63,21 @@
 
 ## Supported Targets and Relocations
 
-- Target IDs: platform families (`none/linux/windows/macos` IDs).
-- CLI target parsing accepts both `x86_64` and `aarch64/arm64` triple aliases and maps them into platform target IDs.
+- Target IDs are architecture-aware:
+  - `none`
+  - `x86_64-linux`, `x86_64-windows`, `x86_64-macos`
+  - `aarch64-linux`, `aarch64-windows`, `aarch64-macos`
+- CLI target parsing preserves architecture for both `x86_64` and `aarch64/arm64` aliases.
+- CLI target parsing also accepts musl triples, Windows GNU triples, and bare-metal `*-none[-elf]` aliases.
 - ELF object validator machine coverage includes `EM_X86_64` and `EM_AARCH64`.
+- relocation application is machine-aware per ingested object via runtime `object.machine`.
+- COFF and Mach-O object ingestion now use refined machine-aware relocation-kind mapping during relocation record ingest.
 - Core relocation set includes:
   - `R_X86_64_NONE`, `R_X86_64_64`, `R_X86_64_PC32`, `R_X86_64_PLT32`
   - `R_X86_64_GLOB_DAT`, `R_X86_64_JUMP_SLOT`, `R_X86_64_RELATIVE`
   - `R_X86_64_GOTPCREL`, `R_X86_64_32`, `R_X86_64_32S`
   - `R_X86_64_GOTPCRELX`, `R_X86_64_REX_GOTPCRELX`
+  - AArch64 baseline: `R_AARCH64_NONE`, `R_AARCH64_ABS64`, `R_AARCH64_ABS32`, `R_AARCH64_PREL32`
 
 ## CLI Compatibility Surface
 
@@ -111,6 +123,17 @@ Primary options:
 
 Compatibility spellings for common ld/lld flags are accepted.  
 Core linker-affecting paths (`--target`/`-m`, `--defsym`, `--build-id`, `-z`, required-symbol flags, sysroot/rpath/rpath-link, dynamic policy flags, group/static/shared toggles, and hash/thread/icf-related compatibility controls) are wired to internal linker state.
+`lld-link` compatibility controls `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, and `/LARGEADDRESSAWARE` are now state-wired into PE writer behavior.
+Additional soft-compatibility families (`--warn-*`, `--time-trace*`, `--lto-*`, and `/GUARD:*`-style slash families) are accepted to reduce false hard-fail paths during lld-profile migrations.
+These compatibility no-op paths now emit diagnostics, and become hard failures when `--fatal-warnings` (or `/WX`) is enabled.
+
+## Recent Parity Improvements
+
+- `--dependency-file` is now state-wired and emits a depfile after successful links.
+- `--emit-relocs` is now state-wired and expands map-row output with relocation rows.
+- `--hash-style` now affects ELF dynamic-tag emission (`DT_HASH` / `DT_GNU_HASH`) in Dust runtime host writer output.
+- `--print-gc-sections` now prints section-drop diagnostics during GC-aware alloc-section selection.
+- Unsupported flag/target failures now emit explicit diagnostics instead of returning only status codes.
 
 ## Build
 

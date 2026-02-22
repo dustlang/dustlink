@@ -13,6 +13,9 @@ forge LinkerHostCliTests {
     const TARGET_X86_64_LINUX: UInt32 = 1;
     const TARGET_X86_64_WINDOWS: UInt32 = 2;
     const TARGET_X86_64_MACOS: UInt32 = 3;
+    const TARGET_AARCH64_LINUX: UInt32 = 4;
+    const TARGET_AARCH64_WINDOWS: UInt32 = 5;
+    const TARGET_AARCH64_MACOS: UInt32 = 6;
 
     proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
         if actual == expected {
@@ -84,19 +87,34 @@ forge LinkerHostCliTests {
         return expect_u32(target, TARGET_X86_64_LINUX);
     }
 
+    proc K::test_target_linux_musl_alias() -> UInt32 {
+        let target = LinkerHostCli::K::resolve_target("x86_64-unknown-linux-musl");
+        return expect_u32(target, TARGET_X86_64_LINUX);
+    }
+
     proc K::test_target_linux_arm_alias() -> UInt32 {
         let target = LinkerHostCli::K::resolve_target("aarch64-unknown-linux-gnu");
-        return expect_u32(target, TARGET_X86_64_LINUX);
+        return expect_u32(target, TARGET_AARCH64_LINUX);
     }
 
     proc K::test_target_windows_arm_alias() -> UInt32 {
         let target = LinkerHostCli::K::resolve_target("aarch64-pc-windows-msvc");
+        return expect_u32(target, TARGET_AARCH64_WINDOWS);
+    }
+
+    proc K::test_target_windows_gnu_alias() -> UInt32 {
+        let target = LinkerHostCli::K::resolve_target("x86_64-pc-windows-gnu");
         return expect_u32(target, TARGET_X86_64_WINDOWS);
     }
 
     proc K::test_target_macos_arm_alias() -> UInt32 {
         let target = LinkerHostCli::K::resolve_target("arm64-apple-darwin");
-        return expect_u32(target, TARGET_X86_64_MACOS);
+        return expect_u32(target, TARGET_AARCH64_MACOS);
+    }
+
+    proc K::test_target_none_alias() -> UInt32 {
+        let target = LinkerHostCli::K::resolve_target("x86_64-unknown-none-elf");
+        return expect_u32(target, 0);
     }
 
     proc K::test_default_format_for_windows_target() -> UInt32 {
@@ -320,6 +338,11 @@ forge LinkerHostCliTests {
         return expect_u32(LinkerHost::K::str_eq(value, "X64"), 1);
     }
 
+    proc K::test_resolve_link_machine_arm64() -> UInt32 {
+        let target = LinkerHostCli::K::resolve_link_machine("ARM64");
+        return expect_u32(target, TARGET_AARCH64_WINDOWS);
+    }
+
     proc K::test_inline_link_libpath_value() -> UInt32 {
         let value = LinkerHostCli::K::inline_link_libpath_value("/LIBPATH:C:\\libs");
         return expect_u32(LinkerHost::K::str_eq(value, "C:\\libs"), 1);
@@ -385,6 +408,16 @@ forge LinkerHostCliTests {
         return expect_u32(flag, 1);
     }
 
+    proc K::test_soft_compat_long_flag_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_soft_compat_long_flag("--time-trace-file=trace.json");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_soft_compat_slash_flag_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_soft_compat_link_slash_flag("/GUARD:CF");
+        return expect_u32(flag, 1);
+    }
+
     proc K::test_shared_flag_no_value() -> UInt32 {
         let required = LinkerHostCli::K::requires_value("-shared");
         return expect_u32(required, 0);
@@ -434,9 +467,12 @@ forge LinkerHostCliTests {
             + test_target_windows_alias()
             + test_target_macos_alias()
             + test_target_linux_alias()
+            + test_target_linux_musl_alias()
             + test_target_linux_arm_alias()
             + test_target_windows_arm_alias()
+            + test_target_windows_gnu_alias()
             + test_target_macos_arm_alias()
+            + test_target_none_alias()
             + test_default_format_for_windows_target()
             + test_default_format_for_macos_target()
             + test_inline_undefined_short_alias()
@@ -480,6 +516,7 @@ forge LinkerHostCliTests {
             + test_inline_link_out_value()
             + test_inline_link_entry_value()
             + test_inline_link_machine_value()
+            + test_resolve_link_machine_arm64()
             + test_inline_link_libpath_value()
             + test_inline_link_defaultlib_value()
             + test_inline_link_map_value()
@@ -493,6 +530,8 @@ forge LinkerHostCliTests {
             + test_link_compat_inline_value_detected()
             + test_extended_compat_undefined_version_detected()
             + test_long_compat_inline_value_detected()
+            + test_soft_compat_long_flag_detected()
+            + test_soft_compat_slash_flag_detected()
             + test_shared_flag_no_value()
             + test_pie_flag_no_value()
             + test_enable_new_dtags_flag_no_value()

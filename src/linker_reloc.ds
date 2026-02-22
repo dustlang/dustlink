@@ -3,6 +3,8 @@
 forge LinkerReloc {
     const MAX_RELOCATIONS: UInt32 = 131072;
     const MAX_SECTION_INDEX: UInt32 = 4096;
+    const EM_X86_64: UInt16 = 62;
+    const EM_AARCH64: UInt16 = 183;
 
     const R_X86_64_NONE: UInt32 = 0;
     const R_X86_64_64: UInt32 = 1;
@@ -16,13 +18,17 @@ forge LinkerReloc {
     const R_X86_64_32S: UInt32 = 11;
     const R_X86_64_GOTPCRELX: UInt32 = 41;
     const R_X86_64_REX_GOTPCRELX: UInt32 = 42;
+    const R_AARCH64_NONE: UInt32 = 0;
+    const R_AARCH64_ABS64: UInt32 = 257;
+    const R_AARCH64_ABS32: UInt32 = 258;
+    const R_AARCH64_PREL32: UInt32 = 261;
 
     const ERR_OK: UInt32 = 0;
     const ERR_INVALID_SECTION: UInt32 = 3;
     const ERR_UNDEFINED_SYMBOL: UInt32 = 4;
     const ERR_INVALID_RELOCATION: UInt32 = 6;
 
-    proc K::is_supported_reloc(reloc_type: UInt32) -> UInt32 {
+    proc K::is_supported_reloc_x86_64(reloc_type: UInt32) -> UInt32 {
         if reloc_type == R_X86_64_NONE {
             return 1;
         } else {
@@ -74,7 +80,39 @@ forge LinkerReloc {
         }
     }
 
-    proc K::reloc_write_width(reloc_type: UInt32) -> UInt32 {
+    proc K::is_supported_reloc_aarch64(reloc_type: UInt32) -> UInt32 {
+        if reloc_type == R_AARCH64_NONE {
+            return 1;
+        } else {
+            if reloc_type == R_AARCH64_ABS64 {
+                return 1;
+            } else {
+                if reloc_type == R_AARCH64_ABS32 {
+                    return 1;
+                } else {
+                    if reloc_type == R_AARCH64_PREL32 {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::is_supported_reloc(reloc_type: UInt32, machine: UInt16) -> UInt32 {
+        if machine == EM_X86_64 {
+            return is_supported_reloc_x86_64(reloc_type);
+        } else {
+            if machine == EM_AARCH64 {
+                return is_supported_reloc_aarch64(reloc_type);
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::reloc_write_width_x86_64(reloc_type: UInt32) -> UInt32 {
         if reloc_type == R_X86_64_64 {
             return 8;
         } else {
@@ -122,7 +160,42 @@ forge LinkerReloc {
         }
     }
 
-    proc K::is_dynamic_placeholder_reloc(reloc_type: UInt32) -> UInt32 {
+    proc K::reloc_write_width_aarch64(reloc_type: UInt32) -> UInt32 {
+        if reloc_type == R_AARCH64_ABS64 {
+            return 8;
+        } else {
+            if reloc_type == R_AARCH64_ABS32 {
+                return 4;
+            } else {
+                if reloc_type == R_AARCH64_PREL32 {
+                    return 4;
+                } else {
+                    if reloc_type == R_AARCH64_NONE {
+                        return 4;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::reloc_write_width(reloc_type: UInt32, machine: UInt16) -> UInt32 {
+        if machine == EM_X86_64 {
+            return reloc_write_width_x86_64(reloc_type);
+        } else {
+            if machine == EM_AARCH64 {
+                return reloc_write_width_aarch64(reloc_type);
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::is_dynamic_placeholder_reloc(reloc_type: UInt32, machine: UInt16) -> UInt32 {
+        if machine == EM_AARCH64 {
+            return 0;
+        }
         if reloc_type == R_X86_64_PLT32 {
             return 1;
         } else {
@@ -158,15 +231,35 @@ forge LinkerReloc {
         }
     }
 
-    proc K::validate_relocation_value(reloc_type: UInt32, value: UInt64) -> UInt32 {
-        if reloc_type == R_X86_64_64 {
-            return ERR_OK;
-        } else {
-            if fits_u32(value) == 1 {
+    proc K::validate_relocation_value(reloc_type: UInt32, machine: UInt16, value: UInt64) -> UInt32 {
+        if machine == EM_X86_64 {
+            if reloc_type == R_X86_64_64 {
                 return ERR_OK;
             } else {
-                return ERR_INVALID_RELOCATION;
+                if fits_u32(value) == 1 {
+                    return ERR_OK;
+                } else {
+                    return ERR_INVALID_RELOCATION;
+                }
             }
+        }
+
+        if machine == EM_AARCH64 {
+            if reloc_type == R_AARCH64_ABS64 {
+                return ERR_OK;
+            } else {
+                if fits_u32(value) == 1 {
+                    return ERR_OK;
+                } else {
+                    return ERR_INVALID_RELOCATION;
+                }
+            }
+        }
+
+        if fits_u32(value) == 1 {
+            return ERR_OK;
+        } else {
+            return ERR_INVALID_RELOCATION;
         }
     }
 
@@ -175,6 +268,7 @@ forge LinkerReloc {
         offset: UInt64,
         sym_idx: UInt32,
         reloc_type: UInt32,
+        machine: UInt16,
         section_size: UInt64,
         symbol_count: UInt32
     ) -> UInt32 {
@@ -184,10 +278,10 @@ forge LinkerReloc {
             if sym_idx >= symbol_count {
                 return ERR_UNDEFINED_SYMBOL;
             } else {
-                if is_supported_reloc(reloc_type) == 0 {
+                if is_supported_reloc(reloc_type, machine) == 0 {
                     return ERR_INVALID_RELOCATION;
                 } else {
-                    let width = reloc_write_width(reloc_type);
+                    let width = reloc_write_width(reloc_type, machine);
                     if width == 0 {
                         return ERR_INVALID_RELOCATION;
                     } else {
@@ -218,10 +312,32 @@ forge LinkerReloc {
 
     proc K::calc_relocation_value(
         reloc_type: UInt32,
+        machine: UInt16,
         symbol_addr: UInt64,
         addend: UInt64,
         place_addr: UInt64
     ) -> UInt64 {
+        if machine == EM_AARCH64 {
+            let arm_sum = symbol_addr + addend;
+            if reloc_type == R_AARCH64_NONE {
+                return 0;
+            } else {
+                if reloc_type == R_AARCH64_ABS64 {
+                    return arm_sum;
+                } else {
+                    if reloc_type == R_AARCH64_ABS32 {
+                        return arm_sum;
+                    } else {
+                        if reloc_type == R_AARCH64_PREL32 {
+                            return calculate_pcrel_offset(place_addr, arm_sum, 0);
+                        } else {
+                            return 0;
+                        }
+                    }
+                }
+            }
+        }
+
         if reloc_type == R_X86_64_NONE {
             return 0;
         } else {
@@ -278,12 +394,20 @@ forge LinkerReloc {
         section_index: UInt32,
         offset: UInt64,
         reloc_type: UInt32,
+        machine: UInt16,
         value: UInt64
     ) -> UInt32 {
-        let value_status = validate_relocation_value(reloc_type, value);
+        let value_status = validate_relocation_value(reloc_type, machine, value);
         if value_status ! ERR_OK {
             return value_status;
         } else {
+            if machine == EM_AARCH64 {
+                if reloc_type == R_AARCH64_ABS64 {
+                    return host_linker_patch_u64(section_index, offset, value);
+                } else {
+                    return host_linker_patch_u32(section_index, offset, value);
+                }
+            }
             if reloc_type == R_X86_64_64 {
                 return host_linker_patch_u64(section_index, offset, value);
             } else {
@@ -308,6 +432,7 @@ forge LinkerReloc {
         object_index: UInt32,
         reloc_index: UInt32
     ) -> UInt32 {
+        let machine = host_linker_object_machine(object_index);
         let target_section = host_linker_object_relocation_section(object_index, reloc_index);
         let offset = host_linker_object_relocation_offset(object_index, reloc_index);
         let reloc_type = host_linker_object_relocation_type(object_index, reloc_index);
@@ -321,6 +446,7 @@ forge LinkerReloc {
             offset,
             sym_index,
             reloc_type,
+            machine,
             section_size,
             symbol_count
         );
@@ -331,17 +457,17 @@ forge LinkerReloc {
             let symbol_addr = host_linker_resolved_symbol_address(object_index, sym_index);
             if symbol_defined == 0 {
                 if symbol_addr == 0 {
-                    if is_dynamic_placeholder_reloc(reloc_type) == 1 {
+                    if is_dynamic_placeholder_reloc(reloc_type, machine) == 1 {
                         if host_linker_allow_dynamic_unresolved() == 1 {
-                            return apply_relocation_value(target_section, offset, reloc_type, 0);
+                            return apply_relocation_value(target_section, offset, reloc_type, machine, 0);
                         }
                     }
                     return ERR_UNDEFINED_SYMBOL;
                 }
             }
             let place = host_linker_section_runtime_address(object_index, target_section) + offset;
-            let value = calc_relocation_value(reloc_type, symbol_addr, addend, place);
-            return apply_relocation_value(target_section, offset, reloc_type, value);
+            let value = calc_relocation_value(reloc_type, machine, symbol_addr, addend, place);
+            return apply_relocation_value(target_section, offset, reloc_type, machine, value);
         }
     }
 
