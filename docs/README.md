@@ -61,6 +61,8 @@ This directory contains complete Markdown documentation for `dustlink`.
 - Compatibility no-op families now emit diagnostics and can hard-fail under `--fatal-warnings` / `/WX`.
 - `--dependency-file` and `--emit-relocs` are state-wired (depfile output + relocation map-row reporting).
 - ELF writer now consumes `--hash-style` state for dynamic hash-tag emission and host runtime consumes `--print-gc-sections` for GC drop diagnostics.
-- AArch64 ELF relocation coverage now includes instruction bitfield patching (branches/literals/ADR/ADRP/ADD/LDST, including `LDST128`), MOVW relocation families, and starter TLS relocation plumbing (`TLSGD`/`TLSLD`/`TLSDESC`, `TLS_DTPMOD`/`TLS_DTPREL`/`TLS_TPREL`).
+- AArch64 ELF relocation coverage now includes instruction bitfield patching (branches/literals/ADR/ADRP/ADD/LDST, including `LDST128`) and MOVW relocation families.
+- AArch64 TLS-family relocation IDs (`TLSGD`/`TLSLD`/`TLSDESC`, `TLS_DTPMOD`/`TLS_DTPREL`/`TLS_TPREL`) are recognized/validated, but relocation application is currently strict `ERR_NOT_IMPLEMENTED_YET` pending TLS layout/module metadata in the host linker runtime ABI.
+- Shared-library ingest now propagates shared-object ingest failures directly (no Dust-side `ERR_NOT_IMPLEMENTED_YET` swallow).
 - `lld-link` spellings: `/OUT`, `/ENTRY`, `/MACHINE`, `/LIBPATH`, `/DEFAULTLIB`, `/MAP`, `/DLL`, `/SUBSYSTEM`, `/OPT`, `/WX`, `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, `/LARGEADDRESSAWARE`.
 - soft-compatibility flag-family acceptance for broader ld/lld/lld-link compatibility while preserving deterministic internal link behavior.

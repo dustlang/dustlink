@@ -87,6 +87,7 @@ forge LinkerReloc {
     const ERR_INVALID_SECTION: UInt32 = 3;
     const ERR_UNDEFINED_SYMBOL: UInt32 = 4;
     const ERR_INVALID_RELOCATION: UInt32 = 6;
+    const ERR_NOT_IMPLEMENTED_YET: UInt32 = 17;
 
     proc K::is_supported_reloc_x86_64(reloc_type: UInt32) -> UInt32 {
         if reloc_type == R_X86_64_NONE { return 1; }
@@ -464,6 +465,36 @@ forge LinkerReloc {
         return 0;
     }
 
+    proc K::aarch64_is_tls_family_reloc(reloc_type: UInt32) -> UInt32 {
+        if reloc_type == R_AARCH64_TLSGD_ADR_PREL21 { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_ADR_PAGE21 { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_ADD_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G1 { return 1; }
+        if reloc_type == R_AARCH64_TLSGD_MOVW_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_ADR_PREL21 { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_ADR_PAGE21 { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_ADD_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G1 { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_MOVW_G0_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_LD_PREL19 { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLE_ADD_TPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_LD_PREL19 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_ADR_PREL21 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_ADR_PAGE21 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_LD64_LO12 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_ADD_LO12 { return 1; }
+        if reloc_type == R_AARCH64_TLSDESC_CALL { return 1; }
+        if reloc_type == R_AARCH64_TLS_DTPMOD { return 1; }
+        if reloc_type == R_AARCH64_TLS_DTPREL { return 1; }
+        if reloc_type == R_AARCH64_TLS_TPREL { return 1; }
+        return 0;
+    }
+
     proc K::aarch64_page_delta_bytes(symbol_plus_addend: UInt64, place_addr: UInt64) -> UInt64 {
         let page_mask = 0 - 4096;
         let sym_page = symbol_plus_addend & page_mask;
@@ -677,10 +708,16 @@ forge LinkerReloc {
     }
 
     proc K::aarch64_tlsdesc_call_patch_word(instr: UInt64) -> UInt64 {
+        let blr_mask = 4294966303;
+        let blr_opcode = 3594452992;
         if instr == 0 {
             return 0;
         } else {
-            return instr;
+            if (instr & blr_mask) ! blr_opcode {
+                return 0;
+            } else {
+                return instr;
+            }
         }
     }
 
@@ -1499,6 +1536,13 @@ forge LinkerReloc {
         } else {
             let symbol_defined = host_linker_object_symbol_defined(object_index, sym_index);
             let symbol_addr = host_linker_resolved_symbol_address(object_index, sym_index);
+            if machine == EM_AARCH64 {
+                if aarch64_is_tls_family_reloc(reloc_type) == 1 {
+                    // AArch64 TLS relocations require TLS block/layout/module metadata not yet surfaced
+                    // through the current Dust host linker runtime ABI.
+                    return ERR_NOT_IMPLEMENTED_YET;
+                }
+            }
             if symbol_defined == 0 {
                 if symbol_addr == 0 {
                     if is_dynamic_placeholder_reloc(reloc_type, machine) == 1 {

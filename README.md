@@ -83,9 +83,10 @@
     - `R_AARCH64_LD_PREL_LO19`, `R_AARCH64_ADR_PREL_LO21`, `R_AARCH64_ADR_PREL_PG_HI21`, `R_AARCH64_ADR_PREL_PG_HI21_NC`
     - `R_AARCH64_ADD_ABS_LO12_NC`, `R_AARCH64_LDST8/16/32/64/128_ABS_LO12_NC`
     - MOVW families: `R_AARCH64_MOVW_UABS_*`, `R_AARCH64_MOVW_SABS_*`, `R_AARCH64_MOVW_PREL_*`
-  - AArch64 TLS starter coverage:
-    - `TLSGD` / `TLSLD` / `TLSDESC` instruction-form relocations (ADR/ADRP/ADD/LD literal/LD lo12/CALL subset)
-    - `R_AARCH64_TLS_DTPMOD`, `R_AARCH64_TLS_DTPREL`, `R_AARCH64_TLS_TPREL`
+  - AArch64 TLS relocation coverage (parse/validate surface):
+    - `TLSGD` / `TLSLD` / `TLSDESC` instruction-form relocation IDs are recognized by ELF ingest and relocation validation
+    - `R_AARCH64_TLS_DTPMOD`, `R_AARCH64_TLS_DTPREL`, `R_AARCH64_TLS_TPREL` are recognized as AArch64 TLS data relocation IDs
+    - relocation application currently returns `ERR_NOT_IMPLEMENTED_YET` for AArch64 TLS-family relocations pending TLS layout/module metadata in the host linker runtime ABI
 
 ## CLI Compatibility Surface
 
@@ -142,7 +143,10 @@ These compatibility no-op paths now emit diagnostics, and become hard failures w
 - `--hash-style` now affects ELF dynamic-tag emission (`DT_HASH` / `DT_GNU_HASH`) in Dust runtime host writer output.
 - `--print-gc-sections` now prints section-drop diagnostics during GC-aware alloc-section selection.
 - Unsupported flag/target failures now emit explicit diagnostics instead of returning only status codes.
-- AArch64 ELF relocation coverage now includes instruction bitfield patching (`ADR_PREL_LO21`, MOVW families, `LD/ST` lo12 variants, branch/literal forms) and starter TLS relocation plumbing (`TLSGD`/`TLSLD`/`TLSDESC`, `TLS_DTPMOD`/`TLS_DTPREL`/`TLS_TPREL`).
+- AArch64 ELF relocation coverage now includes instruction bitfield patching (`ADR_PREL_LO21`, MOVW families, `LD/ST` lo12 variants, branch/literal forms) and stricter TLS-family handling:
+  - `TLSDESC_CALL` now validates `BLR` instruction encoding instead of acting as a generic no-op
+  - AArch64 TLS-family relocation application now fails with `ERR_NOT_IMPLEMENTED_YET` instead of silently patching placeholder values
+- Shared-library ingest now propagates shared-object ingest failures directly (no Dust-side `ERR_NOT_IMPLEMENTED_YET` swallow path).
 
 ## Build
 

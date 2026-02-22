@@ -57,11 +57,12 @@
 - AArch64 ELF relocation parity expansions in Dust linker modules:
   - instruction-form bitfield patching for `CALL26`, `JUMP26`, `CONDBR19`, `TSTBR14`, `LD_PREL_LO19`, `ADR_PREL_LO21`, `ADR_PREL_PG_HI21(_NC)`, `ADD_ABS_LO12_NC`, and `LDST*_ABS_LO12_NC` (including `LDST128`)
   - MOVW relocation families (`UABS`, `SABS`, `PREL`)
-  - starter TLS relocation families (`TLSGD`, `TLSLD`, `TLSDESC` instruction forms) and AArch64 TLS data relocs (`TLS_DTPMOD`, `TLS_DTPREL`, `TLS_TPREL`)
+  - AArch64 TLS relocation ID recognition/validation for starter TLS families (`TLSGD`, `TLSLD`, `TLSDESC` instruction forms) and AArch64 TLS data relocs (`TLS_DTPMOD`, `TLS_DTPREL`, `TLS_TPREL`)
 - Additional Dust relocation/math tests for AArch64:
   - `ADR_PREL_LO21` patching
   - MOVW patching and overflow validation
   - AArch64 TLS data relocation value validation
+  - `TLSDESC_CALL` instruction-shape validation (`BLR` accepted, non-`BLR` rejected)
 
 ### Changed
 
@@ -83,6 +84,7 @@
 - `--print-gc-sections` now emits drop diagnostics during GC-based section pruning.
 - COFF and Mach-O object ingest relocation mapping is now machine-aware/refined instead of coarse fallback-only classification.
 - ELF relocation ingest validation and linker relocation pipeline now accept/process a broader AArch64 relocation surface (including MOVW and TLS starter forms) instead of rejecting them as unsupported.
+- Shared-library ingest in `linker_archive.ds` now propagates shared-object ingest errors directly instead of swallowing `ERR_NOT_IMPLEMENTED_YET`.
 
 ### Fixed
 
@@ -90,6 +92,8 @@
 - Linker script parser no longer silently accepts unknown directive heads.
 - Linker script `OUTPUT_FORMAT`, `TARGET`, and `OUTPUT_ARCH` invalid values now fail with explicit invalid/unsupported statuses instead of silently succeeding.
 - AArch64 64-bit TLS data relocations no longer fall through 32-bit relocation validation constraints in the Dust relocation validator.
+- AArch64 TLS-family relocation application no longer silently patches placeholder values; it now returns `ERR_NOT_IMPLEMENTED_YET` until TLS layout/module metadata is exposed to the Dust relocation pipeline.
+- `R_AARCH64_TLSDESC_CALL` patch helper no longer accepts arbitrary non-zero instructions; it now validates `BLR`-class encoding.
 
 ## 2026-02-21
 

@@ -5,7 +5,6 @@ forge LinkerArchive {
     const ERR_FILE_NOT_FOUND: UInt32 = 1;
     const ERR_INVALID_FORMAT: UInt32 = 2;
     const ERR_CONFLICTING_OPTIONS: UInt32 = 16;
-    const ERR_NOT_IMPLEMENTED_YET: UInt32 = 17;
 
     const TARGET_NONE: UInt32 = 0;
     const TARGET_X86_64_LINUX: UInt32 = 1;
@@ -684,9 +683,7 @@ forge LinkerArchive {
             let unresolved_before = host_linker_unresolved_symbol_count();
             let shared_status = host_linker_ingest_shared_object(path);
             if shared_status ! ERR_OK {
-                if shared_status ! ERR_NOT_IMPLEMENTED_YET {
-                    return shared_status;
-                }
+                return shared_status;
             }
             let unresolved_after = host_linker_unresolved_symbol_count();
             let contributed = shared_contribution(unresolved_before, unresolved_after);
