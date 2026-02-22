@@ -45,12 +45,12 @@ The Dust modules provide deterministic linker behavior for:
 - symbol/relocation resolution and patch application
 - symbol policy controls (`--defsym`, `--allow-multiple-definition`)
 - required-symbol controls (`-u`, `--undefined`, `--require-defined`)
-- dynamic unresolved-policy controls (`--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`)
+- dynamic unresolved-policy controls (`--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`, `--no-allow-shlib-undefined`)
 - loader/search path controls (`--sysroot`, `-rpath`, `-rpath-link`)
 - dynamic tag mode controls (`--enable-new-dtags`, `--disable-new-dtags`)
 - transitive needed-entry controls (`--copy-dt-needed-entries`, `--no-copy-dt-needed-entries`)
 - build-id controls (`--build-id` with mode/value)
-- `-z` controls (`relro`/`norelro`, `now`/`lazy`, `execstack`/`noexecstack`)
+- `-z` controls (`relro`/`norelro`, `now`/`lazy`, `execstack`/`noexecstack`, `defs`/`undefs`, accepted compatibility tokens `text`/`notext`/`origin`)
 - section GC policy controls (`--gc-sections`, `--no-gc-sections`)
 - shared-symbol ingestion across ELF, PE, COFF, and Mach-O metadata paths
 - COFF and Mach-O ingest acceptance for both x86_64 and arm64 machine/cpu identifiers

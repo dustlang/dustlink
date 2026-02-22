@@ -128,6 +128,12 @@
 - Relocation behavior additions:
   - unresolved dynamic-placeholder relocations (`PLT/GOT/JUMP_SLOT/GLOB_DAT` families) now allow zero-placeholder patching when dynamic unresolved policy permits
   - `R_X86_64_RELATIVE` now resolves via `image_base + addend`
+- Additional dynamic-link parity additions:
+  - `-z defs` / `-z undefs` now toggle unresolved-symbol strictness (`no_undefined`) through host runtime state
+  - accepted compatibility `-z` spellings: `text`, `notext`, `origin`
+  - CLI support for `--no-allow-shlib-undefined` (strict unresolved-symbol alias)
+- Additional `lld-link` compatibility acceptance:
+  - no-value forms `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, `/LARGEADDRESSAWARE`
 
 ### Changed
 
@@ -153,6 +159,7 @@
 - host CLI no longer rejects several previously unsupported-but-common lld compatibility spellings in the script/export and diagnostics families.
 - no-value `--print-map` now auto-derives a map output path (`a.out.map` for default output).
 - linker-link profile naming now uses `LINKER_INTERNAL` while preserving `LINKER_INTERNAL_MVP` as a compatibility alias in Dust modules.
+- split-form `--dynamic-linker <path>` and `--soname <name>` parsing now routes through requires-value handling in host CLI logic.
 
 ## 2026-02-20
 

@@ -38,12 +38,12 @@ The internal Dust linker profile recognizes canonical/alias families for:
 - multiple definition policy (`--allow-multiple-definition`)
 - group flags (`--start-group`, `--end-group`)
 - utility flags (`--help`, `--version`)
-- dynamic-policy flags (`--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`)
+- dynamic-policy flags (`--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`, `--no-allow-shlib-undefined`)
 - dynamic-tag mode flags (`--enable-new-dtags`, `--disable-new-dtags`)
 - transitive-needed flags (`--copy-dt-needed-entries`, `--no-copy-dt-needed-entries`)
 - script/export compatibility flags (`--version-script`, `--dynamic-list`, `--trace-symbol`)
 - broader compatibility/no-op controls (`--print-map`, `--start-lib`, `--end-lib`, `--emit-relocs`, `--strip-all`)
-- `lld-link` forms (`/OUT:`, `/ENTRY:`, `/MACHINE:`, `/LIBPATH:`, `/DEFAULTLIB:`, `/MAP[:file]`, `/DLL`, `/SUBSYSTEM:`, `/OPT:`, `/WX`)
+- `lld-link` forms (`/OUT:`, `/ENTRY:`, `/MACHINE:`, `/LIBPATH:`, `/DEFAULTLIB:`, `/MAP[:file]`, `/DLL`, `/SUBSYSTEM:`, `/OPT:`, `/WX`, `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, `/LARGEADDRESSAWARE`)
 
 ### OFormat values
 
@@ -66,7 +66,7 @@ State-wired (non-no-op) controls include:
 - `--target` / `-m`
 - `--defsym`
 - `-u` / `--undefined` / `--require-defined`
-- `--no-undefined` / `--error-unresolved-symbols` / `--allow-shlib-undefined`
+- `--no-undefined` / `--error-unresolved-symbols` / `--allow-shlib-undefined` / `--no-allow-shlib-undefined`
 - `-shared` / `-pie` / `--no-pie` / `-static` / `-Bstatic` / `-Bdynamic`
 - `--dynamic-linker` / `--soname`
 - `--sysroot`
@@ -91,6 +91,7 @@ State-wired (non-no-op) controls include:
 - `/MACHINE:<arch>`
 - `/OPT:REF` / `/OPT:NOREF` / `/OPT:ICF` / `/OPT:NOICF`
 - `/WX` / `/WX:NO`
+- `/NOENTRY` / `/DYNAMICBASE` / `/NXCOMPAT` / `/LARGEADDRESSAWARE`
 
 Accepted compatibility/no-op controls now also include common `lld-link` metadata families (`/PDB:`, `/IMPLIB:`, `/MANIFEST:`, `/EXPORT:`, `/NODEFAULTLIB[:...]`, `/INCLUDE:`) and long-form inline options such as `--plugin-opt=*`, `--mllvm=*`, and `--thinlto-*`.
 

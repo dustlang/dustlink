@@ -48,7 +48,8 @@ Both files define forge-based test procedures with this pattern:
 - Script path (`-T/--script`) applies basic directives and can override output format.
 - `-Map` output creation works on split form (`-Map file.map`).
 - Required-symbol CLI paths (`-u`, `--undefined`, `--require-defined`) are parsed and wired to enforcement checks.
-- Dynamic unresolved-policy CLI paths (`--no-undefined`, `--allow-shlib-undefined`) are parsed and wired to linker state.
+- Dynamic unresolved-policy CLI paths (`--no-undefined`, `--allow-shlib-undefined`, `--no-allow-shlib-undefined`) are parsed and wired to linker state.
+- `-z` semantic tests include unresolved-policy toggles (`defs`/`undefs`) and accepted compatibility tokens (`text`/`notext`/`origin`).
 - Search-path CLI paths (`--sysroot`, `-rpath`, `-rpath-link`) are parsed and wired to linker state.
 - Dynamic tag and copy-needed policy flags are parsed and wired to linker state.
 - Shared-object symbol ingestion now includes ELF, PE, COFF, and Mach-O metadata paths.

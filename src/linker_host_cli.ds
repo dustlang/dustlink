@@ -266,6 +266,22 @@ forge LinkerHostCli {
         return 0;
     }
 
+    proc K::is_no_allow_shlib_undefined_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--no-allow-shlib-undefined") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_dynamic_linker_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--dynamic-linker") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_soname_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--soname") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "-soname") == 1 { return 1; }
+        return 0;
+    }
+
     proc K::is_enable_new_dtags_flag(arg: UInt64) -> UInt32 {
         if LinkerHost::K::str_eq(arg, "--enable-new-dtags") == 1 { return 1; }
         return 0;
@@ -382,6 +398,7 @@ forge LinkerHostCli {
         if LinkerHost::K::str_eq(arg, "--omagic") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--discard-all") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "--discard-locals") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "--undefined-version") == 1 { return 1; }
         return 0;
     }
 
@@ -797,6 +814,14 @@ forge LinkerHostCli {
         if LinkerHost::K::str_eq(arg, "/wx") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "/WX:NO") == 1 { return 1; }
         if LinkerHost::K::str_eq(arg, "/wx:no") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/NOENTRY") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/noentry") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/DYNAMICBASE") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/dynamicbase") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/NXCOMPAT") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/nxcompat") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/LARGEADDRESSAWARE") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "/largeaddressaware") == 1 { return 1; }
         return 0;
     }
 
@@ -971,6 +996,8 @@ forge LinkerHostCli {
         if is_sysroot_flag(arg) == 1 { return 1; }
         if is_rpath_flag(arg) == 1 { return 1; }
         if is_rpath_link_flag(arg) == 1 { return 1; }
+        if is_dynamic_linker_flag(arg) == 1 { return 1; }
+        if is_soname_flag(arg) == 1 { return 1; }
         if is_script_flag(arg) == 1 { return 1; }
         if is_defsym_flag(arg) == 1 { return 1; }
         if is_target_flag(arg) == 1 { return 1; }
@@ -1576,6 +1603,11 @@ forge LinkerHostCli {
         if is_allow_shlib_undefined_flag(arg) == 1 {
             let nu0 = DustLink::K::set_no_undefined(0);
             if nu0 ! ERR_OK { return nu0; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_no_allow_shlib_undefined_flag(arg) == 1 {
+            let nu1b = DustLink::K::set_no_undefined(1);
+            if nu1b ! ERR_OK { return nu1b; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
         if is_start_group_flag(arg) == 1 {

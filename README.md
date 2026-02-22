@@ -48,12 +48,12 @@
   - `--defsym name=value`
   - `--target=<triple>` / `-m<emulation>` target selection
   - `--sysroot`, `-rpath`/`--rpath`, and `-rpath-link`/`--rpath-link`
-  - dynamic-unresolved policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`
+  - dynamic-unresolved policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`, `--no-allow-shlib-undefined`
   - dynamic-tag controls: `--enable-new-dtags` / `--disable-new-dtags`
   - transitive `DT_NEEDED` policy controls: `--copy-dt-needed-entries` / `--no-copy-dt-needed-entries`
   - compatibility-state controls: `--hash-style`, `--threads`, `--thread-count`, `--eh-frame-hdr`, `--fatal-warnings`, `--color-diagnostics`, `--print-gc-sections`, `--icf=*`
   - broader compatibility controls: `--version-script`, `--dynamic-list`, `--trace-symbol`, `--print-map`, `--start-lib`, `--end-lib`, `--emit-relocs`, `--strip-all`
-  - `lld-link` compatibility controls: `/OUT:`, `/ENTRY:`, `/MACHINE:`, `/LIBPATH:`, `/DEFAULTLIB:`, `/MAP[:file]`, `/DLL`, `/SUBSYSTEM:`, `/OPT:`, `/WX`
+  - `lld-link` compatibility controls: `/OUT:`, `/ENTRY:`, `/MACHINE:`, `/LIBPATH:`, `/DEFAULTLIB:`, `/MAP[:file]`, `/DLL`, `/SUBSYSTEM:`, `/OPT:`, `/WX`, `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, `/LARGEADDRESSAWARE`
   - shared-object symbol ingestion for exported symbol resolution across ELF, PE, COFF, and Mach-O metadata paths
 
 ## Supported Targets and Relocations
@@ -91,10 +91,11 @@ Primary options:
 - `--build-id` / `--build-id=<none|fast|md5|sha1|uuid|0x...>`
 - `--target` / `--target=<triple>`
 - `-m` / `-m<emulation>`
-- `-z` / `-z<...>`
+- `-z` / `-z<...>` (`relro`, `norelro`, `now`, `lazy`, `execstack`, `noexecstack`, `defs`, `undefs`, plus accepted compatibility tokens `text`, `notext`, `origin`)
 - `-u`, `--undefined`, `--require-defined`
 - `--no-undefined`, `--error-unresolved-symbols`
 - `--allow-shlib-undefined`
+- `--no-allow-shlib-undefined`
 - `--enable-new-dtags`, `--disable-new-dtags`
 - `--copy-dt-needed-entries`, `--no-copy-dt-needed-entries`
 - `--start-group`, `--end-group`
@@ -105,6 +106,7 @@ Primary options:
   - `/OUT:<path>`, `/ENTRY:<symbol|addr>`, `/MACHINE:<arch>`
   - `/LIBPATH:<dir>`, `/DEFAULTLIB:<name>`, `/MAP` or `/MAP:<path>`
   - `/DLL`, `/SUBSYSTEM:<kind>`, `/OPT:<token>`, `/WX`, `/WX:NO`
+  - `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, `/LARGEADDRESSAWARE`
 - `--help`, `--version`
 
 Compatibility spellings for common ld/lld flags are accepted.  

@@ -53,6 +53,7 @@ This directory contains complete Markdown documentation for `dustlink`.
   - Mach-O external definitions
 - Linker script support: directives (`ENTRY`, `OUTPUT`, `OUTPUT_FORMAT`, `OUTPUT_ARCH`, `TARGET`, `SEARCH_DIR`, `INPUT`, `GROUP`, `AS_NEEDED`, `NO_AS_NEEDED`, `EXTERN`, `PROVIDE`, `INCLUDE`, `ASSERT`) plus `PHDRS`/`VERSION` compatibility blocks with block-shape validation.
 - Script parser now uses block-aware statement splitting, supports expression evaluation (`ORIGIN/LENGTH/ADDR/LOADADDR/SIZEOF/ALIGN` + `+/-`), supports `SECTIONS` output-address and `AT(...)` forms, resolves `SEARCH_DIR(=...)` against `--sysroot`, and recognizes `INPUT` token forms `-L` / `-l`.
-- Dynamic-link policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`.
+- Dynamic-link policy controls: `--no-undefined`, `--error-unresolved-symbols`, `--allow-shlib-undefined`, `--no-allow-shlib-undefined`.
+- `-z` token coverage includes relro/now/execstack families plus `defs`/`undefs` and accepted compatibility tokens `text`/`notext`/`origin`.
 - Compatibility-state controls: hash-style/thread settings, eh-frame-header toggle, diagnostics toggles, print-gc toggle, and `--icf=*` mode.
-- `lld-link` spellings: `/OUT`, `/ENTRY`, `/MACHINE`, `/LIBPATH`, `/DEFAULTLIB`, `/MAP`, `/DLL`, `/SUBSYSTEM`, `/OPT`, `/WX`.
+- `lld-link` spellings: `/OUT`, `/ENTRY`, `/MACHINE`, `/LIBPATH`, `/DEFAULTLIB`, `/MAP`, `/DLL`, `/SUBSYSTEM`, `/OPT`, `/WX`, `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, `/LARGEADDRESSAWARE`.

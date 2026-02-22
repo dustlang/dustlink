@@ -134,6 +134,11 @@ forge LinkerHostCliTests {
         return expect_u32(required, 0);
     }
 
+    proc K::test_no_allow_shlib_undefined_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--no-allow-shlib-undefined");
+        return expect_u32(required, 0);
+    }
+
     proc K::test_whole_archive_flag_no_value() -> UInt32 {
         let required = LinkerHostCli::K::requires_value("--whole-archive");
         return expect_u32(required, 0);
@@ -345,6 +350,31 @@ forge LinkerHostCliTests {
         return expect_u32(flag, 1);
     }
 
+    proc K::test_link_compat_noentry_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_link_compat_no_value_flag("/NOENTRY");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_link_compat_dynamicbase_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_link_compat_no_value_flag("/DYNAMICBASE");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_link_compat_nxcompat_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_link_compat_no_value_flag("/NXCOMPAT");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_link_compat_largeaddressaware_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_link_compat_no_value_flag("/LARGEADDRESSAWARE");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_extended_compat_undefined_version_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_extended_compat_no_value_flag("--undefined-version");
+        return expect_u32(flag, 1);
+    }
+
     proc K::test_link_compat_inline_value_detected() -> UInt32 {
         let flag = LinkerHostCli::K::is_link_compat_inline_value_flag("/PDB:kernel.pdb");
         return expect_u32(flag, 1);
@@ -414,6 +444,7 @@ forge LinkerHostCliTests {
             + test_require_defined_flag_requires_value()
             + test_no_undefined_flag_no_value()
             + test_allow_shlib_undefined_flag_no_value()
+            + test_no_allow_shlib_undefined_flag_no_value()
             + test_whole_archive_flag_no_value()
             + test_no_whole_archive_flag_no_value()
             + test_sysroot_flag_requires_value()
@@ -455,7 +486,12 @@ forge LinkerHostCliTests {
             + test_link_dll_flag_detected()
             + test_link_map_no_value_detected()
             + test_link_compat_no_value_detected()
+            + test_link_compat_noentry_detected()
+            + test_link_compat_dynamicbase_detected()
+            + test_link_compat_nxcompat_detected()
+            + test_link_compat_largeaddressaware_detected()
             + test_link_compat_inline_value_detected()
+            + test_extended_compat_undefined_version_detected()
             + test_long_compat_inline_value_detected()
             + test_shared_flag_no_value()
             + test_pie_flag_no_value()
