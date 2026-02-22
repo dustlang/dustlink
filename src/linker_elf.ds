@@ -55,11 +55,13 @@ forge ElfFormat {
     const R_X86_64_GOTPCREL: UInt32 = 9;
     const R_X86_64_32: UInt32 = 10;
     const R_X86_64_32S: UInt32 = 11;
+    const R_X86_64_PC64: UInt32 = 24;
     const R_X86_64_GOTPCRELX: UInt32 = 41;
     const R_X86_64_REX_GOTPCRELX: UInt32 = 42;
     const R_AARCH64_NONE: UInt32 = 0;
     const R_AARCH64_ABS64: UInt32 = 257;
     const R_AARCH64_ABS32: UInt32 = 258;
+    const R_AARCH64_PREL64: UInt32 = 260;
     const R_AARCH64_PREL32: UInt32 = 261;
 
     const ELF64_HEADER_SIZE: UInt32 = 64;
@@ -206,7 +208,10 @@ forge ElfFormat {
                                             if reloc_type == R_X86_64_GOTPCREL {
                                                 return 0;
                                             } else {
-                                                if reloc_type == R_X86_64_GOTPCRELX {
+                                                if reloc_type == R_X86_64_PC64 {
+                                                    return 0;
+                                                } else {
+                                                    if reloc_type == R_X86_64_GOTPCRELX {
                                                     return 0;
                                                 } else {
                                                     if reloc_type == R_X86_64_REX_GOTPCRELX {
@@ -214,6 +219,7 @@ forge ElfFormat {
                                                     } else {
                                                         return 6;
                                                     }
+                                                }
                                                 }
                                             }
                                         }
@@ -441,11 +447,7 @@ forge ElfFormat {
                 if offset >= section_size {
                     return 6;
                 } else {
-                    if addend > 9223372036854775807 {
-                        return 6;
-                    } else {
-                        return 0;
-                    }
+                    return 0;
                 }
             }
         }
@@ -461,10 +463,14 @@ forge ElfFormat {
                 if reloc_type == R_AARCH64_ABS32 {
                     return 0;
                 } else {
-                    if reloc_type == R_AARCH64_PREL32 {
+                    if reloc_type == R_AARCH64_PREL64 {
+                        return 0;
+                    } else {
+                        if reloc_type == R_AARCH64_PREL32 {
                         return 0;
                     } else {
                         return 6;
+                    }
                     }
                 }
             }
@@ -564,6 +570,73 @@ forge ElfFormat {
     proc K::decode_r_info_type(r_info: UInt64) -> UInt32 {
         let sym = decode_r_info_sym(r_info);
         return r_info - (sym * 4294967296);
+    }
+
+    proc K::implicit_rel_addend_width(reloc_type: UInt32, machine: UInt16) -> UInt32 {
+        if machine == EM_X86_64 {
+            if reloc_type == R_X86_64_64 {
+                return 8;
+            } else {
+                if reloc_type == R_X86_64_GLOB_DAT {
+                    return 8;
+                } else {
+                    if reloc_type == R_X86_64_JUMP_SLOT {
+                        return 8;
+                    } else {
+                        if reloc_type == R_X86_64_RELATIVE {
+                            return 8;
+                        } else {
+                            if reloc_type == R_X86_64_PC64 {
+                                return 8;
+                            } else {
+                                return 4;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if machine == EM_AARCH64 {
+            if reloc_type == R_AARCH64_ABS64 {
+                return 8;
+            } else {
+                if reloc_type == R_AARCH64_PREL64 {
+                    return 8;
+                } else {
+                    return 4;
+                }
+            }
+        }
+        return 4;
+    }
+
+    proc K::read_implicit_rel_addend(
+        path: UInt64,
+        machine: UInt16,
+        target_section_type: UInt32,
+        target_section_off: UInt64,
+        target_section_size: UInt64,
+        reloc_offset: UInt64,
+        reloc_type: UInt32
+    ) -> UInt64 {
+        if target_section_type == SHT_NOBITS {
+            return 0;
+        } else {
+            let width = implicit_rel_addend_width(reloc_type, machine);
+            if width == 8 {
+                if reloc_offset + 8 > target_section_size {
+                    return 0;
+                } else {
+                    return read_u64_file(path, target_section_off + reloc_offset);
+                }
+            } else {
+                if reloc_offset + 4 > target_section_size {
+                    return 0;
+                } else {
+                    return read_u32_file(path, target_section_off + reloc_offset);
+                }
+            }
+        }
     }
 
     proc K::ingest_symbol_records(
@@ -681,6 +754,77 @@ forge ElfFormat {
         }
     }
 
+    proc K::ingest_relocation_records_rel(
+        path: UInt64,
+        machine: UInt16,
+        reloc_off: UInt64,
+        reloc_entsize: UInt64,
+        reloc_count: UInt32,
+        index: UInt32,
+        target_section: UInt32,
+        target_section_size: UInt64,
+        target_section_type: UInt32,
+        target_section_off: UInt64,
+        symbol_count: UInt32
+    ) -> UInt32 {
+        if index >= reloc_count {
+            return 0;
+        } else {
+            let rec_off = reloc_off + (index * reloc_entsize);
+            let r_offset = read_u64_file(path, rec_off + 0);
+            let r_info = read_u64_file(path, rec_off + 8);
+            let sym_index = decode_r_info_sym(r_info);
+            let reloc_type = decode_r_info_type(r_info);
+            let r_addend = read_implicit_rel_addend(
+                path,
+                machine,
+                target_section_type,
+                target_section_off,
+                target_section_size,
+                r_offset,
+                reloc_type
+            );
+
+            let validate_status = parse_relocation_record_fields(
+                r_offset,
+                reloc_type,
+                machine,
+                sym_index,
+                r_addend,
+                target_section_size,
+                symbol_count
+            );
+            if validate_status ! 0 {
+                return validate_status;
+            } else {
+                let register_status = host_linker_object_add_relocation(
+                    target_section,
+                    r_offset,
+                    reloc_type,
+                    sym_index,
+                    r_addend
+                );
+                if register_status ! 0 {
+                    return register_status;
+                } else {
+                    return ingest_relocation_records_rel(
+                        path,
+                        machine,
+                        reloc_off,
+                        reloc_entsize,
+                        reloc_count,
+                        index + 1,
+                        target_section,
+                        target_section_size,
+                        target_section_type,
+                        target_section_off,
+                        symbol_count
+                    );
+                }
+            }
+        }
+    }
+
     proc K::ingest_section_records(
         path: UInt64,
         machine: UInt16,
@@ -767,9 +911,11 @@ forge ElfFormat {
                                 let symbol_table_size_rel = section_size(path, shoff, shentsize, sec_link);
                                 let symbol_table_entsize_rel = section_entsize(path, shoff, shentsize, sec_link);
                                 let symbol_count_rel = symbol_record_count(symbol_table_size_rel, symbol_table_entsize_rel);
+                                let target_type_rel = section_type(path, shoff, shentsize, sec_info);
+                                let target_off_rel = section_offset(path, shoff, shentsize, sec_info);
                                 let target_size_rel = section_size(path, shoff, shentsize, sec_info);
                                 let reloc_count_rel = symbol_record_count(sec_size, sec_entsize);
-                                let reloc_status_rel = ingest_relocation_records(
+                                let reloc_status_rel = ingest_relocation_records_rel(
                                     path,
                                     machine,
                                     sec_offset,
@@ -778,6 +924,8 @@ forge ElfFormat {
                                     0,
                                     sec_info,
                                     target_size_rel,
+                                    target_type_rel,
+                                    target_off_rel,
                                     symbol_count_rel
                                 );
                                 if reloc_status_rel ! 0 {

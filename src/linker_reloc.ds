@@ -16,11 +16,13 @@ forge LinkerReloc {
     const R_X86_64_GOTPCREL: UInt32 = 9;
     const R_X86_64_32: UInt32 = 10;
     const R_X86_64_32S: UInt32 = 11;
+    const R_X86_64_PC64: UInt32 = 24;
     const R_X86_64_GOTPCRELX: UInt32 = 41;
     const R_X86_64_REX_GOTPCRELX: UInt32 = 42;
     const R_AARCH64_NONE: UInt32 = 0;
     const R_AARCH64_ABS64: UInt32 = 257;
     const R_AARCH64_ABS32: UInt32 = 258;
+    const R_AARCH64_PREL64: UInt32 = 260;
     const R_AARCH64_PREL32: UInt32 = 261;
 
     const ERR_OK: UInt32 = 0;
@@ -29,75 +31,29 @@ forge LinkerReloc {
     const ERR_INVALID_RELOCATION: UInt32 = 6;
 
     proc K::is_supported_reloc_x86_64(reloc_type: UInt32) -> UInt32 {
-        if reloc_type == R_X86_64_NONE {
-            return 1;
-        } else {
-            if reloc_type == R_X86_64_64 {
-                return 1;
-            } else {
-                if reloc_type == R_X86_64_PC32 {
-                    return 1;
-                } else {
-                    if reloc_type == R_X86_64_32 {
-                        return 1;
-                    } else {
-                        if reloc_type == R_X86_64_32S {
-                            return 1;
-                        } else {
-                            if reloc_type == R_X86_64_PLT32 {
-                                return 1;
-                            } else {
-                                if reloc_type == R_X86_64_GLOB_DAT {
-                                    return 1;
-                                } else {
-                                    if reloc_type == R_X86_64_JUMP_SLOT {
-                                        return 1;
-                                    } else {
-                                        if reloc_type == R_X86_64_RELATIVE {
-                                            return 1;
-                                        } else {
-                                            if reloc_type == R_X86_64_GOTPCREL {
-                                                return 1;
-                                            } else {
-                                                if reloc_type == R_X86_64_GOTPCRELX {
-                                                    return 1;
-                                                } else {
-                                                    if reloc_type == R_X86_64_REX_GOTPCRELX {
-                                                        return 1;
-                                                    } else {
-                                                        return 0;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        if reloc_type == R_X86_64_NONE { return 1; }
+        if reloc_type == R_X86_64_64 { return 1; }
+        if reloc_type == R_X86_64_PC32 { return 1; }
+        if reloc_type == R_X86_64_32 { return 1; }
+        if reloc_type == R_X86_64_32S { return 1; }
+        if reloc_type == R_X86_64_PLT32 { return 1; }
+        if reloc_type == R_X86_64_GLOB_DAT { return 1; }
+        if reloc_type == R_X86_64_JUMP_SLOT { return 1; }
+        if reloc_type == R_X86_64_RELATIVE { return 1; }
+        if reloc_type == R_X86_64_GOTPCREL { return 1; }
+        if reloc_type == R_X86_64_PC64 { return 1; }
+        if reloc_type == R_X86_64_GOTPCRELX { return 1; }
+        if reloc_type == R_X86_64_REX_GOTPCRELX { return 1; }
+        return 0;
     }
 
     proc K::is_supported_reloc_aarch64(reloc_type: UInt32) -> UInt32 {
-        if reloc_type == R_AARCH64_NONE {
-            return 1;
-        } else {
-            if reloc_type == R_AARCH64_ABS64 {
-                return 1;
-            } else {
-                if reloc_type == R_AARCH64_ABS32 {
-                    return 1;
-                } else {
-                    if reloc_type == R_AARCH64_PREL32 {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                }
-            }
-        }
+        if reloc_type == R_AARCH64_NONE { return 1; }
+        if reloc_type == R_AARCH64_ABS64 { return 1; }
+        if reloc_type == R_AARCH64_ABS32 { return 1; }
+        if reloc_type == R_AARCH64_PREL64 { return 1; }
+        if reloc_type == R_AARCH64_PREL32 { return 1; }
+        return 0;
     }
 
     proc K::is_supported_reloc(reloc_type: UInt32, machine: UInt16) -> UInt32 {
@@ -113,71 +69,28 @@ forge LinkerReloc {
     }
 
     proc K::reloc_write_width_x86_64(reloc_type: UInt32) -> UInt32 {
-        if reloc_type == R_X86_64_64 {
-            return 8;
-        } else {
-            if reloc_type == R_X86_64_PC32 {
-                return 4;
-            } else {
-                if reloc_type == R_X86_64_32 {
-                    return 4;
-                } else {
-                    if reloc_type == R_X86_64_32S {
-                        return 4;
-                    } else {
-                        if reloc_type == R_X86_64_PLT32 {
-                            return 4;
-                        } else {
-                            if reloc_type == R_X86_64_GLOB_DAT {
-                                return 8;
-                            } else {
-                                if reloc_type == R_X86_64_JUMP_SLOT {
-                                    return 8;
-                                } else {
-                                    if reloc_type == R_X86_64_RELATIVE {
-                                        return 8;
-                                    } else {
-                                        if reloc_type == R_X86_64_GOTPCREL {
-                                            return 4;
-                                        } else {
-                                            if reloc_type == R_X86_64_GOTPCRELX {
-                                                return 4;
-                                            } else {
-                                                if reloc_type == R_X86_64_REX_GOTPCRELX {
-                                                    return 4;
-                                                } else {
-                                                    return 0;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        if reloc_type == R_X86_64_64 { return 8; }
+        if reloc_type == R_X86_64_GLOB_DAT { return 8; }
+        if reloc_type == R_X86_64_JUMP_SLOT { return 8; }
+        if reloc_type == R_X86_64_RELATIVE { return 8; }
+        if reloc_type == R_X86_64_PC64 { return 8; }
+        if reloc_type == R_X86_64_PC32 { return 4; }
+        if reloc_type == R_X86_64_32 { return 4; }
+        if reloc_type == R_X86_64_32S { return 4; }
+        if reloc_type == R_X86_64_PLT32 { return 4; }
+        if reloc_type == R_X86_64_GOTPCREL { return 4; }
+        if reloc_type == R_X86_64_GOTPCRELX { return 4; }
+        if reloc_type == R_X86_64_REX_GOTPCRELX { return 4; }
+        return 0;
     }
 
     proc K::reloc_write_width_aarch64(reloc_type: UInt32) -> UInt32 {
-        if reloc_type == R_AARCH64_ABS64 {
-            return 8;
-        } else {
-            if reloc_type == R_AARCH64_ABS32 {
-                return 4;
-            } else {
-                if reloc_type == R_AARCH64_PREL32 {
-                    return 4;
-                } else {
-                    if reloc_type == R_AARCH64_NONE {
-                        return 4;
-                    } else {
-                        return 0;
-                    }
-                }
-            }
-        }
+        if reloc_type == R_AARCH64_ABS64 { return 8; }
+        if reloc_type == R_AARCH64_PREL64 { return 8; }
+        if reloc_type == R_AARCH64_ABS32 { return 4; }
+        if reloc_type == R_AARCH64_PREL32 { return 4; }
+        if reloc_type == R_AARCH64_NONE { return 4; }
+        return 0;
     }
 
     proc K::reloc_write_width(reloc_type: UInt32, machine: UInt16) -> UInt32 {
@@ -231,11 +144,74 @@ forge LinkerReloc {
         }
     }
 
+    proc K::fits_s32(value: UInt64) -> UInt32 {
+        if value <= 2147483647 {
+            return 1;
+        } else {
+            if value >= (0 - 2147483648) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    proc K::is_signed_32_reloc_x86_64(reloc_type: UInt32) -> UInt32 {
+        if reloc_type == R_X86_64_PC32 {
+            return 1;
+        } else {
+            if reloc_type == R_X86_64_32S {
+                return 1;
+            } else {
+                if reloc_type == R_X86_64_PLT32 {
+                    return 1;
+                } else {
+                    if reloc_type == R_X86_64_GOTPCREL {
+                        return 1;
+                    } else {
+                        if reloc_type == R_X86_64_GOTPCRELX {
+                            return 1;
+                        } else {
+                            if reloc_type == R_X86_64_REX_GOTPCRELX {
+                                return 1;
+                            } else {
+                                return 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     proc K::validate_relocation_value(reloc_type: UInt32, machine: UInt16, value: UInt64) -> UInt32 {
         if machine == EM_X86_64 {
             if reloc_type == R_X86_64_64 {
                 return ERR_OK;
             } else {
+                if reloc_type == R_X86_64_PC64 {
+                    return ERR_OK;
+                } else {
+                    if reloc_type == R_X86_64_GLOB_DAT {
+                        return ERR_OK;
+                    } else {
+                        if reloc_type == R_X86_64_JUMP_SLOT {
+                            return ERR_OK;
+                        } else {
+                            if reloc_type == R_X86_64_RELATIVE {
+                                return ERR_OK;
+                            } else {
+                                if is_signed_32_reloc_x86_64(reloc_type) == 1 {
+                                    if fits_s32(value) == 1 {
+                                        return ERR_OK;
+                                    } else {
+                                        return ERR_INVALID_RELOCATION;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 if fits_u32(value) == 1 {
                     return ERR_OK;
                 } else {
@@ -248,6 +224,17 @@ forge LinkerReloc {
             if reloc_type == R_AARCH64_ABS64 {
                 return ERR_OK;
             } else {
+                if reloc_type == R_AARCH64_PREL64 {
+                    return ERR_OK;
+                } else {
+                    if reloc_type == R_AARCH64_PREL32 {
+                        if fits_s32(value) == 1 {
+                            return ERR_OK;
+                        } else {
+                            return ERR_INVALID_RELOCATION;
+                        }
+                    }
+                }
                 if fits_u32(value) == 1 {
                     return ERR_OK;
                 } else {
@@ -319,74 +306,31 @@ forge LinkerReloc {
     ) -> UInt64 {
         if machine == EM_AARCH64 {
             let arm_sum = symbol_addr + addend;
-            if reloc_type == R_AARCH64_NONE {
-                return 0;
-            } else {
-                if reloc_type == R_AARCH64_ABS64 {
-                    return arm_sum;
-                } else {
-                    if reloc_type == R_AARCH64_ABS32 {
-                        return arm_sum;
-                    } else {
-                        if reloc_type == R_AARCH64_PREL32 {
-                            return calculate_pcrel_offset(place_addr, arm_sum, 0);
-                        } else {
-                            return 0;
-                        }
-                    }
-                }
-            }
+            if reloc_type == R_AARCH64_NONE { return 0; }
+            if reloc_type == R_AARCH64_ABS64 { return arm_sum; }
+            if reloc_type == R_AARCH64_ABS32 { return arm_sum; }
+            if reloc_type == R_AARCH64_PREL64 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            if reloc_type == R_AARCH64_PREL32 { return calculate_pcrel_offset(place_addr, arm_sum, 0); }
+            return 0;
         }
 
         if reloc_type == R_X86_64_NONE {
             return 0;
         } else {
             let sum = symbol_addr + addend;
-            if reloc_type == R_X86_64_64 {
-                return sum;
-            } else {
-                if reloc_type == R_X86_64_PC32 {
-                    return calculate_pcrel_offset(place_addr, sum, 0);
-                } else {
-                    if reloc_type == R_X86_64_32 {
-                        return sum;
-                    } else {
-                        if reloc_type == R_X86_64_32S {
-                            return sum;
-                        } else {
-                            if reloc_type == R_X86_64_PLT32 {
-                                return calculate_pcrel_offset(place_addr, sum, 0);
-                            } else {
-                                if reloc_type == R_X86_64_GLOB_DAT {
-                                    return sum;
-                                } else {
-                                    if reloc_type == R_X86_64_JUMP_SLOT {
-                                        return sum;
-                                    } else {
-                                        if reloc_type == R_X86_64_RELATIVE {
-                                            return host_linker_get_image_base() + addend;
-                                        } else {
-                                            if reloc_type == R_X86_64_GOTPCREL {
-                                                return calculate_pcrel_offset(place_addr, sum, 0);
-                                            } else {
-                                                if reloc_type == R_X86_64_GOTPCRELX {
-                                                    return calculate_pcrel_offset(place_addr, sum, 0);
-                                                } else {
-                                                    if reloc_type == R_X86_64_REX_GOTPCRELX {
-                                                        return calculate_pcrel_offset(place_addr, sum, 0);
-                                                    } else {
-                                                        return 0;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            if reloc_type == R_X86_64_64 { return sum; }
+            if reloc_type == R_X86_64_PC32 { return calculate_pcrel_offset(place_addr, sum, 0); }
+            if reloc_type == R_X86_64_32 { return sum; }
+            if reloc_type == R_X86_64_32S { return sum; }
+            if reloc_type == R_X86_64_PC64 { return calculate_pcrel_offset(place_addr, sum, 0); }
+            if reloc_type == R_X86_64_PLT32 { return calculate_pcrel_offset(place_addr, sum, 0); }
+            if reloc_type == R_X86_64_GLOB_DAT { return sum; }
+            if reloc_type == R_X86_64_JUMP_SLOT { return sum; }
+            if reloc_type == R_X86_64_RELATIVE { return host_linker_get_image_base() + addend; }
+            if reloc_type == R_X86_64_GOTPCREL { return calculate_pcrel_offset(place_addr, sum, 0); }
+            if reloc_type == R_X86_64_GOTPCRELX { return calculate_pcrel_offset(place_addr, sum, 0); }
+            if reloc_type == R_X86_64_REX_GOTPCRELX { return calculate_pcrel_offset(place_addr, sum, 0); }
+            return 0;
         }
     }
 
@@ -402,29 +346,16 @@ forge LinkerReloc {
             return value_status;
         } else {
             if machine == EM_AARCH64 {
-                if reloc_type == R_AARCH64_ABS64 {
-                    return host_linker_patch_u64(section_index, offset, value);
-                } else {
-                    return host_linker_patch_u32(section_index, offset, value);
-                }
+                if reloc_type == R_AARCH64_ABS64 { return host_linker_patch_u64(section_index, offset, value); }
+                if reloc_type == R_AARCH64_PREL64 { return host_linker_patch_u64(section_index, offset, value); }
+                return host_linker_patch_u32(section_index, offset, value);
             }
-            if reloc_type == R_X86_64_64 {
-                return host_linker_patch_u64(section_index, offset, value);
-            } else {
-                if reloc_type == R_X86_64_GLOB_DAT {
-                    return host_linker_patch_u64(section_index, offset, value);
-                } else {
-                    if reloc_type == R_X86_64_JUMP_SLOT {
-                        return host_linker_patch_u64(section_index, offset, value);
-                    } else {
-                        if reloc_type == R_X86_64_RELATIVE {
-                            return host_linker_patch_u64(section_index, offset, value);
-                        } else {
-                            return host_linker_patch_u32(section_index, offset, value);
-                        }
-                    }
-                }
-            }
+            if reloc_type == R_X86_64_64 { return host_linker_patch_u64(section_index, offset, value); }
+            if reloc_type == R_X86_64_PC64 { return host_linker_patch_u64(section_index, offset, value); }
+            if reloc_type == R_X86_64_GLOB_DAT { return host_linker_patch_u64(section_index, offset, value); }
+            if reloc_type == R_X86_64_JUMP_SLOT { return host_linker_patch_u64(section_index, offset, value); }
+            if reloc_type == R_X86_64_RELATIVE { return host_linker_patch_u64(section_index, offset, value); }
+            return host_linker_patch_u32(section_index, offset, value);
         }
     }
 

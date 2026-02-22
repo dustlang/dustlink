@@ -209,6 +209,24 @@ forge LinkerSymbol {
         }
     }
 
+    proc K::prefer_concrete_weak_over_zero_addr_fallback(
+        decision: UInt32,
+        lhs_bind: UInt8,
+        rhs_bind: UInt8,
+        name_hash: UInt64
+    ) -> UInt32 {
+        if decision == 1 {
+            if lhs_bind == SYM_WEAK {
+                if rhs_bind == SYM_WEAK {
+                    if host_linker_global_symbol_address(name_hash) == 0 {
+                        return 2;
+                    }
+                }
+            }
+        }
+        return decision;
+    }
+
     proc K::resolve_symbol_slot(object_index: UInt32, symbol_index: UInt32) -> UInt32 {
         let name_hash = host_linker_object_symbol_name_hash(object_index, symbol_index);
         let rhs_defined = host_linker_object_symbol_defined(object_index, symbol_index);
@@ -219,7 +237,13 @@ forge LinkerSymbol {
         } else {
             let lhs_defined = host_linker_global_symbol_defined(name_hash);
             let lhs_bind = host_linker_global_symbol_bind(name_hash);
-            let decision = select_definition(lhs_defined, lhs_bind, rhs_defined, rhs_bind);
+            let base_decision = select_definition(lhs_defined, lhs_bind, rhs_defined, rhs_bind);
+            let decision = prefer_concrete_weak_over_zero_addr_fallback(
+                base_decision,
+                lhs_bind,
+                rhs_bind,
+                name_hash
+            );
             if decision == ERR_MULTIPLE_DEFINITION {
                 if host_linker_get_allow_multiple_definition() == 1 {
                     return ERR_OK;

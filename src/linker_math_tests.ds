@@ -4,6 +4,12 @@ forge LinkerMathTests {
     const ERR_OK: UInt32 = 0;
     const ERR_INVALID_SECTION: UInt32 = 3;
     const ERR_INVALID_RELOCATION: UInt32 = 6;
+    const EM_X86_64: UInt16 = 62;
+    const EM_AARCH64: UInt16 = 183;
+    const R_X86_64_PC32: UInt32 = 2;
+    const R_X86_64_32: UInt32 = 10;
+    const R_X86_64_GLOB_DAT: UInt32 = 6;
+    const R_AARCH64_PREL32: UInt32 = 261;
 
     proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
         if actual == expected {
@@ -52,13 +58,30 @@ forge LinkerMathTests {
     }
 
     proc K::test_u32_reloc_value_accepts_max() -> UInt32 {
-        let status = LinkerReloc::K::validate_relocation_value(10, 4294967295);
+        let status = LinkerReloc::K::validate_relocation_value(R_X86_64_32, EM_X86_64, 4294967295);
         return expect_u32(status, ERR_OK);
     }
 
     proc K::test_u32_reloc_value_rejects_overflow() -> UInt32 {
-        let status = LinkerReloc::K::validate_relocation_value(10, 4294967296);
+        let status = LinkerReloc::K::validate_relocation_value(R_X86_64_32, EM_X86_64, 4294967296);
         return expect_u32(status, ERR_INVALID_RELOCATION);
+    }
+
+    proc K::test_x86_64_pc32_accepts_negative_delta() -> UInt32 {
+        let minus_four = 0 - 4;
+        let status = LinkerReloc::K::validate_relocation_value(R_X86_64_PC32, EM_X86_64, minus_four);
+        return expect_u32(status, ERR_OK);
+    }
+
+    proc K::test_x86_64_glob_dat_accepts_64bit_value() -> UInt32 {
+        let status = LinkerReloc::K::validate_relocation_value(R_X86_64_GLOB_DAT, EM_X86_64, 4294967296);
+        return expect_u32(status, ERR_OK);
+    }
+
+    proc K::test_aarch64_prel32_accepts_negative_delta() -> UInt32 {
+        let minus_eight = 0 - 8;
+        let status = LinkerReloc::K::validate_relocation_value(R_AARCH64_PREL32, EM_AARCH64, minus_eight);
+        return expect_u32(status, ERR_OK);
     }
 
     proc K::run_all_tests() -> UInt32 {
@@ -70,7 +93,10 @@ forge LinkerMathTests {
             + test_validate_section_span_overflow_rejected()
             + test_pcrel_forward_delta()
             + test_u32_reloc_value_accepts_max()
-            + test_u32_reloc_value_rejects_overflow();
+            + test_u32_reloc_value_rejects_overflow()
+            + test_x86_64_pc32_accepts_negative_delta()
+            + test_x86_64_glob_dat_accepts_64bit_value()
+            + test_aarch64_prel32_accepts_negative_delta();
         return passed;
     }
 }
