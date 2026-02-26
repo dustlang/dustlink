@@ -428,6 +428,28 @@ forge DustLink {
         }
     }
 
+    proc K::aarch64_tls_synth_reserve(object_index: UInt32, symbol_index: UInt32, reloc_type: UInt32) -> UInt32 {
+        return host_linker_aarch64_tls_synth_reserve(object_index, symbol_index, reloc_type);
+    }
+
+    proc K::aarch64_tls_synth_count() -> UInt32 {
+        return host_linker_aarch64_tls_synth_count();
+    }
+
+    proc K::aarch64_tls_synth_slot_address(slot_index: UInt32) -> UInt64 {
+        return host_linker_aarch64_tls_synth_slot_address(slot_index);
+    }
+
+    proc K::aarch64_tls_synth_reloc_value(
+        object_index: UInt32,
+        symbol_index: UInt32,
+        reloc_type: UInt32,
+        addend: UInt64,
+        place_addr: UInt64
+    ) -> UInt64 {
+        return host_linker_aarch64_tls_synth_reloc_value(object_index, symbol_index, reloc_type, addend, place_addr);
+    }
+
     proc K::apply_script(path: UInt64) -> UInt32 {
         if path == 0 {
             return ERR_FILE_NOT_FOUND;

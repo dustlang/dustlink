@@ -1578,17 +1578,26 @@ forge LinkerReloc {
                         return apply_relocation_value(target_section, offset, reloc_type, machine, tls_value2);
                     }
                 }
-                if reloc_type == R_AARCH64_TLSDESC_CALL {
-                    // TLSDESC_CALL does not encode an immediate payload; validate/preserve the
-                    // BLR instruction shape and allow the relocation to apply even while broader
-                    // TLSDESC descriptor/GOT semantics remain incomplete.
-                    return apply_relocation_value(target_section, offset, reloc_type, machine, 0);
-                }
                 if aarch64_is_tls_family_reloc(reloc_type) == 1 {
-                    // AArch64 TLS instruction/descriptor relocations still require additional
-                    // TLSDESC/GOT metadata and relaxation semantics not yet surfaced through
-                    // the current Dust host linker runtime ABI.
-                    return ERR_NOT_IMPLEMENTED_YET;
+                    let place_tls = host_linker_section_runtime_address(object_index, target_section) + offset;
+                    let tls_synth_value = host_linker_aarch64_tls_synth_reloc_value(
+                        object_index,
+                        sym_index,
+                        reloc_type,
+                        addend,
+                        place_tls
+                    );
+                    let tls_synth_status = host_linker_last_error();
+                    if tls_synth_status ! ERR_OK {
+                        return tls_synth_status;
+                    } else {
+                        // Descriptor-sequence relocation apply path now routes through the host
+                        // TLS synthetic slot helper, which coalesces TLSLD/TLSGD/TLSDESC slot
+                        // planning and patches the instruction payload against materialized slot
+                        // addresses in the emitted load image. Full instruction-sequence rewrite
+                        // relaxations remain a separate pass.
+                        return apply_relocation_value(target_section, offset, reloc_type, machine, tls_synth_value);
+                    }
                 }
             }
             let symbol_defined = host_linker_object_symbol_defined(object_index, sym_index);

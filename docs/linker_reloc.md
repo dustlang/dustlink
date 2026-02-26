@@ -51,7 +51,9 @@ AArch64 TLS data relocs (`TLS_DTPMOD`, `TLS_DTPREL`, `TLS_TPREL`) are applied th
 AArch64 shared-link TLS data relocation handling is partial but more specific: `TLS_DTPREL` can resolve from TLS layout metadata, shared-link `TLS_TPREL` returns invalid relocation, and shared-link `TLS_DTPMOD` remains not implemented.
 AArch64 TLSLE/TLSLD low12 offset instruction relocations (`ADD`/`LDST64`/`LDST128` `*_DTPREL_*` / `*_TPREL_*`) also reuse the host-runtime TLS offset helper in non-shared links.
 `R_AARCH64_TLSDESC_CALL` is applied as a validated `BLR` preserve relocation (no immediate payload rewrite).
-Remaining AArch64 TLS instruction/descriptor-family relocations still return `ERR_NOT_IMPLEMENTED_YET` until full TLS descriptor/GOT metadata and relaxation semantics are exposed by the host linker runtime ABI.
+Remaining AArch64 TLS descriptor-sequence instruction relocations (`TLSGD`/`TLSLD`/`TLSDESC`) now route through the host-runtime AArch64 TLS synthetic-slot reloc-value helper and patch instruction payloads against reserved/materialized synthetic slot addresses in staged form.
+The host runtime now materializes a synthetic AArch64 TLS descriptor/GOT-like slot region in ELF load images and emits minimal synthetic `.rela.dyn` metadata (`DT_SYMTAB`, `DT_SYMENT`, `DT_RELA*`) for reserved descriptor-sequence slots.
+Descriptor-sequence staged relaxation currently covers deterministic synthetic-slot reuse/coalescing (including TLSLD module-slot coalescing); full instruction-sequence rewrite relaxations remain pending for parity.
 `R_AARCH64_TLSDESC_CALL` helper now validates `BLR` instruction encoding before preserving the instruction word.
 
 ## `Q` and `Phi`

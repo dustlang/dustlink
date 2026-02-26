@@ -67,11 +67,14 @@ This directory contains complete Markdown documentation for `dustlink`.
 - AArch64 TLSLE/TLSLD low12 offset instruction forms (`ADD`/`LDST64`/`LDST128`) now apply in non-shared links via host-runtime TLS offset helpers.
 - `R_AARCH64_TLSDESC_CALL` now applies as a validated `BLR` preserve relocation.
 - AArch64 shared-link TLS data relocation handling is now partially differentiated (`TLS_DTPREL` supported; shared-link `TLS_TPREL` invalid; shared-link `TLS_DTPMOD` still unsupported).
-- Remaining AArch64 TLS instruction/descriptor-family relocation application stays strict `ERR_NOT_IMPLEMENTED_YET` pending full TLS descriptor/GOT metadata and relaxation semantics.
+- AArch64 TLS synthetic descriptor/GOT planning state + host ABI (`reserve/count/slot address/reloc-value`) is now used by Dust relocation application for staged `TLSGD`/`TLSLD`/`TLSDESC` descriptor-sequence instruction relocations.
+- Host ELF writer now materializes a synthetic AArch64 TLS descriptor/GOT-like slot region and emits minimal synthetic `.rela.dyn` metadata (`DT_SYMTAB`, `DT_SYMENT`, `DT_RELA*`) for reserved descriptor-sequence slots.
+- Descriptor-sequence staged relaxation currently covers deterministic synthetic-slot reuse/coalescing (including TLSLD module-slot coalescing); full instruction rewrite relaxations remain pending.
 - Shared-library ingest now propagates shared-object ingest failures directly (no Dust-side `ERR_NOT_IMPLEMENTED_YET` swallow).
 - Host shared-object ingest also fails on unknown/unsupported payload formats (`ERR_INVALID_FORMAT`) instead of silently succeeding.
 - Host shared-object ingest now validates target/ABI/file kind before symbol ingestion (ELF `ET_DYN`, Windows PE DLL/COFF machine, Mach-O dylib CPU type).
 - Host shared-object ingest now filters non-exported ELF/Mach-O metadata symbols (hidden/internal dynsyms; private extern/debug symbols).
 - Host needed-library recording now prefers embedded shared-library names (`DT_SONAME`, PE export DLL name, Mach-O install name) when available.
+- AArch64 TLS descriptor-sequence instruction relocs now patch against host-planned/materialized synthetic slot addresses, and reserved synthetic TLS slots are emitted in ELF load images with minimal synthetic dynamic relocation metadata (staged semantics).
 - `lld-link` spellings: `/OUT`, `/ENTRY`, `/MACHINE`, `/LIBPATH`, `/DEFAULTLIB`, `/MAP`, `/DLL`, `/SUBSYSTEM`, `/OPT`, `/WX`, `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, `/LARGEADDRESSAWARE`.
 - soft-compatibility flag-family acceptance for broader ld/lld/lld-link compatibility while preserving deterministic internal link behavior.

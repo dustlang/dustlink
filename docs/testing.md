@@ -79,11 +79,14 @@ Both files define forge-based test procedures with this pattern:
 - `dust check src` passes after enabling `R_AARCH64_TLSDESC_CALL` application (validated preserve relocation) within the remaining partial AArch64 TLS-family support.
 - `cargo check -p dust_codegen` passes after host shared-library metadata parsing additions for embedded needed-name preference (`SONAME` / export DLL name / Mach-O install name).
 - `cargo check -p dust_codegen` passes after host AArch64 shared-link TLS data-reloc behavior differentiation (`TLS_DTPREL` support, shared-link `TLS_TPREL` invalid) and shared-export filtering tightening for ELF/Mach-O metadata paths.
+- `cargo check -p dust_codegen` and `dust check src` pass after adding preparatory AArch64 TLS synthetic descriptor/GOT planning state + host helper ABI and Dust-side TLS planning-slot reservation calls for unsupported descriptor-sequence relocs.
+- `cargo check -p dust_codegen` and `dust check src` pass after wiring AArch64 TLS descriptor-sequence instruction reloc application through the host synthetic-slot reloc-value helper, adding synthetic TLS slot-region materialization in ELF load images, and emitting minimal synthetic `.rela.dyn` metadata (`DT_SYMTAB`, `DT_SYMENT`, `DT_RELA*`) for reserved descriptor-sequence slots.
 
 ## Current Limitations
 
 - Tests still focus on deterministic status behavior and arithmetic/helper semantics.
 - Compatibility no-op diagnostics and fatal-warning escalation behavior are only partially covered by unit-style Dust tests and need broader CLI integration assertions.
+- AArch64 TLS descriptor-sequence staged semantics (synthetic slot-region emission, synthetic `.rela.dyn` metadata, and relocation application wiring) are not yet covered by byte-level ELF fixture tests or runtime TLS behavior tests.
 - They do not yet validate exhaustive byte-for-byte parity against `lld` across full flag/script/cross-format matrices.
 - Cross-platform host-link attempt ordering is not yet validated by integration tests.
 

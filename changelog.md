@@ -62,6 +62,8 @@
   - AArch64 TLSLE/TLSLD low12 offset instruction relocation application (`ADD`/`LDST64`/`LDST128`) via host-runtime TLS offset helper reuse in non-shared links
   - `R_AARCH64_TLSDESC_CALL` application support (validated `BLR` preserve relocation) while leaving broader TLSDESC descriptor-sequence relocs explicitly unsupported
   - partial shared-link AArch64 TLS data-reloc differentiation (`TLS_DTPREL` supported via TLS layout metadata, shared-link `TLS_TPREL` invalid, shared-link `TLS_DTPMOD` still unsupported)
+  - preparatory AArch64 TLS synthetic descriptor/GOT planning state + host helper ABI (`reserve`, `count`, `slot address`, `reloc value`) for staged descriptor-sequence parity work
+  - staged AArch64 TLS synthetic descriptor/GOT-like ELF slot-region materialization and minimal synthetic `.rela.dyn` metadata emission (`DT_SYMTAB`, `DT_SYMENT`, `DT_RELA*`) for reserved descriptor-sequence slots
 - Additional Dust relocation/math tests for AArch64:
   - `ADR_PREL_LO21` patching
   - MOVW patching and overflow validation
@@ -94,6 +96,9 @@
 - Host shared-object ingest now enforces target/ABI/file-kind validation before symbol ingest (ELF `ET_DYN`, Windows PE DLL/COFF machine, Mach-O dylib CPU).
 - Host shared-object ingest now filters non-exported ELF/Mach-O metadata symbols (ELF hidden/internal dynsyms, Mach-O private extern/debug entries).
 - Host needed-library recording now prefers embedded shared-library names (`DT_SONAME`, PE export DLL name, Mach-O install name) when present.
+- Dust linker now reserves AArch64 TLS synthetic planning slots when unsupported TLS descriptor-sequence relocs are encountered (discovery/planning infrastructure only).
+- Dust linker AArch64 TLS descriptor-sequence instruction relocs now route through the host synthetic-slot reloc-value helper and patch against reserved/materialized synthetic slot addresses (staged semantics; full TLSDESC runtime parity still incomplete).
+- Staged descriptor-sequence relaxation behavior now includes deterministic synthetic-slot reuse/coalescing (including TLSLD module-slot coalescing in emitted synthetic slot metadata), while full instruction rewrite relaxations remain deferred.
 
 ### Fixed
 
@@ -106,7 +111,10 @@
 - AArch64 TLSLE/TLSLD low12 offset instruction relocations no longer fall through the blanket TLS-family `ERR_NOT_IMPLEMENTED_YET` path in non-shared links.
 - `R_AARCH64_TLSDESC_CALL` no longer falls through the blanket TLS-family `ERR_NOT_IMPLEMENTED_YET` path; it now applies as a validated preserve relocation.
 - AArch64 shared-link TLS data relocs no longer all fail as `ERR_NOT_IMPLEMENTED_YET`; `TLS_DTPREL` now resolves while shared-link `TLS_TPREL` fails as invalid relocation.
+- Unsupported AArch64 TLS descriptor-sequence relocs no longer leave no trace in linker state; they now populate synthetic TLS planning state for future GOT/TLSDESC emission work.
 - `R_AARCH64_TLSDESC_CALL` patch helper no longer accepts arbitrary non-zero instructions; it now validates `BLR`-class encoding.
+- AArch64 TLS descriptor-sequence instruction relocs no longer stop at the blanket `ERR_NOT_IMPLEMENTED_YET` apply-path gate; they now patch against host-planned synthetic slot addresses.
+- Reserved AArch64 TLS synthetic planning slots no longer remain planning-only for ELF output; they now materialize into the load image and emit minimal synthetic `.rela.dyn` metadata.
 
 ## 2026-02-21
 
