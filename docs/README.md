@@ -64,8 +64,12 @@ This directory contains complete Markdown documentation for `dustlink`.
 - AArch64 ELF relocation coverage now includes instruction bitfield patching (branches/literals/ADR/ADRP/ADD/LDST, including `LDST128`) and MOVW relocation families.
 - AArch64 TLS-family relocation IDs (`TLSGD`/`TLSLD`/`TLSDESC`, `TLS_DTPMOD`/`TLS_DTPREL`/`TLS_TPREL`) are recognized/validated.
 - AArch64 TLS data relocs (`TLS_DTPMOD`/`TLS_DTPREL`/`TLS_TPREL`) now use host-runtime TLS layout metadata helpers in non-shared links.
-- AArch64 TLS instruction/descriptor-family relocation application remains strict `ERR_NOT_IMPLEMENTED_YET` pending full TLS descriptor/GOT metadata and relaxation semantics.
+- AArch64 TLSLE/TLSLD low12 offset instruction forms (`ADD`/`LDST64`/`LDST128`) now apply in non-shared links via host-runtime TLS offset helpers.
+- `R_AARCH64_TLSDESC_CALL` now applies as a validated `BLR` preserve relocation.
+- Remaining AArch64 TLS instruction/descriptor-family relocation application stays strict `ERR_NOT_IMPLEMENTED_YET` pending full TLS descriptor/GOT metadata and relaxation semantics.
 - Shared-library ingest now propagates shared-object ingest failures directly (no Dust-side `ERR_NOT_IMPLEMENTED_YET` swallow).
 - Host shared-object ingest also fails on unknown/unsupported payload formats (`ERR_INVALID_FORMAT`) instead of silently succeeding.
+- Host shared-object ingest now validates target/ABI/file kind before symbol ingestion (ELF `ET_DYN`, Windows PE DLL/COFF machine, Mach-O dylib CPU type).
+- Host needed-library recording now prefers embedded shared-library names (`DT_SONAME`, PE export DLL name, Mach-O install name) when available.
 - `lld-link` spellings: `/OUT`, `/ENTRY`, `/MACHINE`, `/LIBPATH`, `/DEFAULTLIB`, `/MAP`, `/DLL`, `/SUBSYSTEM`, `/OPT`, `/WX`, `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, `/LARGEADDRESSAWARE`.
 - soft-compatibility flag-family acceptance for broader ld/lld/lld-link compatibility while preserving deterministic internal link behavior.

@@ -86,7 +86,9 @@
   - AArch64 TLS relocation coverage:
     - `TLSGD` / `TLSLD` / `TLSDESC` instruction-form relocation IDs are recognized by ELF ingest and relocation validation
     - `R_AARCH64_TLS_DTPMOD`, `R_AARCH64_TLS_DTPREL`, `R_AARCH64_TLS_TPREL` are applied for non-shared links using host-runtime TLS layout metadata helpers
-    - TLS instruction/descriptor-family relocation application (TLSGD/TLSLD/TLSDESC sequences) remains strict `ERR_NOT_IMPLEMENTED_YET` pending full TLS descriptor/GOT metadata and relaxation semantics
+    - TLSLE/TLSLD low12 offset instruction forms (`*_ADD_*_LO12_NC`, `*_LDST64_*_LO12_NC`, `*_LDST128_*_LO12_NC`) are applied in non-shared links using host-runtime TLS offset helpers
+    - `R_AARCH64_TLSDESC_CALL` is applied as a validated `BLR` preserve relocation
+    - remaining TLS instruction/descriptor-family relocation application (TLSGD/TLSLD/TLSDESC descriptor sequences) remains strict `ERR_NOT_IMPLEMENTED_YET` pending full TLS descriptor/GOT metadata and relaxation semantics
 
 ## CLI Compatibility Surface
 
@@ -149,6 +151,8 @@ These compatibility no-op paths now emit diagnostics, and become hard failures w
   - TLS instruction/descriptor-family relocation application now fails with `ERR_NOT_IMPLEMENTED_YET` instead of silently patching placeholder values
 - Shared-library ingest now propagates shared-object ingest failures directly (no Dust-side `ERR_NOT_IMPLEMENTED_YET` swallow path).
 - Host shared-object ingest now treats unknown/unsupported payload formats as `ERR_INVALID_FORMAT` instead of silently succeeding.
+- Host shared-object ingest now also rejects cross-target / wrong-ABI / wrong-kind shared inputs before symbol ingest (ELF requires target machine + `ET_DYN`; PE requires Windows target + DLL + matching machine; Mach-O requires macOS target + matching CPU + dylib file type).
+- Needed-library recording now prefers embedded shared-library names when available (`DT_SONAME`, PE export DLL name, Mach-O install name) instead of filename-only normalization.
 
 ## Build
 

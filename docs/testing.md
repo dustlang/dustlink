@@ -48,6 +48,7 @@ Both files define forge-based test procedures with this pattern:
   - `ADR_PREL_LO21` and MOVW patch/validation paths
   - starter AArch64 TLS data relocation value validation (`TLS_DTPMOD`, `TLS_TPREL`)
   - `TLSDESC_CALL` instruction-shape validation (`BLR` accepted, `BR` rejected)
+  - TLSLE/TLSLD low12 offset relocation-kind mapping helper coverage
 
 ## Recent Integration Checks
 
@@ -74,6 +75,9 @@ Both files define forge-based test procedures with this pattern:
 - `dust check src` passes for current Dust-source linker modules (host CLI + runtime parity changes).
 - `dust check src` passes after AArch64 relocation parity expansions (MOVW, `ADR_PREL_LO21`, and starter TLS relocation plumbing).
 - `dust check src` passes after AArch64 TLS data-reloc host-helper wiring (non-shared links), stricter TLS instruction-family `ERR_NOT_IMPLEMENTED_YET` handling, and shared-ingest error propagation/format strictness tightening.
+- `dust check src` passes after adding AArch64 TLSLE/TLSLD low12 offset relocation routing via host TLS helpers (non-shared links).
+- `dust check src` passes after enabling `R_AARCH64_TLSDESC_CALL` application (validated preserve relocation) within the remaining partial AArch64 TLS-family support.
+- `cargo check -p dust_codegen` passes after host shared-library metadata parsing additions for embedded needed-name preference (`SONAME` / export DLL name / Mach-O install name).
 
 ## Current Limitations
 

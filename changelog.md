@@ -59,11 +59,14 @@
   - MOVW relocation families (`UABS`, `SABS`, `PREL`)
   - AArch64 TLS relocation ID recognition/validation for starter TLS families (`TLSGD`, `TLSLD`, `TLSDESC` instruction forms) and AArch64 TLS data relocs (`TLS_DTPMOD`, `TLS_DTPREL`, `TLS_TPREL`)
   - host-runtime-backed AArch64 TLS data relocation value computation for non-shared links (`TLS_DTPMOD`, `TLS_DTPREL`, `TLS_TPREL`) using synthesized TLS section layout metadata
+  - AArch64 TLSLE/TLSLD low12 offset instruction relocation application (`ADD`/`LDST64`/`LDST128`) via host-runtime TLS offset helper reuse in non-shared links
+  - `R_AARCH64_TLSDESC_CALL` application support (validated `BLR` preserve relocation) while leaving broader TLSDESC descriptor-sequence relocs explicitly unsupported
 - Additional Dust relocation/math tests for AArch64:
   - `ADR_PREL_LO21` patching
   - MOVW patching and overflow validation
   - AArch64 TLS data relocation value validation
   - `TLSDESC_CALL` instruction-shape validation (`BLR` accepted, non-`BLR` rejected)
+  - TLSLE/TLSLD low12 offset relocation-kind mapping helper coverage
 
 ### Changed
 
@@ -87,6 +90,8 @@
 - ELF relocation ingest validation and linker relocation pipeline now accept/process a broader AArch64 relocation surface (including MOVW and TLS starter forms) instead of rejecting them as unsupported.
 - Shared-library ingest in `linker_archive.ds` now propagates shared-object ingest errors directly instead of swallowing `ERR_NOT_IMPLEMENTED_YET`.
 - Host shared-object ingest now returns `ERR_INVALID_FORMAT` for unknown/unsupported payloads instead of silently succeeding.
+- Host shared-object ingest now enforces target/ABI/file-kind validation before symbol ingest (ELF `ET_DYN`, Windows PE DLL/COFF machine, Mach-O dylib CPU).
+- Host needed-library recording now prefers embedded shared-library names (`DT_SONAME`, PE export DLL name, Mach-O install name) when present.
 
 ### Fixed
 
@@ -96,6 +101,8 @@
 - AArch64 64-bit TLS data relocations no longer fall through 32-bit relocation validation constraints in the Dust relocation validator.
 - AArch64 TLS instruction/descriptor-family relocation application no longer silently patches placeholder values; it now returns `ERR_NOT_IMPLEMENTED_YET` until full TLS descriptor/GOT metadata and relaxation semantics are exposed to the Dust relocation pipeline.
 - AArch64 TLS data relocations (`TLS_DTPMOD`/`TLS_DTPREL`/`TLS_TPREL`) no longer use placeholder relocation math in non-shared links; they now use host-runtime TLS layout metadata.
+- AArch64 TLSLE/TLSLD low12 offset instruction relocations no longer fall through the blanket TLS-family `ERR_NOT_IMPLEMENTED_YET` path in non-shared links.
+- `R_AARCH64_TLSDESC_CALL` no longer falls through the blanket TLS-family `ERR_NOT_IMPLEMENTED_YET` path; it now applies as a validated preserve relocation.
 - `R_AARCH64_TLSDESC_CALL` patch helper no longer accepts arbitrary non-zero instructions; it now validates `BLR`-class encoding.
 
 ## 2026-02-21

@@ -502,6 +502,23 @@ forge LinkerReloc {
         return 0;
     }
 
+    proc K::aarch64_tls_offset_data_reloc_kind(reloc_type: UInt32) -> UInt32 {
+        if reloc_type == R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC { return R_AARCH64_TLS_DTPREL; }
+        if reloc_type == R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC { return R_AARCH64_TLS_DTPREL; }
+        if reloc_type == R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC { return R_AARCH64_TLS_DTPREL; }
+        if reloc_type == R_AARCH64_TLSLE_ADD_TPREL_LO12_NC { return R_AARCH64_TLS_TPREL; }
+        if reloc_type == R_AARCH64_TLSLE_LDST64_TPREL_LO12_NC { return R_AARCH64_TLS_TPREL; }
+        if reloc_type == R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC { return R_AARCH64_TLS_TPREL; }
+        return R_AARCH64_NONE;
+    }
+
+    proc K::aarch64_is_tls_offset_instr_reloc(reloc_type: UInt32) -> UInt32 {
+        if aarch64_tls_offset_data_reloc_kind(reloc_type) == R_AARCH64_NONE {
+            return 0;
+        }
+        return 1;
+    }
+
     proc K::aarch64_page_delta_bytes(symbol_plus_addend: UInt64, place_addr: UInt64) -> UInt64 {
         let page_mask = 0 - 4096;
         let sym_page = symbol_plus_addend & page_mask;
@@ -1550,6 +1567,22 @@ forge LinkerReloc {
                     } else {
                         return apply_relocation_value(target_section, offset, reloc_type, machine, tls_value);
                     }
+                }
+                if aarch64_is_tls_offset_instr_reloc(reloc_type) == 1 {
+                    let tls_kind = aarch64_tls_offset_data_reloc_kind(reloc_type);
+                    let tls_value2 = host_linker_aarch64_tls_data_reloc_value(object_index, sym_index, tls_kind, addend);
+                    let tls_status2 = host_linker_last_error();
+                    if tls_status2 ! ERR_OK {
+                        return tls_status2;
+                    } else {
+                        return apply_relocation_value(target_section, offset, reloc_type, machine, tls_value2);
+                    }
+                }
+                if reloc_type == R_AARCH64_TLSDESC_CALL {
+                    // TLSDESC_CALL does not encode an immediate payload; validate/preserve the
+                    // BLR instruction shape and allow the relocation to apply even while broader
+                    // TLSDESC descriptor/GOT semantics remain incomplete.
+                    return apply_relocation_value(target_section, offset, reloc_type, machine, 0);
                 }
                 if aarch64_is_tls_family_reloc(reloc_type) == 1 {
                     // AArch64 TLS instruction/descriptor relocations still require additional

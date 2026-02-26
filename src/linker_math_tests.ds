@@ -25,8 +25,13 @@ forge LinkerMathTests {
     const R_AARCH64_LDST32_ABS_LO12_NC: UInt32 = 285;
     const R_AARCH64_LDST64_ABS_LO12_NC: UInt32 = 286;
     const R_AARCH64_LDST128_ABS_LO12_NC: UInt32 = 299;
+    const R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC: UInt32 = 530;
+    const R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC: UInt32 = 538;
+    const R_AARCH64_TLSLE_ADD_TPREL_LO12_NC: UInt32 = 551;
     const R_AARCH64_TLSDESC_CALL: UInt32 = 569;
+    const R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC: UInt32 = 573;
     const R_AARCH64_TLS_DTPMOD: UInt32 = 1028;
+    const R_AARCH64_TLS_DTPREL: UInt32 = 1029;
     const R_AARCH64_TLS_TPREL: UInt32 = 1030;
 
     proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
@@ -213,6 +218,17 @@ forge LinkerMathTests {
         return expect_u32(status, ERR_OK);
     }
 
+    proc K::test_aarch64_tls_offset_instr_mapping() -> UInt32 {
+        let a = LinkerReloc::K::aarch64_tls_offset_data_reloc_kind(R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC);
+        let b = LinkerReloc::K::aarch64_tls_offset_data_reloc_kind(R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC);
+        let c = LinkerReloc::K::aarch64_tls_offset_data_reloc_kind(R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC);
+        let d = LinkerReloc::K::aarch64_tls_offset_data_reloc_kind(R_AARCH64_TLSLE_ADD_TPREL_LO12_NC);
+        return expect_u32(a, R_AARCH64_TLS_DTPREL)
+            * expect_u32(b, R_AARCH64_TLS_DTPREL)
+            * expect_u32(c, R_AARCH64_TLS_DTPREL)
+            * expect_u32(d, R_AARCH64_TLS_TPREL);
+    }
+
     proc K::run_all_tests() -> UInt32 {
         let passed =
             test_sections_align_forward_identity()
@@ -244,7 +260,8 @@ forge LinkerMathTests {
             + test_aarch64_tlsdesc_call_patch_word_accepts_blr()
             + test_aarch64_tlsdesc_call_patch_word_rejects_br()
             + test_aarch64_tls_dtpmod_accepts_64bit_value()
-            + test_aarch64_tls_tprel_accepts_64bit_value();
+            + test_aarch64_tls_tprel_accepts_64bit_value()
+            + test_aarch64_tls_offset_instr_mapping();
         return passed;
     }
 }

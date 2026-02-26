@@ -48,7 +48,9 @@ Source: `src/linker_reloc.ds`
 Current AArch64 support includes instruction bitfield patching for branch/literal/ADR/ADRP/ADD/LDST relocations and MOVW family relocations.
 AArch64 TLS-family relocations are recognized/validated in this module.
 AArch64 TLS data relocs (`TLS_DTPMOD`, `TLS_DTPREL`, `TLS_TPREL`) are applied through a host-runtime helper that computes values from object TLS section metadata for non-shared links.
-AArch64 TLS instruction/descriptor-family relocations still return `ERR_NOT_IMPLEMENTED_YET` until full TLS descriptor/GOT metadata and relaxation semantics are exposed by the host linker runtime ABI.
+AArch64 TLSLE/TLSLD low12 offset instruction relocations (`ADD`/`LDST64`/`LDST128` `*_DTPREL_*` / `*_TPREL_*`) also reuse the host-runtime TLS offset helper in non-shared links.
+`R_AARCH64_TLSDESC_CALL` is applied as a validated `BLR` preserve relocation (no immediate payload rewrite).
+Remaining AArch64 TLS instruction/descriptor-family relocations still return `ERR_NOT_IMPLEMENTED_YET` until full TLS descriptor/GOT metadata and relaxation semantics are exposed by the host linker runtime ABI.
 `R_AARCH64_TLSDESC_CALL` helper now validates `BLR` instruction encoding before preserving the instruction word.
 
 ## `Q` and `Phi`
