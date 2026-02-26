@@ -78,6 +78,7 @@ Both files define forge-based test procedures with this pattern:
 - `dust check src` passes after adding AArch64 TLSLE/TLSLD low12 offset relocation routing via host TLS helpers (non-shared links).
 - `dust check src` passes after enabling `R_AARCH64_TLSDESC_CALL` application (validated preserve relocation) within the remaining partial AArch64 TLS-family support.
 - `cargo check -p dust_codegen` passes after host shared-library metadata parsing additions for embedded needed-name preference (`SONAME` / export DLL name / Mach-O install name).
+- `cargo check -p dust_codegen` passes after host AArch64 shared-link TLS data-reloc behavior differentiation (`TLS_DTPREL` support, shared-link `TLS_TPREL` invalid) and shared-export filtering tightening for ELF/Mach-O metadata paths.
 
 ## Current Limitations
 

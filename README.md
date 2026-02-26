@@ -86,6 +86,7 @@
   - AArch64 TLS relocation coverage:
     - `TLSGD` / `TLSLD` / `TLSDESC` instruction-form relocation IDs are recognized by ELF ingest and relocation validation
     - `R_AARCH64_TLS_DTPMOD`, `R_AARCH64_TLS_DTPREL`, `R_AARCH64_TLS_TPREL` are applied for non-shared links using host-runtime TLS layout metadata helpers
+    - shared-link AArch64 TLS data reloc handling is partially differentiated: `TLS_DTPREL` resolves from TLS layout metadata, shared-link `TLS_TPREL` is rejected as invalid, and shared-link `TLS_DTPMOD` remains unsupported
     - TLSLE/TLSLD low12 offset instruction forms (`*_ADD_*_LO12_NC`, `*_LDST64_*_LO12_NC`, `*_LDST128_*_LO12_NC`) are applied in non-shared links using host-runtime TLS offset helpers
     - `R_AARCH64_TLSDESC_CALL` is applied as a validated `BLR` preserve relocation
     - remaining TLS instruction/descriptor-family relocation application (TLSGD/TLSLD/TLSDESC descriptor sequences) remains strict `ERR_NOT_IMPLEMENTED_YET` pending full TLS descriptor/GOT metadata and relaxation semantics
@@ -152,6 +153,7 @@ These compatibility no-op paths now emit diagnostics, and become hard failures w
 - Shared-library ingest now propagates shared-object ingest failures directly (no Dust-side `ERR_NOT_IMPLEMENTED_YET` swallow path).
 - Host shared-object ingest now treats unknown/unsupported payload formats as `ERR_INVALID_FORMAT` instead of silently succeeding.
 - Host shared-object ingest now also rejects cross-target / wrong-ABI / wrong-kind shared inputs before symbol ingest (ELF requires target machine + `ET_DYN`; PE requires Windows target + DLL + matching machine; Mach-O requires macOS target + matching CPU + dylib file type).
+- Host shared-object ingest now filters non-exported metadata entries during symbol ingestion (ELF hidden/internal dynsyms and Mach-O private extern/debug symbols are skipped).
 - Needed-library recording now prefers embedded shared-library names when available (`DT_SONAME`, PE export DLL name, Mach-O install name) instead of filename-only normalization.
 
 ## Build

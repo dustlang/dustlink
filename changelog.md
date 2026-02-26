@@ -61,6 +61,7 @@
   - host-runtime-backed AArch64 TLS data relocation value computation for non-shared links (`TLS_DTPMOD`, `TLS_DTPREL`, `TLS_TPREL`) using synthesized TLS section layout metadata
   - AArch64 TLSLE/TLSLD low12 offset instruction relocation application (`ADD`/`LDST64`/`LDST128`) via host-runtime TLS offset helper reuse in non-shared links
   - `R_AARCH64_TLSDESC_CALL` application support (validated `BLR` preserve relocation) while leaving broader TLSDESC descriptor-sequence relocs explicitly unsupported
+  - partial shared-link AArch64 TLS data-reloc differentiation (`TLS_DTPREL` supported via TLS layout metadata, shared-link `TLS_TPREL` invalid, shared-link `TLS_DTPMOD` still unsupported)
 - Additional Dust relocation/math tests for AArch64:
   - `ADR_PREL_LO21` patching
   - MOVW patching and overflow validation
@@ -91,6 +92,7 @@
 - Shared-library ingest in `linker_archive.ds` now propagates shared-object ingest errors directly instead of swallowing `ERR_NOT_IMPLEMENTED_YET`.
 - Host shared-object ingest now returns `ERR_INVALID_FORMAT` for unknown/unsupported payloads instead of silently succeeding.
 - Host shared-object ingest now enforces target/ABI/file-kind validation before symbol ingest (ELF `ET_DYN`, Windows PE DLL/COFF machine, Mach-O dylib CPU).
+- Host shared-object ingest now filters non-exported ELF/Mach-O metadata symbols (ELF hidden/internal dynsyms, Mach-O private extern/debug entries).
 - Host needed-library recording now prefers embedded shared-library names (`DT_SONAME`, PE export DLL name, Mach-O install name) when present.
 
 ### Fixed
@@ -103,6 +105,7 @@
 - AArch64 TLS data relocations (`TLS_DTPMOD`/`TLS_DTPREL`/`TLS_TPREL`) no longer use placeholder relocation math in non-shared links; they now use host-runtime TLS layout metadata.
 - AArch64 TLSLE/TLSLD low12 offset instruction relocations no longer fall through the blanket TLS-family `ERR_NOT_IMPLEMENTED_YET` path in non-shared links.
 - `R_AARCH64_TLSDESC_CALL` no longer falls through the blanket TLS-family `ERR_NOT_IMPLEMENTED_YET` path; it now applies as a validated preserve relocation.
+- AArch64 shared-link TLS data relocs no longer all fail as `ERR_NOT_IMPLEMENTED_YET`; `TLS_DTPREL` now resolves while shared-link `TLS_TPREL` fails as invalid relocation.
 - `R_AARCH64_TLSDESC_CALL` patch helper no longer accepts arbitrary non-zero instructions; it now validates `BLR`-class encoding.
 
 ## 2026-02-21
