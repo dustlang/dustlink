@@ -325,6 +325,16 @@ forge LinkerHostCli {
         return 0;
     }
 
+    proc K::is_push_state_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--push-state") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_pop_state_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--pop-state") == 1 { return 1; }
+        return 0;
+    }
+
     proc K::is_group_marker_flag(arg: UInt64) -> UInt32 {
         if LinkerHost::K::str_eq(arg, "--start-group") == 1 {
             return 1;
@@ -526,6 +536,7 @@ forge LinkerHostCli {
         LinkerHost::K::print_line("  --defsym=name=value");
         LinkerHost::K::print_line("  -u/--undefined/--require-defined <symbol>");
         LinkerHost::K::print_line("  --start-group ... --end-group");
+        LinkerHost::K::print_line("  --push-state ... --pop-state");
         LinkerHost::K::print_line("  -shared/-pie/--no-pie/-static/-Bstatic/-Bdynamic");
         LinkerHost::K::print_line("  --dynamic-linker <path>  --soname <name>");
         LinkerHost::K::print_line("  --enable-new-dtags/--disable-new-dtags");
@@ -1751,6 +1762,16 @@ forge LinkerHostCli {
         if is_no_allow_shlib_undefined_flag(arg) == 1 {
             let nu1b = DustLink::K::set_no_undefined(1);
             if nu1b ! ERR_OK { return nu1b; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_push_state_flag(arg) == 1 {
+            let ps = DustLink::K::push_state();
+            if ps ! ERR_OK { return ps; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_pop_state_flag(arg) == 1 {
+            let pp = DustLink::K::pop_state();
+            if pp ! ERR_OK { return pp; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
         if is_start_group_flag(arg) == 1 {

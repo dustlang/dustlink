@@ -232,6 +232,18 @@ forge LinkerHostCliTests {
         return expect_u32(a, 1) * expect_u32(b, 1);
     }
 
+    proc K::test_push_pop_state_markers_detected() -> UInt32 {
+        let a = LinkerHostCli::K::is_push_state_flag("--push-state");
+        let b = LinkerHostCli::K::is_pop_state_flag("--pop-state");
+        return expect_u32(a, 1) * expect_u32(b, 1);
+    }
+
+    proc K::test_push_pop_state_flags_no_value() -> UInt32 {
+        let a = LinkerHostCli::K::requires_value("--push-state");
+        let b = LinkerHostCli::K::requires_value("--pop-state");
+        return expect_u32(a, 0) * expect_u32(b, 0);
+    }
+
     proc K::test_inline_dynamic_linker_value() -> UInt32 {
         let value = LinkerHostCli::K::inline_dynamic_linker_value("--dynamic-linker=/lib64/ld-linux-x86-64.so.2");
         return expect_u32(LinkerHost::K::str_eq(value, "/lib64/ld-linux-x86-64.so.2"), 1);
@@ -495,6 +507,8 @@ forge LinkerHostCliTests {
             + test_z_flag_requires_value()
             + test_inline_z_short_alias()
             + test_group_markers_detected()
+            + test_push_pop_state_markers_detected()
+            + test_push_pop_state_flags_no_value()
             + test_inline_dynamic_linker_value()
             + test_inline_soname_value()
             + test_dynamic_linker_requires_value()

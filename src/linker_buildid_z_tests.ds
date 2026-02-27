@@ -3,6 +3,7 @@
 forge LinkerBuildIdZTests {
     const ERR_OK: UInt32 = 0;
     const ERR_UNSUPPORTED_FLAG: UInt32 = 12;
+    const ERR_CONFLICTING_OPTIONS: UInt32 = 16;
 
     const BUILD_ID_MODE_NONE: UInt32 = 0;
     const BUILD_ID_MODE_FAST: UInt32 = 1;
@@ -127,6 +128,31 @@ forge LinkerBuildIdZTests {
         }
         let s3 = DustLink::K::set_z_option("origin");
         return expect_u32(s3, ERR_OK);
+    }
+
+    proc K::test_z_extended_compat_tokens_accepted() -> UInt32 {
+        DustLink::K::reset_state();
+        let s1 = DustLink::K::set_z_option("separate-code");
+        if s1 ! ERR_OK { return 0; }
+        let s2 = DustLink::K::set_z_option("pack-relative-relocs");
+        if s2 ! ERR_OK { return 0; }
+        let s3 = DustLink::K::set_z_option("max-page-size=0x1000");
+        if s3 ! ERR_OK { return 0; }
+        let s4 = DustLink::K::set_z_option("common-page-size=0x1000");
+        if s4 ! ERR_OK { return 0; }
+        let s5 = DustLink::K::set_z_option("stack-size=0x400000");
+        return expect_u32(s5, ERR_OK);
+    }
+
+    proc K::test_z_muldefs_nomuldefs_toggle() -> UInt32 {
+        DustLink::K::reset_state();
+        let s1 = DustLink::K::set_z_option("muldefs");
+        if s1 ! ERR_OK { return 0; }
+        let a = host_linker_get_allow_multiple_definition();
+        let s2 = DustLink::K::set_z_option("nomuldefs");
+        if s2 ! ERR_OK { return 0; }
+        let b = host_linker_get_allow_multiple_definition();
+        return expect_u32(a, 1) * expect_u32(b, 0);
     }
 
     proc K::test_dynamic_mode_toggles() -> UInt32 {
@@ -259,6 +285,44 @@ forge LinkerBuildIdZTests {
         return expect_u32(a, 1) * expect_u32(b, 0);
     }
 
+    proc K::test_push_pop_state_restores_link_policy() -> UInt32 {
+        DustLink::K::reset_state();
+        DustLink::K::set_static(0);
+        DustLink::K::set_as_needed(0);
+        DustLink::K::set_whole_archive(0);
+        DustLink::K::set_new_dtags(1);
+        DustLink::K::set_copy_dt_needed_entries(0);
+        DustLink::K::set_no_undefined(0);
+        let push = DustLink::K::push_state();
+        if push ! ERR_OK { return 0; }
+        DustLink::K::set_static(1);
+        DustLink::K::set_as_needed(1);
+        DustLink::K::set_whole_archive(1);
+        DustLink::K::set_new_dtags(0);
+        DustLink::K::set_copy_dt_needed_entries(1);
+        DustLink::K::set_no_undefined(1);
+        let pop = DustLink::K::pop_state();
+        if pop ! ERR_OK { return 0; }
+        let a = host_linker_get_static();
+        let b = host_linker_get_as_needed();
+        let c = host_linker_get_whole_archive();
+        let d = host_linker_get_new_dtags();
+        let e = host_linker_get_copy_dt_needed_entries();
+        let f = host_linker_get_no_undefined();
+        return expect_u32(a, 0)
+            * expect_u32(b, 0)
+            * expect_u32(c, 0)
+            * expect_u32(d, 1)
+            * expect_u32(e, 0)
+            * expect_u32(f, 0);
+    }
+
+    proc K::test_pop_state_without_push_rejected() -> UInt32 {
+        DustLink::K::reset_state();
+        let status = DustLink::K::pop_state();
+        return expect_u32(status, ERR_CONFLICTING_OPTIONS);
+    }
+
     proc K::test_sysroot_roundtrip() -> UInt32 {
         DustLink::K::reset_state();
         let status = DustLink::K::set_sysroot("/opt/xdv-sysroot");
@@ -363,6 +427,8 @@ forge LinkerBuildIdZTests {
             + test_z_invalid_rejected()
             + test_z_defs_undefs_toggle_no_undefined()
             + test_z_text_family_accepted()
+            + test_z_extended_compat_tokens_accepted()
+            + test_z_muldefs_nomuldefs_toggle()
             + test_dynamic_mode_toggles()
             + test_dynamic_linker_and_soname_set()
             + test_needed_library_note_normalization()
@@ -371,6 +437,8 @@ forge LinkerBuildIdZTests {
             + test_no_undefined_toggle()
             + test_dynamic_unresolved_policy_gate()
             + test_whole_archive_toggle()
+            + test_push_pop_state_restores_link_policy()
+            + test_pop_state_without_push_rejected()
             + test_sysroot_roundtrip()
             + test_rpath_roundtrip()
             + test_rpath_link_roundtrip()

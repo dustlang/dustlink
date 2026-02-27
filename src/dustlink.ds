@@ -320,6 +320,14 @@ forge DustLink {
         return host_linker_set_as_needed(enabled);
     }
 
+    proc K::push_state() -> UInt32 {
+        return host_linker_push_state();
+    }
+
+    proc K::pop_state() -> UInt32 {
+        return host_linker_pop_state();
+    }
+
     proc K::set_new_dtags(enabled: UInt32) -> UInt32 {
         return host_linker_set_new_dtags(enabled);
     }
