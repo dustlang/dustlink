@@ -1,4 +1,11 @@
-// Build-id and -z semantic behavior tests.
+// File: linker_buildid_z_tests.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Build-id and -z semantic behavior tests.
+//   Provides test cases for:
+//     - BUILD_ID_MODE_NONE, BUILD_ID_MODE_SHA1, BUILD_ID_MODE_SHA256
+//     - z_relro, z_now, z_execstack options
+//     - Build ID generation and embedding
 
 forge LinkerBuildIdZTests {
     const ERR_OK: UInt32 = 0;

@@ -1,5 +1,9 @@
-// Dust-native dustlink executable entrypoint.
-// Host CLI dispatch is routed through Dust code (no backend forwarding).
+// File: main.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Dust-native dustlink executable entrypoint.
+//   Host CLI dispatch is routed through Dust code (no backend forwarding).
+//   Entry point: main() calls LinkerHostCli::run_with_host_args()
 
 forge DustLinkMain {
     proc K::main() -> UInt32 {

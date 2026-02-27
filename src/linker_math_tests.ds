@@ -1,4 +1,12 @@
-// Deterministic math and bounds tests for DustLink linker helpers.
+// File: linker_math_tests.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Deterministic math and bounds tests for DustLink linker helpers.
+//   Provides test cases for:
+//     - Math operations
+//     - Bounds checking
+//     - Relocation value calculations
+//     - AArch64 instruction patching
 
 forge LinkerMathTests {
     const ERR_OK: UInt32 = 0;

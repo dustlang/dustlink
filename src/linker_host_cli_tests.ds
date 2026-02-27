@@ -1,4 +1,12 @@
-// Host CLI dispatch tests for DustLink migration path.
+// File: linker_host_cli_tests.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Host CLI dispatch tests for DustLink migration path.
+//   Provides test cases for:
+//     - Argument parsing
+//     - Flag handling
+//     - Format detection (FORMAT_ELF64, FORMAT_BINARY)
+//     - Error conditions
 
 forge LinkerHostCliTests {
     const ERR_OK: UInt32 = 0;

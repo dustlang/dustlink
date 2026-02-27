@@ -1,4 +1,12 @@
-// Archive (.a) ingestion and deterministic -L/-l resolution.
+// File: linker_archive.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Archive (.a) ingestion and deterministic -L/-l resolution.
+//   Provides:
+//     - Archive parsing (ELF, COFF, Mach-O)
+//     - Library search path resolution
+//     - Member extraction and loading
+//     - Static library linking
 
 forge LinkerArchive {
     const ERR_OK: UInt32 = 0;

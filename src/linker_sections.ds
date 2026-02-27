@@ -1,4 +1,12 @@
-// Section management, layout planning, and deterministic address helpers.
+// File: linker_sections.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Section management, layout planning, and deterministic address helpers.
+//   Provides:
+//     - MAX_SECTIONS, MAX_SECTION_NAME
+//     - SECTION_TEXT, SECTION_DATA, etc.
+//     - Section layout and ordering
+//     - Address assignment
 
 forge LinkerSections {
     const MAX_SECTIONS: UInt32 = 64;

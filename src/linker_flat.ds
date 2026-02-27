@@ -1,4 +1,12 @@
-// Flat binary and boot-image helpers.
+// File: linker_flat.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Flat binary and boot-image helpers.
+//   Provides:
+//     - MBR_SIZE, MBR_SIGNATURE
+//     - BOOT_LOADER_ADDRESS, KERNEL_LOAD_ADDRESS
+//     - Flat binary layout
+//     - Boot sector generation
 
 forge FlatFormat {
     const MBR_SIZE: UInt32 = 512;

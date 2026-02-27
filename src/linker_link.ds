@@ -1,4 +1,12 @@
-// DustLink object/link stage orchestration for the internal linker pipeline.
+// File: linker_link.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   DustLink object/link stage orchestration for the internal linker pipeline.
+//   Provides:
+//     - LINKER_NONE, LINKER_INTERNAL, LINKER_EXTERNAL_COMPAT constants
+//     - Object file linking orchestration
+//     - Symbol resolution
+//     - Relocation application
 
 forge LinkerLink {
     const LINKER_NONE: UInt32 = 0;

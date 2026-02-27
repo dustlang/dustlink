@@ -1,4 +1,12 @@
-// Host CLI dispatch for dustlink.
+// File: linker_host_cli.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Host CLI dispatch for dustlink.
+//   Provides:
+//     - args_count(), arg_at(): Command line argument access
+//     - env_get(): Environment variable access
+//     - path operations: exists, is_file, find_executable
+//     - File I/O operations
 
 forge LinkerHost {
     proc K::args_count() -> UInt32 {

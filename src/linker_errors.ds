@@ -1,4 +1,12 @@
-// DustLink Error Codes - ABI-stable linker statuses.
+// File: linker_errors.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   DustLink Error Codes - ABI-stable linker statuses.
+//   Provides:
+//     - ERR_OK, ERR_FILE_NOT_FOUND, ERR_INVALID_FORMAT
+//     - ERR_INVALID_SECTION, ERR_UNDEFINED_SYMBOL
+//     - ERR_MULTIPLE_DEFINITION, ERR_INVALID_RELOCATION
+//     - ERR_NOT_IMPLEMENTED_YET
 
 forge LinkerErrors {
     const ERR_OK: UInt32 = 0;

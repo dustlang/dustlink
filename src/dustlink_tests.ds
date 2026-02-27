@@ -1,4 +1,12 @@
-// DustLink tests focused on deterministic linker behavior.
+// File: dustlink_tests.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   DustLink tests focused on deterministic linker behavior.
+//   Provides test cases for:
+//     - Top-level linker orchestration
+//     - Version information
+//     - Format handling
+//     - Error conditions
 
 forge DustLinkTests {
     const ERR_OK: UInt32 = 0;

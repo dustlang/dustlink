@@ -1,4 +1,14 @@
-// ELF64/System-V constants and parsing/validation helpers for DustLink.
+// File: linker_elf.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   ELF64/System-V constants and parsing/validation helpers for DustLink.
+//   Provides:
+//     - ELF header constants (EI_*, EM_*, ET_*, etc.)
+//     - Section header constants (SHT_*, SHF_*, etc.)
+//     - Program header constants (PT_*, PF_*, etc.)
+//     - Symbol table constants (ST_*, STB_*, STT_*)
+//     - Relocation type constants (R_* for x86_64, AArch64)
+//     - ELF parsing and validation helpers
 
 forge ElfFormat {
     const EI_MAG0: UInt8 = 127;
@@ -58,6 +68,12 @@ forge ElfFormat {
     const R_X86_64_PC64: UInt32 = 24;
     const R_X86_64_GOTPCRELX: UInt32 = 41;
     const R_X86_64_REX_GOTPCRELX: UInt32 = 42;
+    const R_X86_64_TPOFF64: UInt32 = 18;
+    const R_X86_64_TPOFF32: UInt32 = 19;
+    const R_X86_64_GOTTPOFF: UInt32 = 20;
+    const R_X86_64_DTPOFF64: UInt32 = 17;
+    const R_X86_64_DTPOFF32: UInt32 = 16;
+    const R_X86_64_IRELATIVE: UInt32 = 42;
     const R_AARCH64_NONE: UInt32 = 0;
     const R_AARCH64_ABS64: UInt32 = 257;
     const R_AARCH64_ABS32: UInt32 = 258;

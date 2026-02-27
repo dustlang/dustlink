@@ -1,6 +1,12 @@
-// Filesystem and host-bridge operations for DustLink.
-// These calls are linker-generic and provide byte-level IO for object/archive parsing
-// and output image emission.
+// File: linker_fs.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Filesystem and host-bridge operations for DustLink.
+//   Provides byte-level IO for object/archive parsing and output image emission.
+//   Provides:
+//     - File operations (open, read, write, close)
+//     - Path resolution
+//     - Error codes (ERR_OK, ERR_FILE_NOT_FOUND, ERR_WRITE_FAILED)
 
 forge LinkerFs {
     const ERR_OK: UInt32 = 0;

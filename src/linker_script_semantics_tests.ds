@@ -1,4 +1,12 @@
-// Linker script behavior tests for parser semantics and state effects.
+// File: linker_script_semantics_tests.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Linker script behavior tests for parser semantics and state effects.
+//   Provides test cases for:
+//     - Script parsing (ENTRY, OUTPUT, SECTIONS)
+//     - MEMORY and PHDRS directives
+//     - Symbol assignment
+//     - Expression evaluation
 
 forge LinkerScriptSemanticsTests {
     const ERR_OK: UInt32 = 0;

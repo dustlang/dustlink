@@ -1,4 +1,13 @@
-// Relocation parsing and deterministic patch planning helpers.
+// File: linker_reloc.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Relocation parsing and deterministic patch planning helpers.
+//   Provides:
+//     - Relocation type constants (x86_64, AArch64)
+//     - Relocation validation and application
+//     - TLS relocation handling
+//     - Instruction patching for AArch64
+//     - ELF relocation processing
 
 forge LinkerReloc {
     const MAX_RELOCATIONS: UInt32 = 131072;
@@ -19,6 +28,12 @@ forge LinkerReloc {
     const R_X86_64_PC64: UInt32 = 24;
     const R_X86_64_GOTPCRELX: UInt32 = 41;
     const R_X86_64_REX_GOTPCRELX: UInt32 = 42;
+    const R_X86_64_TPOFF64: UInt32 = 18;
+    const R_X86_64_TPOFF32: UInt32 = 19;
+    const R_X86_64_GOTTPOFF: UInt32 = 20;
+    const R_X86_64_DTPOFF64: UInt32 = 17;
+    const R_X86_64_DTPOFF32: UInt32 = 16;
+    const R_X86_64_IRELATIVE: UInt32 = 42;
     const R_AARCH64_NONE: UInt32 = 0;
     const R_AARCH64_ABS64: UInt32 = 257;
     const R_AARCH64_ABS32: UInt32 = 258;
@@ -103,6 +118,12 @@ forge LinkerReloc {
         if reloc_type == R_X86_64_PC64 { return 1; }
         if reloc_type == R_X86_64_GOTPCRELX { return 1; }
         if reloc_type == R_X86_64_REX_GOTPCRELX { return 1; }
+        if reloc_type == R_X86_64_TPOFF64 { return 1; }
+        if reloc_type == R_X86_64_TPOFF32 { return 1; }
+        if reloc_type == R_X86_64_GOTTPOFF { return 1; }
+        if reloc_type == R_X86_64_DTPOFF64 { return 1; }
+        if reloc_type == R_X86_64_DTPOFF32 { return 1; }
+        if reloc_type == R_X86_64_IRELATIVE { return 1; }
         return 0;
     }
 
@@ -303,7 +324,23 @@ forge LinkerReloc {
                             if reloc_type == R_X86_64_REX_GOTPCRELX {
                                 return 1;
                             } else {
-                                return 0;
+                                if reloc_type == R_X86_64_GOTTPOFF {
+                                    return 1;
+                                } else {
+                                    if reloc_type == R_X86_64_DTPOFF64 {
+                                        return 1;
+                                    } else {
+                                        if reloc_type == R_X86_64_DTPOFF32 {
+                                            return 1;
+                                        } else {
+                                            if reloc_type == R_X86_64_IRELATIVE {
+                                                return 1;
+                                            } else {
+                                                return 0;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1638,6 +1675,12 @@ forge LinkerReloc {
             if reloc_type == R_X86_64_GOTPCREL { return calculate_pcrel_offset(place_addr, sum, 0); }
             if reloc_type == R_X86_64_GOTPCRELX { return calculate_pcrel_offset(place_addr, sum, 0); }
             if reloc_type == R_X86_64_REX_GOTPCRELX { return calculate_pcrel_offset(place_addr, sum, 0); }
+            if reloc_type == R_X86_64_TPOFF64 { return symbol_addr; }
+            if reloc_type == R_X86_64_TPOFF32 { return symbol_addr; }
+            if reloc_type == R_X86_64_GOTTPOFF { return calculate_pcrel_offset(place_addr, sum, 0); }
+            if reloc_type == R_X86_64_DTPOFF64 { return symbol_addr + addend; }
+            if reloc_type == R_X86_64_DTPOFF32 { return symbol_addr + addend; }
+            if reloc_type == R_X86_64_IRELATIVE { return symbol_addr + addend; }
             return 0;
         }
     }
@@ -1748,6 +1791,86 @@ forge LinkerReloc {
                         // addresses in the emitted load image. Full instruction-sequence rewrite
                         // relaxations remain a separate pass.
                         return apply_relocation_value(target_section, offset, reloc_type, machine, tls_synth_value);
+                    }
+                }
+            }
+            if machine == EM_X86_64 {
+                if reloc_type == R_X86_64_GOTTPOFF {
+                    let place = host_linker_section_runtime_address(object_index, target_section) + offset;
+                    let tls_got_value = host_linker_x86_64_tls_got_reloc_value(
+                        object_index,
+                        sym_index,
+                        reloc_type,
+                        addend,
+                        place
+                    );
+                    let tls_got_status = host_linker_last_error();
+                    if tls_got_status ! ERR_OK {
+                        return tls_got_status;
+                    } else {
+                        return apply_relocation_value(target_section, offset, reloc_type, machine, tls_got_value);
+                    }
+                }
+                if reloc_type == R_X86_64_TPOFF64 {
+                    let tls_value = host_linker_x86_64_tls_got_reloc_value(
+                        object_index,
+                        sym_index,
+                        reloc_type,
+                        addend,
+                        0
+                    );
+                    let tls_status = host_linker_last_error();
+                    if tls_status ! ERR_OK {
+                        return tls_status;
+                    } else {
+                        return apply_relocation_value(target_section, offset, reloc_type, machine, tls_value);
+                    }
+                }
+                if reloc_type == R_X86_64_DTPOFF64 {
+                    let place = host_linker_section_runtime_address(object_index, target_section) + offset;
+                    let dtp_value = host_linker_x86_64_tls_got_reloc_value(
+                        object_index,
+                        sym_index,
+                        reloc_type,
+                        addend,
+                        place
+                    );
+                    let dtp_status = host_linker_last_error();
+                    if dtp_status ! ERR_OK {
+                        return dtp_status;
+                    } else {
+                        return apply_relocation_value(target_section, offset, reloc_type, machine, dtp_value);
+                    }
+                }
+                if reloc_type == R_X86_64_DTPOFF32 {
+                    let place = host_linker_section_runtime_address(object_index, target_section) + offset;
+                    let dtp_value = host_linker_x86_64_tls_got_reloc_value(
+                        object_index,
+                        sym_index,
+                        reloc_type,
+                        addend,
+                        place
+                    );
+                    let dtp_status = host_linker_last_error();
+                    if dtp_status ! ERR_OK {
+                        return dtp_status;
+                    } else {
+                        return apply_relocation_value(target_section, offset, reloc_type, machine, dtp_value);
+                    }
+                }
+                if reloc_type == R_X86_64_IRELATIVE {
+                    let ifunc_value = host_linker_x86_64_tls_got_reloc_value(
+                        object_index,
+                        sym_index,
+                        reloc_type,
+                        addend,
+                        0
+                    );
+                    let ifunc_status = host_linker_last_error();
+                    if ifunc_status ! ERR_OK {
+                        return ifunc_status;
+                    } else {
+                        return apply_relocation_value(target_section, offset, reloc_type, machine, ifunc_value);
                     }
                 }
             }

@@ -1,5 +1,12 @@
-// DustLink CLI compatibility profile.
-// Canonical option IDs are intentionally linker-agnostic and map to gcc/ld/lld spellings.
+// File: linker_cli.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   DustLink CLI compatibility profile.
+//   Canonical option IDs map to gcc/ld/lld spellings.
+//   Provides:
+//     - FLAG_OUTPUT, FLAG_ENTRY, FLAG_MAP, etc.
+//     - CLI option parsing
+//     - Compatibility flag handling
 
 forge LinkerCli {
     const FLAG_NONE: UInt32 = 0;

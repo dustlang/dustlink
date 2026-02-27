@@ -1,4 +1,12 @@
-// Output image composition and validation helpers.
+// File: linker_image.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Output image composition and validation helpers.
+//   Provides:
+//     - FORMAT_ELF, FORMAT_FLAT, FORMAT_MBR, FORMAT_PE, FORMAT_MACHO
+//     - Image layout and section ordering
+//     - Output validation
+//     - ELF/PE/Mach-O image generation
 
 forge LinkerImage {
     const FORMAT_ELF: UInt32 = 1;

@@ -1,4 +1,12 @@
-// Symbol table parsing and deterministic resolution helpers.
+// File: linker_symbol.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Symbol table parsing and deterministic resolution helpers.
+//   Provides:
+//     - MAX_SYMBOLS: Maximum symbol count
+//     - Symbol binding (SYM_LOCAL, SYM_GLOBAL, SYM_WEAK)
+//     - Symbol type definitions
+//     - Symbol resolution logic
 
 forge LinkerSymbol {
     const MAX_SYMBOLS: UInt32 = 131072;

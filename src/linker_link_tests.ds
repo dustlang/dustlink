@@ -1,4 +1,12 @@
-// Link stage behavior tests for the Dust internal linker profile.
+// File: linker_link_tests.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Link stage behavior tests for the Dust internal linker profile.
+//   Provides test cases for:
+//     - Linking orchestration
+//     - Entry point handling
+//     - Error conditions
+//     - Output generation
 
 forge LinkerLinkTests {
     const ERR_OK: UInt32 = 0;
