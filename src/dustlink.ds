@@ -420,6 +420,54 @@ forge DustLink {
         return host_linker_set_no_undefined(enabled);
     }
 
+    proc K::set_allow_shlib_undefined(enabled: UInt32) -> UInt32 {
+        return host_linker_set_allow_shlib_undefined(enabled);
+    }
+
+    proc K::get_allow_shlib_undefined() -> UInt32 {
+        return host_linker_get_allow_shlib_undefined();
+    }
+
+    proc K::set_unresolved_policy(policy: UInt32) -> UInt32 {
+        return host_linker_set_unresolved_policy(policy);
+    }
+
+    proc K::get_unresolved_policy() -> UInt32 {
+        return host_linker_get_unresolved_policy();
+    }
+
+    proc K::set_warn_unresolved(enabled: UInt32) -> UInt32 {
+        return host_linker_set_warn_unresolved(enabled);
+    }
+
+    proc K::get_warn_unresolved() -> UInt32 {
+        return host_linker_get_warn_unresolved();
+    }
+
+    proc K::set_trace(enabled: UInt32) -> UInt32 {
+        return host_linker_set_trace(enabled);
+    }
+
+    proc K::get_trace() -> UInt32 {
+        return host_linker_get_trace();
+    }
+
+    proc K::add_trace_symbol(name: UInt64) -> UInt32 {
+        if name == 0 {
+            return ERR_INVALID_FORMAT;
+        } else {
+            return host_linker_add_trace_symbol(name);
+        }
+    }
+
+    proc K::emit_unresolved_warning(unresolved: UInt32, weak_fallbacks: UInt32) -> UInt32 {
+        return host_linker_emit_unresolved_warning(unresolved, weak_fallbacks);
+    }
+
+    proc K::shared_undefined_symbol_count() -> UInt32 {
+        return host_linker_shared_undefined_symbol_count();
+    }
+
     proc K::set_dynamic_linker(path: UInt64) -> UInt32 {
         if path == 0 {
             return ERR_INVALID_FORMAT;

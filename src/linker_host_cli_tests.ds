@@ -17,6 +17,11 @@ forge LinkerHostCliTests {
     const TARGET_AARCH64_WINDOWS: UInt32 = 5;
     const TARGET_AARCH64_MACOS: UInt32 = 6;
 
+    const UNRESOLVED_POLICY_REPORT_ALL: UInt32 = 0;
+    const UNRESOLVED_POLICY_IGNORE_ALL: UInt32 = 1;
+    const UNRESOLVED_POLICY_IGNORE_IN_OBJECT_FILES: UInt32 = 2;
+    const UNRESOLVED_POLICY_IGNORE_IN_SHARED_LIBS: UInt32 = 3;
+
     proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
         if actual == expected {
             return 1;
@@ -144,6 +149,11 @@ forge LinkerHostCliTests {
 
     proc K::test_no_undefined_flag_no_value() -> UInt32 {
         let required = LinkerHostCli::K::requires_value("--no-undefined");
+        return expect_u32(required, 0);
+    }
+
+    proc K::test_error_unresolved_symbols_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--error-unresolved-symbols");
         return expect_u32(required, 0);
     }
 
@@ -312,6 +322,77 @@ forge LinkerHostCliTests {
     proc K::test_inline_trace_symbol_value() -> UInt32 {
         let value = LinkerHostCli::K::inline_trace_symbol_value("--trace-symbol=malloc");
         return expect_u32(LinkerHost::K::str_eq(value, "malloc"), 1);
+    }
+
+    proc K::test_trace_symbol_short_flag_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("-y");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_inline_trace_symbol_short_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_trace_symbol_value("-ymalloc");
+        return expect_u32(LinkerHost::K::str_eq(value, "malloc"), 1);
+    }
+
+    proc K::test_trace_symbol_short_flag_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_trace_symbol_flag("-y");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_trace_flag_detected() -> UInt32 {
+        let a = LinkerHostCli::K::is_trace_flag("--trace");
+        let b = LinkerHostCli::K::is_trace_flag("-t");
+        return expect_u32(a, 1) * expect_u32(b, 1);
+    }
+
+    proc K::test_no_trace_flag_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_no_trace_flag("--no-trace");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_unresolved_symbols_flag_requires_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--unresolved-symbols");
+        return expect_u32(required, 1);
+    }
+
+    proc K::test_inline_unresolved_symbols_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_unresolved_symbols_value("--unresolved-symbols=ignore-all");
+        return expect_u32(LinkerHost::K::str_eq(value, "ignore-all"), 1);
+    }
+
+    proc K::test_resolve_unresolved_policy_report_all() -> UInt32 {
+        let mode = LinkerHostCli::K::resolve_unresolved_policy("report-all");
+        return expect_u32(mode, UNRESOLVED_POLICY_REPORT_ALL);
+    }
+
+    proc K::test_resolve_unresolved_policy_ignore_all() -> UInt32 {
+        let mode = LinkerHostCli::K::resolve_unresolved_policy("ignore-all");
+        return expect_u32(mode, UNRESOLVED_POLICY_IGNORE_ALL);
+    }
+
+    proc K::test_resolve_unresolved_policy_ignore_in_object_files() -> UInt32 {
+        let mode = LinkerHostCli::K::resolve_unresolved_policy("ignore-in-object-files");
+        return expect_u32(mode, UNRESOLVED_POLICY_IGNORE_IN_OBJECT_FILES);
+    }
+
+    proc K::test_resolve_unresolved_policy_ignore_in_shared_libs() -> UInt32 {
+        let mode = LinkerHostCli::K::resolve_unresolved_policy("ignore-in-shared-libs");
+        return expect_u32(mode, UNRESOLVED_POLICY_IGNORE_IN_SHARED_LIBS);
+    }
+
+    proc K::test_resolve_unresolved_policy_invalid() -> UInt32 {
+        let mode = LinkerHostCli::K::resolve_unresolved_policy("bogus");
+        return expect_u32(mode, 4294967295);
+    }
+
+    proc K::test_warn_unresolved_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--warn-unresolved-symbols");
+        return expect_u32(required, 0);
+    }
+
+    proc K::test_no_warn_unresolved_flag_no_value() -> UInt32 {
+        let required = LinkerHostCli::K::requires_value("--no-warn-unresolved-symbols");
+        return expect_u32(required, 0);
     }
 
     proc K::test_dependency_file_flag_requires_value() -> UInt32 {
@@ -491,6 +572,7 @@ forge LinkerHostCliTests {
             + test_undefined_flag_requires_value()
             + test_require_defined_flag_requires_value()
             + test_no_undefined_flag_no_value()
+            + test_error_unresolved_symbols_flag_no_value()
             + test_allow_shlib_undefined_flag_no_value()
             + test_no_allow_shlib_undefined_flag_no_value()
             + test_whole_archive_flag_no_value()
@@ -523,6 +605,20 @@ forge LinkerHostCliTests {
             + test_inline_dynamic_list_value()
             + test_trace_symbol_flag_requires_value()
             + test_inline_trace_symbol_value()
+            + test_trace_symbol_short_flag_requires_value()
+            + test_inline_trace_symbol_short_value()
+            + test_trace_symbol_short_flag_detected()
+            + test_trace_flag_detected()
+            + test_no_trace_flag_detected()
+            + test_unresolved_symbols_flag_requires_value()
+            + test_inline_unresolved_symbols_value()
+            + test_resolve_unresolved_policy_report_all()
+            + test_resolve_unresolved_policy_ignore_all()
+            + test_resolve_unresolved_policy_ignore_in_object_files()
+            + test_resolve_unresolved_policy_ignore_in_shared_libs()
+            + test_resolve_unresolved_policy_invalid()
+            + test_warn_unresolved_flag_no_value()
+            + test_no_warn_unresolved_flag_no_value()
             + test_dependency_file_flag_requires_value()
             + test_inline_dependency_file_value()
             + test_print_map_flag_no_value()

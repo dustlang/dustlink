@@ -59,6 +59,11 @@ forge LinkerHostCli {
     const DEFAULT_ENTRY: UInt64 = 1048576;
     const DEFAULT_BASE: UInt64 = 65536;
 
+    const UNRESOLVED_POLICY_REPORT_ALL: UInt32 = 0;
+    const UNRESOLVED_POLICY_IGNORE_ALL: UInt32 = 1;
+    const UNRESOLVED_POLICY_IGNORE_IN_OBJECT_FILES: UInt32 = 2;
+    const UNRESOLVED_POLICY_IGNORE_IN_SHARED_LIBS: UInt32 = 3;
+
     proc K::is_output_flag(arg: UInt64) -> UInt32 {
         if LinkerHost::K::str_eq(arg, "-o") == 1 {
             return 1;
@@ -325,6 +330,38 @@ forge LinkerHostCli {
         return 0;
     }
 
+    proc K::is_unresolved_symbols_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--unresolved-symbols") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_warn_unresolved_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--warn-unresolved-symbols") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_no_warn_unresolved_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--no-warn-unresolved-symbols") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_trace_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--trace") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "-t") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_no_trace_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--no-trace") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_trace_symbol_flag(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "--trace-symbol") == 1 { return 1; }
+        if LinkerHost::K::str_eq(arg, "-y") == 1 { return 1; }
+        return 0;
+    }
+
     proc K::is_push_state_flag(arg: UInt64) -> UInt32 {
         if LinkerHost::K::str_eq(arg, "--push-state") == 1 { return 1; }
         return 0;
@@ -500,6 +537,14 @@ forge LinkerHostCli {
         return 0;
     }
 
+    proc K::resolve_unresolved_policy(arg: UInt64) -> UInt32 {
+        if LinkerHost::K::str_eq(arg, "report-all") == 1 { return UNRESOLVED_POLICY_REPORT_ALL; }
+        if LinkerHost::K::str_eq(arg, "ignore-all") == 1 { return UNRESOLVED_POLICY_IGNORE_ALL; }
+        if LinkerHost::K::str_eq(arg, "ignore-in-object-files") == 1 { return UNRESOLVED_POLICY_IGNORE_IN_OBJECT_FILES; }
+        if LinkerHost::K::str_eq(arg, "ignore-in-shared-libs") == 1 { return UNRESOLVED_POLICY_IGNORE_IN_SHARED_LIBS; }
+        return 4294967295;
+    }
+
     proc K::default_format_for_target(target: UInt32) -> UInt32 {
         if target == TARGET_X86_64_WINDOWS {
             return FORMAT_PE64;
@@ -535,6 +580,8 @@ forge LinkerHostCli {
         LinkerHost::K::print_line("  --target=<triple> | -m<emulation>");
         LinkerHost::K::print_line("  --defsym=name=value");
         LinkerHost::K::print_line("  -u/--undefined/--require-defined <symbol>");
+        LinkerHost::K::print_line("  --unresolved-symbols <report-all|ignore-all|ignore-in-object-files|ignore-in-shared-libs>");
+        LinkerHost::K::print_line("  --warn-unresolved-symbols/--no-warn-unresolved-symbols");
         LinkerHost::K::print_line("  --start-group ... --end-group");
         LinkerHost::K::print_line("  --push-state ... --pop-state");
         LinkerHost::K::print_line("  -shared/-pie/--no-pie/-static/-Bstatic/-Bdynamic");
@@ -544,7 +591,7 @@ forge LinkerHostCli {
         LinkerHost::K::print_line("  --build-id[=<none|fast|md5|sha1|uuid|0x...>]");
         LinkerHost::K::print_line("  -z <relro|norelro|now|lazy|execstack|noexecstack>");
         LinkerHost::K::print_line("  --version-script <file>  --dynamic-list <file>");
-        LinkerHost::K::print_line("  --trace-symbol <name>  --print-map");
+        LinkerHost::K::print_line("  --trace/-t  --no-trace  --trace-symbol <name>  --print-map");
         LinkerHost::K::print_line("  --start-lib/--end-lib  --emit-relocs  --strip-all");
         LinkerHost::K::print_line("  lld-link forms: /OUT:<path> /ENTRY:<sym|addr> /MACHINE:<arch>");
         LinkerHost::K::print_line("  lld-link forms: /LIBPATH:<dir> /DEFAULTLIB:<name> /DLL /SUBSYSTEM:<kind>");
@@ -711,6 +758,13 @@ forge LinkerHostCli {
         return 0;
     }
 
+    proc K::inline_unresolved_symbols_value(arg: UInt64) -> UInt64 {
+        if LinkerHost::K::str_starts_with(arg, "--unresolved-symbols=") == 1 {
+            return LinkerHost::K::str_after_prefix(arg, "--unresolved-symbols=");
+        }
+        return 0;
+    }
+
     proc K::inline_build_id_value(arg: UInt64) -> UInt64 {
         if LinkerHost::K::str_starts_with(arg, "--build-id=") == 1 {
             return LinkerHost::K::str_after_prefix(arg, "--build-id=");
@@ -840,6 +894,13 @@ forge LinkerHostCli {
     proc K::inline_trace_symbol_value(arg: UInt64) -> UInt64 {
         if LinkerHost::K::str_starts_with(arg, "--trace-symbol=") == 1 {
             return LinkerHost::K::str_after_prefix(arg, "--trace-symbol=");
+        }
+        if LinkerHost::K::str_starts_with(arg, "-y") == 1 {
+            if LinkerHost::K::str_eq(arg, "-y") == 1 {
+                return 0;
+            } else {
+                return LinkerHost::K::str_after_prefix(arg, "-y");
+            }
         }
         return 0;
     }
@@ -1125,6 +1186,8 @@ forge LinkerHostCli {
         if is_defsym_flag(arg) == 1 { return 1; }
         if is_target_flag(arg) == 1 { return 1; }
         if is_undefined_flag(arg) == 1 { return 1; }
+        if is_unresolved_symbols_flag(arg) == 1 { return 1; }
+        if is_trace_symbol_flag(arg) == 1 { return 1; }
         if is_z_flag(arg) == 1 { return 1; }
         if is_compat_value_flag(arg) == 1 { return 1; }
         if is_extended_compat_value_flag(arg) == 1 { return 1; }
@@ -1339,6 +1402,14 @@ forge LinkerHostCli {
             if rs ! ERR_OK { return rs; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
+        let v_unresolved_policy = inline_unresolved_symbols_value(arg);
+        if v_unresolved_policy ! 0 {
+            let up = resolve_unresolved_policy(v_unresolved_policy);
+            if up == 4294967295 { return ERR_INVALID_FORMAT; }
+            let us = DustLink::K::set_unresolved_policy(up);
+            if us ! ERR_OK { return us; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
         let v_build_id = inline_build_id_value(arg);
         if v_build_id ! 0 {
             let bi = DustLink::K::set_build_id(v_build_id);
@@ -1435,8 +1506,18 @@ forge LinkerHostCli {
         }
         let v_trace_symbol = inline_trace_symbol_value(arg);
         if v_trace_symbol ! 0 {
-            let tr = DustLink::K::require_symbol(v_trace_symbol);
+            let tr = DustLink::K::add_trace_symbol(v_trace_symbol);
             if tr ! ERR_OK { return tr; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_trace_flag(arg) == 1 {
+            let te = DustLink::K::set_trace(1);
+            if te ! ERR_OK { return te; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_no_trace_flag(arg) == 1 {
+            let td = DustLink::K::set_trace(0);
+            if td ! ERR_OK { return td; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
         let v_dependency_file = inline_dependency_file_value(arg);
@@ -1696,8 +1777,20 @@ forge LinkerHostCli {
                 return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
             }
             if LinkerHost::K::str_eq(arg, "--trace-symbol") == 1 {
-                let tr2 = DustLink::K::require_symbol(value);
+                let tr2 = DustLink::K::add_trace_symbol(value);
                 if tr2 ! ERR_OK { return tr2; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if LinkerHost::K::str_eq(arg, "-y") == 1 {
+                let tr3 = DustLink::K::add_trace_symbol(value);
+                if tr3 ! ERR_OK { return tr3; }
+                return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+            }
+            if is_unresolved_symbols_flag(arg) == 1 {
+                let up2 = resolve_unresolved_policy(value);
+                if up2 == 4294967295 { return ERR_INVALID_FORMAT; }
+                let us2 = DustLink::K::set_unresolved_policy(up2);
+                if us2 ! ERR_OK { return us2; }
                 return scan_args(arg_count, idx + 2, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
             }
             if LinkerHost::K::str_eq(arg, "--dependency-file") == 1 {
@@ -1754,14 +1847,31 @@ forge LinkerHostCli {
             if nu1 ! ERR_OK { return nu1; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
+        if is_error_unresolved_symbols_flag(arg) == 1 {
+            let nu_err = DustLink::K::set_no_undefined(1);
+            if nu_err ! ERR_OK { return nu_err; }
+            let up_err = DustLink::K::set_unresolved_policy(UNRESOLVED_POLICY_REPORT_ALL);
+            if up_err ! ERR_OK { return up_err; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
         if is_allow_shlib_undefined_flag(arg) == 1 {
-            let nu0 = DustLink::K::set_no_undefined(0);
-            if nu0 ! ERR_OK { return nu0; }
+            let su1 = DustLink::K::set_allow_shlib_undefined(1);
+            if su1 ! ERR_OK { return su1; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
         if is_no_allow_shlib_undefined_flag(arg) == 1 {
-            let nu1b = DustLink::K::set_no_undefined(1);
-            if nu1b ! ERR_OK { return nu1b; }
+            let su0 = DustLink::K::set_allow_shlib_undefined(0);
+            if su0 ! ERR_OK { return su0; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_warn_unresolved_flag(arg) == 1 {
+            let wu1 = DustLink::K::set_warn_unresolved(1);
+            if wu1 ! ERR_OK { return wu1; }
+            return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
+        }
+        if is_no_warn_unresolved_flag(arg) == 1 {
+            let wu0 = DustLink::K::set_warn_unresolved(0);
+            if wu0 ! ERR_OK { return wu0; }
             return scan_args(arg_count, idx + 1, input_count, output_file, output_format, entry_addr, base_addr, map_file, saw_entry, saw_text_base, saw_oformat);
         }
         if is_push_state_flag(arg) == 1 {

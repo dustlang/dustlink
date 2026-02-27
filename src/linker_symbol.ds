@@ -26,6 +26,11 @@ forge LinkerSymbol {
     const ERR_UNDEFINED_SYMBOL: UInt32 = 4;
     const ERR_MULTIPLE_DEFINITION: UInt32 = 5;
 
+    const UNRESOLVED_POLICY_REPORT_ALL: UInt32 = 0;
+    const UNRESOLVED_POLICY_IGNORE_ALL: UInt32 = 1;
+    const UNRESOLVED_POLICY_IGNORE_IN_OBJECT_FILES: UInt32 = 2;
+    const UNRESOLVED_POLICY_IGNORE_IN_SHARED_LIBS: UInt32 = 3;
+
     proc K::parse_symbol_bind(info: UInt8) -> UInt8 {
         return info / 16;
     }
@@ -313,22 +318,107 @@ forge LinkerSymbol {
         }
     }
 
-    proc K::check_unresolved_globals() -> UInt32 {
-        let unresolved = host_linker_unresolved_symbol_count();
-        if unresolved == 0 {
-            return host_linker_check_required_symbols();
+    proc K::unresolved_policy_allows(policy: UInt32, allow_dynamic: UInt32) -> UInt32 {
+        if policy == UNRESOLVED_POLICY_IGNORE_ALL {
+            return 1;
         } else {
-            let allow_dynamic = host_linker_allow_dynamic_unresolved();
-            if allow_dynamic == 1 {
-                return host_linker_check_required_symbols();
-            }
-            let weak_fallbacks = host_linker_weak_fallback_count();
-            let unresolved_status = resolve_undefined(unresolved, weak_fallbacks);
-            if unresolved_status ! ERR_OK {
-                return unresolved_status;
+            if policy == UNRESOLVED_POLICY_IGNORE_IN_OBJECT_FILES {
+                return 1;
             } else {
+                if policy == UNRESOLVED_POLICY_IGNORE_IN_SHARED_LIBS {
+                    return 0;
+                } else {
+                    if policy == UNRESOLVED_POLICY_REPORT_ALL {
+                        return allow_dynamic;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::shared_unresolved_policy_allows(policy: UInt32, allow_shlib_undefined: UInt32) -> UInt32 {
+        if policy == UNRESOLVED_POLICY_IGNORE_ALL {
+            return 1;
+        } else {
+            if policy == UNRESOLVED_POLICY_IGNORE_IN_SHARED_LIBS {
+                return 1;
+            } else {
+                if policy == UNRESOLVED_POLICY_IGNORE_IN_OBJECT_FILES {
+                    return allow_shlib_undefined;
+                } else {
+                    if policy == UNRESOLVED_POLICY_REPORT_ALL {
+                        return allow_shlib_undefined;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::check_unresolved_globals() -> UInt32 {
+        let object_unresolved = host_linker_unresolved_symbol_count();
+        let shared_unresolved = DustLink::K::shared_undefined_symbol_count();
+        if object_unresolved == 0 {
+            if shared_unresolved == 0 {
                 return host_linker_check_required_symbols();
             }
         }
+
+        let weak_fallbacks = host_linker_weak_fallback_count();
+        let policy = host_linker_get_unresolved_policy();
+        let warn_unresolved = host_linker_get_warn_unresolved();
+        let allow_dynamic = host_linker_allow_dynamic_unresolved();
+        let allow_shlib_undefined = DustLink::K::get_allow_shlib_undefined();
+
+        if object_unresolved > 0 {
+            let object_status = resolve_undefined(object_unresolved, weak_fallbacks);
+            if object_status ! ERR_OK {
+                if host_linker_get_no_undefined() == 1 {
+                    return object_status;
+                }
+
+                if warn_unresolved == 1 {
+                    let warn_only = DustLink::K::emit_unresolved_warning(object_unresolved, weak_fallbacks);
+                    if warn_only ! ERR_OK {
+                        return warn_only;
+                    }
+                } else {
+                    let allow_by_policy = unresolved_policy_allows(policy, allow_dynamic);
+                    if allow_by_policy == 0 {
+                        return object_status;
+                    }
+                }
+            }
+        }
+
+        if shared_unresolved > 0 {
+            if host_linker_get_no_undefined() == 1 {
+                return ERR_UNDEFINED_SYMBOL;
+            }
+
+            let shared_allowed = shared_unresolved_policy_allows(policy, allow_shlib_undefined);
+            if shared_allowed == 0 {
+                if warn_unresolved == 1 {
+                    let warn_shared = DustLink::K::emit_unresolved_warning(shared_unresolved, 0);
+                    if warn_shared ! ERR_OK {
+                        return warn_shared;
+                    }
+                } else {
+                    return ERR_UNDEFINED_SYMBOL;
+                }
+            } else {
+                if warn_unresolved == 1 {
+                    let warn_shared_ok = DustLink::K::emit_unresolved_warning(shared_unresolved, 0);
+                    if warn_shared_ok ! ERR_OK {
+                        return warn_shared_ok;
+                    }
+                }
+            }
+        }
+
+        return host_linker_check_required_symbols();
     }
 }

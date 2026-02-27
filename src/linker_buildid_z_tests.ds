@@ -9,6 +9,8 @@ forge LinkerBuildIdZTests {
     const BUILD_ID_MODE_FAST: UInt32 = 1;
     const BUILD_ID_MODE_SHA1: UInt32 = 3;
     const BUILD_ID_MODE_HEX: UInt32 = 5;
+    const UNRESOLVED_POLICY_REPORT_ALL: UInt32 = 0;
+    const UNRESOLVED_POLICY_IGNORE_ALL: UInt32 = 1;
 
     proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
         if actual == expected {
@@ -108,12 +110,14 @@ forge LinkerBuildIdZTests {
             return 0;
         }
         let a = host_linker_get_no_undefined();
+        let a2 = DustLink::K::get_allow_shlib_undefined();
         let undefs = DustLink::K::set_z_option("undefs");
         if undefs ! ERR_OK {
             return 0;
         }
         let b = host_linker_get_no_undefined();
-        return expect_u32(a, 1) * expect_u32(b, 0);
+        let b2 = DustLink::K::get_allow_shlib_undefined();
+        return expect_u32(a, 1) * expect_u32(b, 0) * expect_u32(a2, 0) * expect_u32(b2, 1);
     }
 
     proc K::test_z_text_family_accepted() -> UInt32 {
@@ -265,9 +269,26 @@ forge LinkerBuildIdZTests {
             return 0;
         }
         let during = host_linker_allow_dynamic_unresolved();
+        DustLink::K::set_shared(1);
+        let shared_mode = host_linker_allow_dynamic_unresolved();
         DustLink::K::set_no_undefined(1);
         let forced = host_linker_allow_dynamic_unresolved();
-        return expect_u32(before, 0) * expect_u32(during, 1) * expect_u32(forced, 0);
+        return expect_u32(before, 0) * expect_u32(during, 0) * expect_u32(shared_mode, 1) * expect_u32(forced, 0);
+    }
+
+    proc K::test_allow_shlib_undefined_toggle() -> UInt32 {
+        DustLink::K::reset_state();
+        let off = DustLink::K::set_allow_shlib_undefined(0);
+        if off ! ERR_OK {
+            return 0;
+        }
+        let a = DustLink::K::get_allow_shlib_undefined();
+        let on = DustLink::K::set_allow_shlib_undefined(1);
+        if on ! ERR_OK {
+            return 0;
+        }
+        let b = DustLink::K::get_allow_shlib_undefined();
+        return expect_u32(a, 0) * expect_u32(b, 1);
     }
 
     proc K::test_whole_archive_toggle() -> UInt32 {
@@ -293,6 +314,10 @@ forge LinkerBuildIdZTests {
         DustLink::K::set_new_dtags(1);
         DustLink::K::set_copy_dt_needed_entries(0);
         DustLink::K::set_no_undefined(0);
+        DustLink::K::set_allow_shlib_undefined(1);
+        DustLink::K::set_unresolved_policy(UNRESOLVED_POLICY_REPORT_ALL);
+        DustLink::K::set_warn_unresolved(0);
+        DustLink::K::set_trace(0);
         let push = DustLink::K::push_state();
         if push ! ERR_OK { return 0; }
         DustLink::K::set_static(1);
@@ -301,6 +326,10 @@ forge LinkerBuildIdZTests {
         DustLink::K::set_new_dtags(0);
         DustLink::K::set_copy_dt_needed_entries(1);
         DustLink::K::set_no_undefined(1);
+        DustLink::K::set_allow_shlib_undefined(0);
+        DustLink::K::set_unresolved_policy(UNRESOLVED_POLICY_IGNORE_ALL);
+        DustLink::K::set_warn_unresolved(1);
+        DustLink::K::set_trace(1);
         let pop = DustLink::K::pop_state();
         if pop ! ERR_OK { return 0; }
         let a = host_linker_get_static();
@@ -309,12 +338,20 @@ forge LinkerBuildIdZTests {
         let d = host_linker_get_new_dtags();
         let e = host_linker_get_copy_dt_needed_entries();
         let f = host_linker_get_no_undefined();
+        let g = DustLink::K::get_allow_shlib_undefined();
+        let h = DustLink::K::get_unresolved_policy();
+        let i = DustLink::K::get_warn_unresolved();
+        let j = DustLink::K::get_trace();
         return expect_u32(a, 0)
             * expect_u32(b, 0)
             * expect_u32(c, 0)
             * expect_u32(d, 1)
             * expect_u32(e, 0)
-            * expect_u32(f, 0);
+            * expect_u32(f, 0)
+            * expect_u32(g, 1)
+            * expect_u32(h, UNRESOLVED_POLICY_REPORT_ALL)
+            * expect_u32(i, 0)
+            * expect_u32(j, 0);
     }
 
     proc K::test_pop_state_without_push_rejected() -> UInt32 {
@@ -436,6 +473,7 @@ forge LinkerBuildIdZTests {
             + test_static_mode_skips_needed_library()
             + test_no_undefined_toggle()
             + test_dynamic_unresolved_policy_gate()
+            + test_allow_shlib_undefined_toggle()
             + test_whole_archive_toggle()
             + test_push_pop_state_restores_link_policy()
             + test_pop_state_without_push_rejected()
