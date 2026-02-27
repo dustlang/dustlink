@@ -123,6 +123,48 @@ forge LinkerLinkTests {
         return expect_u32(result, ERR_CONFLICTING_OPTIONS);
     }
 
+    proc K::test_start_lib_push_pop_roundtrip() -> UInt32 {
+        DustLink::K::reset_state();
+        let s = DustLink::K::start_lib_begin();
+        if s ! ERR_OK {
+            return 0;
+        }
+        let depth_after_start = DustLink::K::start_lib_depth();
+        if depth_after_start ! 1 {
+            return 0;
+        }
+        let e = DustLink::K::end_start_lib_and_resolve();
+        if e ! ERR_OK {
+            return 0;
+        }
+        let depth_after_end = DustLink::K::start_lib_depth();
+        return expect_u32(depth_after_end, 0);
+    }
+
+    proc K::test_end_start_lib_without_start_rejected() -> UInt32 {
+        DustLink::K::reset_state();
+        let result = DustLink::K::end_start_lib_and_resolve();
+        return expect_u32(result, ERR_CONFLICTING_OPTIONS);
+    }
+
+    proc K::test_validate_no_open_start_libs_conflict_when_unclosed() -> UInt32 {
+        DustLink::K::reset_state();
+        let s = DustLink::K::start_lib_begin();
+        if s ! ERR_OK {
+            return 0;
+        }
+        let bad = DustLink::K::validate_no_open_start_libs();
+        if bad ! ERR_CONFLICTING_OPTIONS {
+            return 0;
+        }
+        let e = DustLink::K::end_start_lib_and_resolve();
+        if e ! ERR_OK {
+            return 0;
+        }
+        let ok = DustLink::K::validate_no_open_start_libs();
+        return expect_u32(ok, ERR_OK);
+    }
+
     proc K::test_q_rejected() -> UInt32 {
         let result = LinkerLink::Q::link();
         return expect_u32(result, 100);
@@ -152,6 +194,9 @@ forge LinkerLinkTests {
             + test_format_macho_supported()
             + test_group_push_pop_roundtrip()
             + test_end_group_without_start_rejected()
+            + test_start_lib_push_pop_roundtrip()
+            + test_end_start_lib_without_start_rejected()
+            + test_validate_no_open_start_libs_conflict_when_unclosed()
             + test_q_rejected()
             + test_phi_rejected();
         return passed;

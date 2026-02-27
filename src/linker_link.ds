@@ -147,7 +147,11 @@ forge LinkerLink {
 
     proc K::ingest_path(path: UInt64) -> UInt32 {
         if LinkerArchive::K::is_archive_path(path) == 1 {
-            return LinkerArchive::K::ingest_archive(path);
+            if LinkerArchive::K::group_depth() > 0 {
+                return LinkerArchive::K::register_archive_for_group(path);
+            } else {
+                return LinkerArchive::K::ingest_archive(path);
+            }
         } else {
             let file_size = LinkerFs::K::file_size(path);
             let object_kind = host_linker_probe_object_format(path);
@@ -263,11 +267,15 @@ forge LinkerLink {
         if cli_load_status ! ERR_OK {
             return cli_load_status;
         } else {
-            let loaded_after = host_linker_object_count();
-            if loaded_after == 0 {
+            if expected == 0 {
                 return ERR_EMPTY_INPUT;
+            }
+            let loaded_after = host_linker_object_count();
+            if loaded_after > 0 {
+                return ERR_OK;
             } else {
-                if loaded_after >= expected {
+                let needed_count = host_linker_needed_library_count();
+                if needed_count > 0 {
                     return ERR_OK;
                 } else {
                     return ERR_EMPTY_INPUT;

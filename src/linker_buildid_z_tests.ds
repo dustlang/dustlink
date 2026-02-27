@@ -9,10 +9,27 @@ forge LinkerBuildIdZTests {
     const BUILD_ID_MODE_FAST: UInt32 = 1;
     const BUILD_ID_MODE_SHA1: UInt32 = 3;
     const BUILD_ID_MODE_HEX: UInt32 = 5;
+    const DF_BIND_NOW: UInt64 = 8;
+    const DF_SYMBOLIC: UInt64 = 2;
+    const DF_1_NOW: UInt64 = 1;
+    const DF_1_GROUP: UInt64 = 4;
+    const DF_1_NODELETE: UInt64 = 8;
+    const DF_1_INITFIRST: UInt64 = 32;
+    const DF_1_NOOPEN: UInt64 = 64;
+    const DF_1_ORIGIN: UInt64 = 128;
+    const DF_1_INTERPOSE: UInt64 = 1024;
     const UNRESOLVED_POLICY_REPORT_ALL: UInt32 = 0;
     const UNRESOLVED_POLICY_IGNORE_ALL: UInt32 = 1;
 
     proc K::expect_u32(actual: UInt32, expected: UInt32) -> UInt32 {
+        if actual == expected {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::expect_u64(actual: UInt64, expected: UInt64) -> UInt32 {
         if actual == expected {
             return 1;
         } else {
@@ -184,6 +201,110 @@ forge LinkerBuildIdZTests {
         return expect_u32(shared, 1) * expect_u32(pie, 1) * expect_u32(static_mode, 1) * expect_u32(as_needed, 1);
     }
 
+    proc K::test_symbolic_mode_toggles() -> UInt32 {
+        DustLink::K::reset_state();
+        let sb1 = DustLink::K::set_symbolic_bindings(1);
+        if sb1 ! ERR_OK {
+            return 0;
+        }
+        let sf1 = DustLink::K::set_symbolic_functions(1);
+        if sf1 ! ERR_OK {
+            return 0;
+        }
+        let a = DustLink::K::get_symbolic_bindings();
+        let b = DustLink::K::get_symbolic_functions();
+        let sb0 = DustLink::K::set_symbolic_bindings(0);
+        if sb0 ! ERR_OK {
+            return 0;
+        }
+        let sf0 = DustLink::K::set_symbolic_functions(0);
+        if sf0 ! ERR_OK {
+            return 0;
+        }
+        let c = DustLink::K::get_symbolic_bindings();
+        let d = DustLink::K::get_symbolic_functions();
+        return expect_u32(a, 1) * expect_u32(b, 1) * expect_u32(c, 0) * expect_u32(d, 0);
+    }
+
+    proc K::test_symbolic_group_toggle() -> UInt32 {
+        DustLink::K::reset_state();
+        let on = DustLink::K::set_symbolic_group(1);
+        if on ! ERR_OK {
+            return 0;
+        }
+        let a = DustLink::K::get_symbolic_group();
+        let off = DustLink::K::set_symbolic_group(0);
+        if off ! ERR_OK {
+            return 0;
+        }
+        let b = DustLink::K::get_symbolic_group();
+        return expect_u32(a, 1) * expect_u32(b, 0);
+    }
+
+    proc K::test_dynamic_flags_words_reflect_symbolic_and_z_semantics() -> UInt32 {
+        DustLink::K::reset_state();
+        let now = DustLink::K::set_z_option("now");
+        if now ! ERR_OK { return 0; }
+        let sb = DustLink::K::set_symbolic_bindings(1);
+        if sb ! ERR_OK { return 0; }
+        let sbf = DustLink::K::set_symbolic_functions(1);
+        if sbf ! ERR_OK { return 0; }
+        let bg = DustLink::K::set_symbolic_group(1);
+        if bg ! ERR_OK { return 0; }
+        let zo = DustLink::K::set_z_option("origin");
+        if zo ! ERR_OK { return 0; }
+        let zi = DustLink::K::set_z_option("interpose");
+        if zi ! ERR_OK { return 0; }
+        let zif = DustLink::K::set_z_option("initfirst");
+        if zif ! ERR_OK { return 0; }
+        let znd = DustLink::K::set_z_option("nodelete");
+        if znd ! ERR_OK { return 0; }
+        let znl = DustLink::K::set_z_option("nodlopen");
+        if znl ! ERR_OK { return 0; }
+
+        let flags = DustLink::K::get_dynamic_dt_flags();
+        let flags1 = DustLink::K::get_dynamic_dt_flags_1();
+        return expect_u64(flags & DF_BIND_NOW, DF_BIND_NOW)
+            * expect_u64(flags & DF_SYMBOLIC, DF_SYMBOLIC)
+            * expect_u64(flags1 & DF_1_NOW, DF_1_NOW)
+            * expect_u64(flags1 & DF_1_GROUP, DF_1_GROUP)
+            * expect_u64(flags1 & DF_1_ORIGIN, DF_1_ORIGIN)
+            * expect_u64(flags1 & DF_1_INTERPOSE, DF_1_INTERPOSE)
+            * expect_u64(flags1 & DF_1_INITFIRST, DF_1_INITFIRST)
+            * expect_u64(flags1 & DF_1_NODELETE, DF_1_NODELETE)
+            * expect_u64(flags1 & DF_1_NOOPEN, DF_1_NOOPEN);
+    }
+
+    proc K::test_dynamic_flags1_no_variants_clear_semantics() -> UInt32 {
+        DustLink::K::reset_state();
+        let a = DustLink::K::set_z_option("origin");
+        if a ! ERR_OK { return 0; }
+        let b = DustLink::K::set_z_option("interpose");
+        if b ! ERR_OK { return 0; }
+        let c = DustLink::K::set_z_option("initfirst");
+        if c ! ERR_OK { return 0; }
+        let d = DustLink::K::set_z_option("nodelete");
+        if d ! ERR_OK { return 0; }
+        let e = DustLink::K::set_z_option("nodlopen");
+        if e ! ERR_OK { return 0; }
+        let f = DustLink::K::set_z_option("noorigin");
+        if f ! ERR_OK { return 0; }
+        let g = DustLink::K::set_z_option("nointerpose");
+        if g ! ERR_OK { return 0; }
+        let h = DustLink::K::set_z_option("noinitfirst");
+        if h ! ERR_OK { return 0; }
+        let i = DustLink::K::set_z_option("nonodelete");
+        if i ! ERR_OK { return 0; }
+        let j = DustLink::K::set_z_option("nonodlopen");
+        if j ! ERR_OK { return 0; }
+        let flags1 = DustLink::K::get_dynamic_dt_flags_1();
+        return expect_u64(flags1 & DF_1_ORIGIN, 0)
+            * expect_u64(flags1 & DF_1_INTERPOSE, 0)
+            * expect_u64(flags1 & DF_1_INITFIRST, 0)
+            * expect_u64(flags1 & DF_1_NODELETE, 0)
+            * expect_u64(flags1 & DF_1_NOOPEN, 0);
+    }
+
     proc K::test_dynamic_linker_and_soname_set() -> UInt32 {
         DustLink::K::reset_state();
         let d = DustLink::K::set_dynamic_linker("/lib64/ld-linux-x86-64.so.2");
@@ -198,6 +319,35 @@ forge LinkerBuildIdZTests {
         let soname = host_linker_get_soname();
         return expect_u32(LinkerFs::K::str_eq(dyn, "/lib64/ld-linux-x86-64.so.2"), 1)
             * expect_u32(LinkerFs::K::str_eq(soname, "libxdv.so"), 1);
+    }
+
+    proc K::test_default_search_path_toggle() -> UInt32 {
+        DustLink::K::reset_state();
+        let a = DustLink::K::get_use_default_search_paths();
+        let off = DustLink::K::set_use_default_search_paths(0);
+        if off ! ERR_OK {
+            return 0;
+        }
+        let b = DustLink::K::get_use_default_search_paths();
+        let on = DustLink::K::set_use_default_search_paths(1);
+        if on ! ERR_OK {
+            return 0;
+        }
+        let c = DustLink::K::get_use_default_search_paths();
+        return expect_u32(a, 1) * expect_u32(b, 0) * expect_u32(c, 1);
+    }
+
+    proc K::test_default_library_blocklist_roundtrip() -> UInt32 {
+        DustLink::K::reset_state();
+        let block = DustLink::K::block_default_library("kernel32.lib");
+        if block ! ERR_OK {
+            return 0;
+        }
+        let a = DustLink::K::is_default_library_blocked("kernel32.lib");
+        let b = DustLink::K::is_default_library_blocked("kernel32");
+        let c = DustLink::K::is_default_library_blocked("libkernel32.a");
+        let d = DustLink::K::is_default_library_blocked("user32");
+        return expect_u32(a, 1) * expect_u32(b, 1) * expect_u32(c, 1) * expect_u32(d, 0);
     }
 
     proc K::test_needed_library_note_normalization() -> UInt32 {
@@ -314,6 +464,10 @@ forge LinkerBuildIdZTests {
         DustLink::K::set_new_dtags(1);
         DustLink::K::set_copy_dt_needed_entries(0);
         DustLink::K::set_no_undefined(0);
+        DustLink::K::set_use_default_search_paths(1);
+        DustLink::K::set_symbolic_bindings(0);
+        DustLink::K::set_symbolic_functions(0);
+        DustLink::K::set_symbolic_group(0);
         DustLink::K::set_allow_shlib_undefined(1);
         DustLink::K::set_unresolved_policy(UNRESOLVED_POLICY_REPORT_ALL);
         DustLink::K::set_warn_unresolved(0);
@@ -326,6 +480,10 @@ forge LinkerBuildIdZTests {
         DustLink::K::set_new_dtags(0);
         DustLink::K::set_copy_dt_needed_entries(1);
         DustLink::K::set_no_undefined(1);
+        DustLink::K::set_use_default_search_paths(0);
+        DustLink::K::set_symbolic_bindings(1);
+        DustLink::K::set_symbolic_functions(1);
+        DustLink::K::set_symbolic_group(1);
         DustLink::K::set_allow_shlib_undefined(0);
         DustLink::K::set_unresolved_policy(UNRESOLVED_POLICY_IGNORE_ALL);
         DustLink::K::set_warn_unresolved(1);
@@ -338,10 +496,14 @@ forge LinkerBuildIdZTests {
         let d = host_linker_get_new_dtags();
         let e = host_linker_get_copy_dt_needed_entries();
         let f = host_linker_get_no_undefined();
-        let g = DustLink::K::get_allow_shlib_undefined();
-        let h = DustLink::K::get_unresolved_policy();
-        let i = DustLink::K::get_warn_unresolved();
-        let j = DustLink::K::get_trace();
+        let g = DustLink::K::get_use_default_search_paths();
+        let h = DustLink::K::get_symbolic_bindings();
+        let i = DustLink::K::get_symbolic_functions();
+        let j = DustLink::K::get_symbolic_group();
+        let k = DustLink::K::get_allow_shlib_undefined();
+        let l = DustLink::K::get_unresolved_policy();
+        let m = DustLink::K::get_warn_unresolved();
+        let n = DustLink::K::get_trace();
         return expect_u32(a, 0)
             * expect_u32(b, 0)
             * expect_u32(c, 0)
@@ -349,9 +511,13 @@ forge LinkerBuildIdZTests {
             * expect_u32(e, 0)
             * expect_u32(f, 0)
             * expect_u32(g, 1)
-            * expect_u32(h, UNRESOLVED_POLICY_REPORT_ALL)
+            * expect_u32(h, 0)
             * expect_u32(i, 0)
-            * expect_u32(j, 0);
+            * expect_u32(j, 0)
+            * expect_u32(k, 1)
+            * expect_u32(l, UNRESOLVED_POLICY_REPORT_ALL)
+            * expect_u32(m, 0)
+            * expect_u32(n, 0);
     }
 
     proc K::test_pop_state_without_push_rejected() -> UInt32 {
@@ -467,7 +633,13 @@ forge LinkerBuildIdZTests {
             + test_z_extended_compat_tokens_accepted()
             + test_z_muldefs_nomuldefs_toggle()
             + test_dynamic_mode_toggles()
+            + test_symbolic_mode_toggles()
+            + test_symbolic_group_toggle()
+            + test_dynamic_flags_words_reflect_symbolic_and_z_semantics()
+            + test_dynamic_flags1_no_variants_clear_semantics()
             + test_dynamic_linker_and_soname_set()
+            + test_default_search_path_toggle()
+            + test_default_library_blocklist_roundtrip()
             + test_needed_library_note_normalization()
             + test_as_needed_skips_unused_library()
             + test_static_mode_skips_needed_library()

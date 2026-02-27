@@ -98,6 +98,54 @@ forge LinkerArchive {
         return host_linker_group_depth();
     }
 
+    proc K::start_lib_push_start() -> UInt32 {
+        return host_linker_start_lib_push_start();
+    }
+
+    proc K::start_lib_pop_start() -> UInt32 {
+        return host_linker_start_lib_pop_start();
+    }
+
+    proc K::start_lib_depth() -> UInt32 {
+        return host_linker_start_lib_depth();
+    }
+
+    proc K::start_lib_register_member(path: UInt64) -> UInt32 {
+        return host_linker_start_lib_register_member(path);
+    }
+
+    proc K::start_lib_member_count() -> UInt32 {
+        return host_linker_start_lib_member_count();
+    }
+
+    proc K::get_start_lib_member(index: UInt32) -> UInt64 {
+        return host_linker_get_start_lib_member(index);
+    }
+
+    proc K::start_lib_member_is_loaded(index: UInt32) -> UInt32 {
+        return host_linker_start_lib_member_is_loaded(index);
+    }
+
+    proc K::start_lib_member_mark_loaded(index: UInt32) -> UInt32 {
+        return host_linker_start_lib_member_mark_loaded(index);
+    }
+
+    proc K::start_lib_member_matches_unresolved(index: UInt32) -> UInt32 {
+        return host_linker_start_lib_member_matches_unresolved(index);
+    }
+
+    proc K::start_lib_progress_reset() -> UInt32 {
+        return host_linker_start_lib_progress_reset();
+    }
+
+    proc K::start_lib_progress_add(delta: UInt32) -> UInt32 {
+        return host_linker_start_lib_progress_add(delta);
+    }
+
+    proc K::start_lib_progress_get() -> UInt32 {
+        return host_linker_start_lib_progress_get();
+    }
+
     proc K::validate_archive(path: UInt64) -> UInt32 {
         let file_status = LinkerFs::K::validate_input_file(path);
         if file_status ! ERR_OK {
@@ -337,6 +385,141 @@ forge LinkerArchive {
         }
     }
 
+    proc K::start_lib_member_selected_for_ingest(index: UInt32) -> UInt32 {
+        if host_linker_get_whole_archive() == 1 {
+            return 1;
+        } else {
+            return start_lib_member_matches_unresolved(index);
+        }
+    }
+
+    proc K::ingest_start_lib_member_if_needed(index: UInt32) -> UInt32 {
+        if start_lib_member_is_loaded(index) == 1 {
+            return ERR_OK;
+        } else {
+            let should_ingest = start_lib_member_selected_for_ingest(index);
+            if should_ingest == 0 {
+                return ERR_OK;
+            } else {
+                let path = get_start_lib_member(index);
+                if path == 0 {
+                    return ERR_INVALID_FORMAT;
+                } else {
+                    let ingest_status = ingest_object_file(path);
+                    if ingest_status ! ERR_OK {
+                        return ingest_status;
+                    } else {
+                        let mark = start_lib_member_mark_loaded(index);
+                        if mark == 1 {
+                            return start_lib_progress_add(1);
+                        } else {
+                            return ERR_OK;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::ingest_start_lib_range_pass(index: UInt32, start: UInt32, end: UInt32) -> UInt32 {
+        if index >= end {
+            return ERR_OK;
+        } else {
+            if index < start {
+                return ingest_start_lib_range_pass(index + 1, start, end);
+            } else {
+                let status = ingest_start_lib_member_if_needed(index);
+                if status ! ERR_OK {
+                    return status;
+                } else {
+                    return ingest_start_lib_range_pass(index + 1, start, end);
+                }
+            }
+        }
+    }
+
+    proc K::resolve_start_lib_range_fixpoint(start: UInt32, end: UInt32, round: UInt32) -> UInt32 {
+        if start >= end {
+            return ERR_OK;
+        } else {
+            if round >= 4096 {
+                return ERR_OK;
+            } else {
+                let reset_status = start_lib_progress_reset();
+                if reset_status ! ERR_OK {
+                    return reset_status;
+                } else {
+                    let pass_status = ingest_start_lib_range_pass(start, start, end);
+                    if pass_status ! ERR_OK {
+                        return pass_status;
+                    } else {
+                        let added = start_lib_progress_get();
+                        if added == 0 {
+                            return ERR_OK;
+                        } else {
+                            let resolved = LinkerSymbol::K::resolve_loaded_symbols();
+                            if resolved ! ERR_OK {
+                                return resolved;
+                            } else {
+                                return resolve_start_lib_range_fixpoint(start, end, round + 1);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::start_lib_begin() -> UInt32 {
+        return start_lib_push_start();
+    }
+
+    proc K::register_start_lib_member(path: UInt64) -> UInt32 {
+        let file_status = LinkerFs::K::validate_input_file(path);
+        if file_status ! ERR_OK {
+            return file_status;
+        } else {
+            if is_archive_path(path) == 1 {
+                return ERR_INVALID_FORMAT;
+            } else {
+                let kind = host_linker_probe_object_format(path);
+                if kind == 0 {
+                    return ERR_INVALID_FORMAT;
+                } else {
+                    let reg = start_lib_register_member(path);
+                    if reg ! ERR_OK {
+                        return reg;
+                    } else {
+                        return host_linker_register_input(path);
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::end_start_lib_and_resolve() -> UInt32 {
+        let depth = start_lib_depth();
+        if depth == 0 {
+            return ERR_CONFLICTING_OPTIONS;
+        } else {
+            let start = start_lib_pop_start();
+            if start == 4294967295 {
+                return ERR_CONFLICTING_OPTIONS;
+            } else {
+                let end = start_lib_member_count();
+                return resolve_start_lib_range_fixpoint(start, end, 0);
+            }
+        }
+    }
+
+    proc K::validate_no_open_start_libs() -> UInt32 {
+        if start_lib_depth() == 0 {
+            return ERR_OK;
+        } else {
+            return ERR_CONFLICTING_OPTIONS;
+        }
+    }
+
     proc K::path_is_existing_file(path: UInt64) -> UInt32 {
         if path == 0 {
             return 0;
@@ -408,6 +591,19 @@ forge LinkerArchive {
     proc K::candidate_windows_lib_shared_name(name: UInt64) -> UInt64 {
         let prefixed = LinkerFs::K::str_concat("lib", name);
         return LinkerFs::K::str_concat(prefixed, ".dll");
+    }
+
+    proc K::resolve_versioned_shared_library_in_path(search_path: UInt64, name: UInt64, target: UInt32) -> UInt64 {
+        let candidate = host_linker_find_versioned_shared_in_path(search_path, name, target);
+        if candidate == 0 {
+            return 0;
+        } else {
+            if path_is_existing_file(candidate) == 1 {
+                return candidate;
+            } else {
+                return 0;
+            }
+        }
     }
 
     proc K::resolve_exact_library_in_path(search_path: UInt64, name: UInt64) -> UInt64 {
@@ -498,7 +694,7 @@ forge LinkerArchive {
             }
         }
 
-        return 0;
+        return resolve_versioned_shared_library_in_path(search_path, name, target);
     }
 
     proc K::resolve_library_with_search_paths_static(
@@ -666,28 +862,21 @@ forge LinkerArchive {
                 return rpath_link_hit;
             }
         }
+        if host_linker_get_use_default_search_paths() == 0 {
+            return 0;
+        }
         let default_count = host_linker_default_search_path_count();
         return resolve_library_with_default_paths(name, target, static_mode, 0, default_count);
     }
 
-    proc K::shared_contribution(unresolved_before: UInt32, unresolved_after: UInt32) -> UInt32 {
-        if unresolved_after < unresolved_before {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-
     proc K::ingest_resolved_library(name: UInt64, path: UInt64) -> UInt32 {
         if is_shared_library_path(path) == 1 {
-            let unresolved_before = host_linker_unresolved_symbol_count();
             let shared_status = host_linker_ingest_shared_object(path);
             if shared_status ! ERR_OK {
                 return shared_status;
             }
-            let unresolved_after = host_linker_unresolved_symbol_count();
-            let contributed = shared_contribution(unresolved_before, unresolved_after);
-            let note_status = host_linker_note_needed_library(name, path, contributed);
+            let retained = host_linker_last_shared_object_retained();
+            let note_status = host_linker_note_needed_library(name, path, retained);
             if note_status ! ERR_OK {
                 return note_status;
             } else {
@@ -706,6 +895,9 @@ forge LinkerArchive {
         if name == 0 {
             return ERR_FILE_NOT_FOUND;
         } else {
+            if host_linker_is_default_library_blocked(name) == 1 {
+                return ERR_OK;
+            }
             let target = host_linker_get_target();
             let static_mode = host_linker_get_static();
             let library = resolve_library_with_search_order(name, target, static_mode);

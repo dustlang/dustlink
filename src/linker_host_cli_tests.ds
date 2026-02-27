@@ -242,6 +242,12 @@ forge LinkerHostCliTests {
         return expect_u32(a, 1) * expect_u32(b, 1);
     }
 
+    proc K::test_group_short_markers_detected() -> UInt32 {
+        let a = LinkerHostCli::K::is_start_group_flag("-(");
+        let b = LinkerHostCli::K::is_end_group_flag("-)");
+        return expect_u32(a, 1) * expect_u32(b, 1);
+    }
+
     proc K::test_push_pop_state_markers_detected() -> UInt32 {
         let a = LinkerHostCli::K::is_push_state_flag("--push-state");
         let b = LinkerHostCli::K::is_pop_state_flag("--pop-state");
@@ -446,6 +452,16 @@ forge LinkerHostCliTests {
         return expect_u32(LinkerHost::K::str_eq(value, "kernel32.lib"), 1);
     }
 
+    proc K::test_inline_link_nodefaultlib_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_link_nodefaultlib_value("/NODEFAULTLIB:kernel32.lib");
+        return expect_u32(LinkerHost::K::str_eq(value, "kernel32.lib"), 1);
+    }
+
+    proc K::test_inline_link_wholearchive_value() -> UInt32 {
+        let value = LinkerHostCli::K::inline_link_wholearchive_value("/WHOLEARCHIVE:kernel32.lib");
+        return expect_u32(LinkerHost::K::str_eq(value, "kernel32.lib"), 1);
+    }
+
     proc K::test_inline_link_map_value() -> UInt32 {
         let value = LinkerHostCli::K::inline_link_map_value("/MAP:kernel.map");
         return expect_u32(LinkerHost::K::str_eq(value, "kernel.map"), 1);
@@ -458,6 +474,21 @@ forge LinkerHostCliTests {
 
     proc K::test_link_map_no_value_detected() -> UInt32 {
         let flag = LinkerHostCli::K::is_link_map_flag_no_value("/MAP");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_link_nodefaultlib_no_value_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_link_nodefaultlib_flag_no_value("/NODEFAULTLIB");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_link_wholearchive_no_value_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_link_wholearchive_flag_no_value("/WHOLEARCHIVE");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_link_no_wholearchive_no_value_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_link_no_wholearchive_flag_no_value("/WHOLEARCHIVE:NO");
         return expect_u32(flag, 1);
     }
 
@@ -514,6 +545,36 @@ forge LinkerHostCliTests {
     proc K::test_shared_flag_no_value() -> UInt32 {
         let required = LinkerHostCli::K::requires_value("-shared");
         return expect_u32(required, 0);
+    }
+
+    proc K::test_bsymbolic_flag_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_bsymbolic_flag("-Bsymbolic");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_bsymbolic_functions_flag_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_bsymbolic_functions_flag("-Bsymbolic-functions");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_no_bsymbolic_flag_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_no_bsymbolic_flag("--no-Bsymbolic");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_no_bsymbolic_functions_flag_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_no_bsymbolic_functions_flag("--no-Bsymbolic-functions");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_bgroup_flag_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_bgroup_flag("-Bgroup");
+        return expect_u32(flag, 1);
+    }
+
+    proc K::test_no_bgroup_flag_detected() -> UInt32 {
+        let flag = LinkerHostCli::K::is_no_bgroup_flag("--no-Bgroup");
+        return expect_u32(flag, 1);
     }
 
     proc K::test_pie_flag_no_value() -> UInt32 {
@@ -589,6 +650,7 @@ forge LinkerHostCliTests {
             + test_z_flag_requires_value()
             + test_inline_z_short_alias()
             + test_group_markers_detected()
+            + test_group_short_markers_detected()
             + test_push_pop_state_markers_detected()
             + test_push_pop_state_flags_no_value()
             + test_inline_dynamic_linker_value()
@@ -629,9 +691,14 @@ forge LinkerHostCliTests {
             + test_resolve_link_machine_arm64()
             + test_inline_link_libpath_value()
             + test_inline_link_defaultlib_value()
+            + test_inline_link_nodefaultlib_value()
+            + test_inline_link_wholearchive_value()
             + test_inline_link_map_value()
             + test_link_dll_flag_detected()
             + test_link_map_no_value_detected()
+            + test_link_nodefaultlib_no_value_detected()
+            + test_link_wholearchive_no_value_detected()
+            + test_link_no_wholearchive_no_value_detected()
             + test_link_compat_no_value_detected()
             + test_link_compat_noentry_detected()
             + test_link_compat_dynamicbase_detected()
@@ -643,6 +710,12 @@ forge LinkerHostCliTests {
             + test_soft_compat_long_flag_detected()
             + test_soft_compat_slash_flag_detected()
             + test_shared_flag_no_value()
+            + test_bsymbolic_flag_detected()
+            + test_bsymbolic_functions_flag_detected()
+            + test_no_bsymbolic_flag_detected()
+            + test_no_bsymbolic_functions_flag_detected()
+            + test_bgroup_flag_detected()
+            + test_no_bgroup_flag_detected()
             + test_pie_flag_no_value()
             + test_enable_new_dtags_flag_no_value()
             + test_disable_new_dtags_flag_no_value()

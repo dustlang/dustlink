@@ -81,6 +81,10 @@ Both files define forge-based test procedures with this pattern:
 - `cargo check -p dust_codegen` passes after host AArch64 shared-link TLS data-reloc behavior differentiation (`TLS_DTPREL` support, shared-link `TLS_TPREL` invalid) and shared-export filtering tightening for ELF/Mach-O metadata paths.
 - `cargo check -p dust_codegen` and `dust check src` pass after adding preparatory AArch64 TLS synthetic descriptor/GOT planning state + host helper ABI and Dust-side TLS planning-slot reservation calls for unsupported descriptor-sequence relocs.
 - `cargo check -p dust_codegen` and `dust check src` pass after wiring AArch64 TLS descriptor-sequence instruction reloc application through the host synthetic-slot reloc-value helper, adding synthetic TLS slot-region materialization in ELF load images, and emitting minimal synthetic `.rela.dyn` metadata (`DT_SYMTAB`, `DT_SYMENT`, `DT_RELA*`) for reserved descriptor-sequence slots.
+- `cargo check -p dust_codegen` and `dust check src` pass after:
+  - symbol-aware `--as-needed` shared-object retain/drop handling with rollback of dropped-library symbol state
+  - host query wiring for retained shared-object state (`host_linker_last_shared_object_retained`)
+  - deterministic versioned shared-library fallback lookup (`lib<name>.so.<N>` / `lib<name>.dylib.<N>`) in directory search paths.
 
 ## Current Limitations
 

@@ -41,6 +41,7 @@ This directory contains complete Markdown documentation for `dustlink`.
   - dynamic-mode `-l` search prefers shared objects before static archives
   - static-mode `-l` search prefers static archives
   - exact-name `-l:<file>` token support
+  - versioned shared fallback lookup (`lib<name>.so.<N>` / `lib<name>.dylib.<N>`) with deterministic highest-version selection per directory
 - Dynamic loader/search state:
   - `--sysroot` backed default search roots
   - `-rpath` / `--rpath` emitted into ELF dynamic tags
@@ -75,6 +76,7 @@ This directory contains complete Markdown documentation for `dustlink`.
 - Host shared-object ingest now validates target/ABI/file kind before symbol ingestion (ELF `ET_DYN`, Windows PE DLL/COFF machine, Mach-O dylib CPU type).
 - Host shared-object ingest now filters non-exported ELF/Mach-O metadata symbols (hidden/internal dynsyms; private extern/debug symbols).
 - Host needed-library recording now prefers embedded shared-library names (`DT_SONAME`, PE export DLL name, Mach-O install name) when available.
+- `--as-needed` shared-object ingest now performs symbol-aware retain/drop decisions and rolls back non-contributing shared-object symbol state.
 - AArch64 TLS descriptor-sequence instruction relocs now patch against host-planned/materialized synthetic slot addresses, and reserved synthetic TLS slots are emitted in ELF load images with minimal synthetic dynamic relocation metadata (staged semantics).
 - `lld-link` spellings: `/OUT`, `/ENTRY`, `/MACHINE`, `/LIBPATH`, `/DEFAULTLIB`, `/MAP`, `/DLL`, `/SUBSYSTEM`, `/OPT`, `/WX`, `/NOENTRY`, `/DYNAMICBASE`, `/NXCOMPAT`, `/LARGEADDRESSAWARE`.
 - soft-compatibility flag-family acceptance for broader ld/lld/lld-link compatibility while preserving deterministic internal link behavior.

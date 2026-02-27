@@ -184,6 +184,30 @@ forge DustLink {
         }
     }
 
+    proc K::set_use_default_search_paths(enabled: UInt32) -> UInt32 {
+        return host_linker_set_use_default_search_paths(enabled);
+    }
+
+    proc K::get_use_default_search_paths() -> UInt32 {
+        return host_linker_get_use_default_search_paths();
+    }
+
+    proc K::block_default_library(name: UInt64) -> UInt32 {
+        if name == 0 {
+            return ERR_INVALID_FORMAT;
+        } else {
+            return host_linker_block_default_library(name);
+        }
+    }
+
+    proc K::is_default_library_blocked(name: UInt64) -> UInt32 {
+        if name == 0 {
+            return 0;
+        } else {
+            return host_linker_is_default_library_blocked(name);
+        }
+    }
+
     proc K::set_sysroot(path: UInt64) -> UInt32 {
         if path == 0 {
             return ERR_FILE_NOT_FOUND;
@@ -260,6 +284,26 @@ forge DustLink {
         return LinkerArchive::K::validate_no_open_groups();
     }
 
+    proc K::start_lib_begin() -> UInt32 {
+        return LinkerArchive::K::start_lib_begin();
+    }
+
+    proc K::register_start_lib_member(path: UInt64) -> UInt32 {
+        return LinkerArchive::K::register_start_lib_member(path);
+    }
+
+    proc K::end_start_lib_and_resolve() -> UInt32 {
+        return LinkerArchive::K::end_start_lib_and_resolve();
+    }
+
+    proc K::validate_no_open_start_libs() -> UInt32 {
+        return LinkerArchive::K::validate_no_open_start_libs();
+    }
+
+    proc K::start_lib_depth() -> UInt32 {
+        return LinkerArchive::K::start_lib_depth();
+    }
+
     proc K::set_gc_sections(enabled: UInt32) -> UInt32 {
         return host_linker_set_gc_sections(enabled);
     }
@@ -304,6 +348,14 @@ forge DustLink {
         }
     }
 
+    proc K::get_dynamic_dt_flags() -> UInt64 {
+        return host_linker_get_dynamic_dt_flags();
+    }
+
+    proc K::get_dynamic_dt_flags_1() -> UInt64 {
+        return host_linker_get_dynamic_dt_flags_1();
+    }
+
     proc K::set_shared(enabled: UInt32) -> UInt32 {
         return host_linker_set_shared(enabled);
     }
@@ -318,6 +370,30 @@ forge DustLink {
 
     proc K::set_as_needed(enabled: UInt32) -> UInt32 {
         return host_linker_set_as_needed(enabled);
+    }
+
+    proc K::set_symbolic_bindings(enabled: UInt32) -> UInt32 {
+        return host_linker_set_symbolic_bindings(enabled);
+    }
+
+    proc K::get_symbolic_bindings() -> UInt32 {
+        return host_linker_get_symbolic_bindings();
+    }
+
+    proc K::set_symbolic_functions(enabled: UInt32) -> UInt32 {
+        return host_linker_set_symbolic_functions(enabled);
+    }
+
+    proc K::get_symbolic_functions() -> UInt32 {
+        return host_linker_get_symbolic_functions();
+    }
+
+    proc K::set_symbolic_group(enabled: UInt32) -> UInt32 {
+        return host_linker_set_symbolic_group(enabled);
+    }
+
+    proc K::get_symbolic_group() -> UInt32 {
+        return host_linker_get_symbolic_group();
     }
 
     proc K::push_state() -> UInt32 {

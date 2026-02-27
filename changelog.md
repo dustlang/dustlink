@@ -20,6 +20,9 @@
   - `R_AARCH64_PREL32`
 - Host runtime linker intrinsic:
   - `host_linker_object_machine`
+- Host runtime linker intrinsics:
+  - `host_linker_last_shared_object_retained`
+  - `host_linker_find_versioned_shared_in_path`
 - PE compatibility-state intrinsics and state wiring:
   - `/NOENTRY`
   - `/DYNAMICBASE`
@@ -96,6 +99,7 @@
 - Host shared-object ingest now enforces target/ABI/file-kind validation before symbol ingest (ELF `ET_DYN`, Windows PE DLL/COFF machine, Mach-O dylib CPU).
 - Host shared-object ingest now filters non-exported ELF/Mach-O metadata symbols (ELF hidden/internal dynsyms, Mach-O private extern/debug entries).
 - Host needed-library recording now prefers embedded shared-library names (`DT_SONAME`, PE export DLL name, Mach-O install name) when present.
+- Shared-library search now includes deterministic versioned fallback resolution in each search directory (`lib<name>.so.<N>` / `lib<name>.dylib.<N>`) when unversioned names are absent.
 - Dust linker now reserves AArch64 TLS synthetic planning slots when unsupported TLS descriptor-sequence relocs are encountered (discovery/planning infrastructure only).
 - Dust linker AArch64 TLS descriptor-sequence instruction relocs now route through the host synthetic-slot reloc-value helper and patch against reserved/materialized synthetic slot addresses (staged semantics; full TLSDESC runtime parity still incomplete).
 - Staged descriptor-sequence relaxation behavior now includes deterministic synthetic-slot reuse/coalescing (including TLSLD module-slot coalescing in emitted synthetic slot metadata), while full instruction rewrite relaxations remain deferred.
@@ -115,6 +119,8 @@
 - `R_AARCH64_TLSDESC_CALL` patch helper no longer accepts arbitrary non-zero instructions; it now validates `BLR`-class encoding.
 - AArch64 TLS descriptor-sequence instruction relocs no longer stop at the blanket `ERR_NOT_IMPLEMENTED_YET` apply-path gate; they now patch against host-planned synthetic slot addresses.
 - Reserved AArch64 TLS synthetic planning slots no longer remain planning-only for ELF output; they now materialize into the load image and emit minimal synthetic `.rela.dyn` metadata.
+- `--as-needed` shared-library ingest no longer leaks dropped shared-library exports into global symbol resolution.
+- `--as-needed` retained/drop decisions are now based on unresolved-symbol satisfaction (symbol-aware retention), and needed-library recording follows the retained result.
 
 ## 2026-02-21
 
