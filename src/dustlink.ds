@@ -10,13 +10,14 @@
 
 forge DustLink {
     const VERSION_MAJOR: UInt8 = 0;
-    const VERSION_MINOR: UInt8 = 4;
+    const VERSION_MINOR: UInt8 = 6;
 
     const FORMAT_ELF64: UInt32 = 1;
     const FORMAT_FLAT: UInt32 = 2;
     const FORMAT_MBR: UInt32 = 3;
     const FORMAT_PE64: UInt32 = 4;
     const FORMAT_MACHO64: UInt32 = 5;
+    const FORMAT_WASM: UInt32 = 6;
 
     const TARGET_NONE: UInt32 = 0;
     const TARGET_X86_64_LINUX: UInt32 = 1;
@@ -25,6 +26,32 @@ forge DustLink {
     const TARGET_AARCH64_LINUX: UInt32 = 4;
     const TARGET_AARCH64_WINDOWS: UInt32 = 5;
     const TARGET_AARCH64_MACOS: UInt32 = 6;
+    const TARGET_RISCV64_LINUX: UInt32 = 7;
+    const TARGET_RISCV32_LINUX: UInt32 = 8;
+    const TARGET_ARM64_LINUX: UInt32 = 9;
+    const TARGET_ARM32_LINUX: UInt32 = 10;
+    const TARGET_ARM32_EABI: UInt32 = 11;
+    const TARGET_RISCV64_ELF: UInt32 = 12;
+    const TARGET_RISCV32_ELF: UInt32 = 13;
+    const TARGET_PPC64_LINUX: UInt32 = 14;
+    const TARGET_PPC64LE_LINUX: UInt32 = 15;
+    const TARGET_PPC32_LINUX: UInt32 = 16;
+    const TARGET_PPC32_VLE: UInt32 = 17;
+    const TARGET_MIPS64_ELF: UInt32 = 18;
+    const TARGET_MIPS32_ELF: UInt32 = 19;
+    const TARGET_MIPS32EL_ELF: UInt32 = 20;
+    const TARGET_MIPS64EL_ELF: UInt32 = 21;
+    const TARGET_AMDGPU_GFX600: UInt32 = 22;
+    const TARGET_AMDGPU_GFX700: UInt32 = 23;
+    const TARGET_AMDGPU_GFX800: UInt32 = 24;
+    const TARGET_AMDGPU_GFX900: UInt32 = 25;
+    const TARGET_AMDGPU_GFX906: UInt32 = 26;
+    const TARGET_AMDGPU_GFX908: UInt32 = 27;
+    const TARGET_AMDGPU_GFX90A: UInt32 = 28;
+    const TARGET_AMDGPU_GFX940: UInt32 = 29;
+    const TARGET_HEXAGON_ELF: UInt32 = 30;
+    const TARGET_SPARC64_ELF: UInt32 = 31;
+    const TARGET_SPARC32_ELF: UInt32 = 32;
 
     const ERR_OK: UInt32 = 0;
     const ERR_FILE_NOT_FOUND: UInt32 = 1;
@@ -59,12 +86,106 @@ forge DustLink {
                         if format == FORMAT_MACHO64 {
                             return 1;
                         } else {
-                            return 0;
+                            if format == FORMAT_WASM {
+                                return 1;
+                            } else {
+                                return 0;
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    proc K::is_riscv_target(target: UInt32) -> UInt32 {
+        if target == TARGET_RISCV64_LINUX { return 1; }
+        if target == TARGET_RISCV32_LINUX { return 1; }
+        if target == TARGET_RISCV64_ELF { return 1; }
+        if target == TARGET_RISCV32_ELF { return 1; }
+        return 0;
+    }
+
+    proc K::is_arm_target(target: UInt32) -> UInt32 {
+        if target == TARGET_ARM64_LINUX { return 1; }
+        if target == TARGET_ARM32_LINUX { return 1; }
+        if target == TARGET_ARM32_EABI { return 1; }
+        return 0;
+    }
+
+    proc K::get_elf_machine_type(target: UInt32) -> UInt16 {
+        if target == TARGET_X86_64_LINUX { return 62; }
+        if target == TARGET_X86_64_WINDOWS { return 62; }
+        if target == TARGET_X86_64_MACOS { return 62; }
+        if target == TARGET_AARCH64_LINUX { return 183; }
+        if target == TARGET_AARCH64_WINDOWS { return 183; }
+        if target == TARGET_AARCH64_MACOS { return 183; }
+        if target == TARGET_RISCV64_LINUX { return 243; }
+        if target == TARGET_RISCV32_LINUX { return 243; }
+        if target == TARGET_RISCV64_ELF { return 243; }
+        if target == TARGET_RISCV32_ELF { return 243; }
+        if target == TARGET_ARM64_LINUX { return 183; }
+        if target == TARGET_ARM32_LINUX { return 40; }
+        if target == TARGET_ARM32_EABI { return 40; }
+        if target == TARGET_PPC64_LINUX { return 21; }
+        if target == TARGET_PPC64LE_LINUX { return 21; }
+        if target == TARGET_PPC32_LINUX { return 20; }
+        if target == TARGET_PPC32_VLE { return 20; }
+        if target == TARGET_MIPS64_ELF { return 8; }
+        if target == TARGET_MIPS32_ELF { return 8; }
+        if target == TARGET_MIPS32EL_ELF { return 8; }
+        if target == TARGET_MIPS64EL_ELF { return 8; }
+        if target == TARGET_AMDGPU_GFX600 { return 224; }
+        if target == TARGET_AMDGPU_GFX700 { return 224; }
+        if target == TARGET_AMDGPU_GFX800 { return 224; }
+        if target == TARGET_AMDGPU_GFX900 { return 224; }
+        if target == TARGET_AMDGPU_GFX906 { return 224; }
+        if target == TARGET_AMDGPU_GFX908 { return 224; }
+        if target == TARGET_AMDGPU_GFX90A { return 224; }
+        if target == TARGET_AMDGPU_GFX940 { return 224; }
+        if target == TARGET_HEXAGON_ELF { return 164; }
+        if target == TARGET_SPARC64_ELF { return 2; }
+        if target == TARGET_SPARC32_ELF { return 2; }
+        return 0;
+    }
+
+    proc K::is_ppc_target(target: UInt32) -> UInt32 {
+        if target == TARGET_PPC64_LINUX { return 1; }
+        if target == TARGET_PPC64LE_LINUX { return 1; }
+        if target == TARGET_PPC32_LINUX { return 1; }
+        if target == TARGET_PPC32_VLE { return 1; }
+        return 0;
+    }
+
+    proc K::is_mips_target(target: UInt32) -> UInt32 {
+        if target == TARGET_MIPS64_ELF { return 1; }
+        if target == TARGET_MIPS32_ELF { return 1; }
+        if target == TARGET_MIPS32EL_ELF { return 1; }
+        if target == TARGET_MIPS64EL_ELF { return 1; }
+        return 0;
+    }
+
+    proc K::is_amdgpu_target(target: UInt32) -> UInt32 {
+        if target == TARGET_AMDGPU_GFX600 { return 1; }
+        if target == TARGET_AMDGPU_GFX700 { return 1; }
+        if target == TARGET_AMDGPU_GFX800 { return 1; }
+        if target == TARGET_AMDGPU_GFX900 { return 1; }
+        if target == TARGET_AMDGPU_GFX906 { return 1; }
+        if target == TARGET_AMDGPU_GFX908 { return 1; }
+        if target == TARGET_AMDGPU_GFX90A { return 1; }
+        if target == TARGET_AMDGPU_GFX940 { return 1; }
+        return 0;
+    }
+
+    proc K::is_hexagon_target(target: UInt32) -> UInt32 {
+        if target == TARGET_HEXAGON_ELF { return 1; }
+        return 0;
+    }
+
+    proc K::is_sparc_target(target: UInt32) -> UInt32 {
+        if target == TARGET_SPARC64_ELF { return 1; }
+        if target == TARGET_SPARC32_ELF { return 1; }
+        return 0;
     }
 
     proc K::route_phase2_pipeline(
