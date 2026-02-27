@@ -28,6 +28,9 @@ forge LinkerMathTests {
     const R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC: UInt32 = 530;
     const R_AARCH64_TLSLD_LDST64_DTPREL_LO12_NC: UInt32 = 538;
     const R_AARCH64_TLSLE_ADD_TPREL_LO12_NC: UInt32 = 551;
+    const R_AARCH64_TLSDESC_ADR_PAGE21: UInt32 = 562;
+    const R_AARCH64_TLSDESC_LD64_LO12: UInt32 = 563;
+    const R_AARCH64_TLSDESC_ADD_LO12: UInt32 = 564;
     const R_AARCH64_TLSDESC_CALL: UInt32 = 569;
     const R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC: UInt32 = 573;
     const R_AARCH64_TLS_DTPMOD: UInt32 = 1028;
@@ -48,6 +51,14 @@ forge LinkerMathTests {
         } else {
             return 0;
         }
+    }
+
+    proc K::word_le_byte(word: UInt64, index: UInt32) -> UInt64 {
+        if index == 0 { return word & 255; }
+        if index == 1 { return (word / 256) & 255; }
+        if index == 2 { return (word / 65536) & 255; }
+        if index == 3 { return (word / 16777216) & 255; }
+        return 0;
     }
 
     proc K::test_sections_align_forward_identity() -> UInt32 {
@@ -229,6 +240,70 @@ forge LinkerMathTests {
             * expect_u32(d, R_AARCH64_TLS_TPREL);
     }
 
+    proc K::test_aarch64_tlsdesc_relax_pattern_matches_canonical_words() -> UInt32 {
+        let adrp_x0 = 2415919104;
+        let ldr_x1_x0 = 4181721089;
+        let add_x0_x0 = 2432696320;
+        let blr_x1 = 3594453024;
+        let matched = LinkerReloc::K::aarch64_tlsdesc_relax_pattern_match_words(
+            adrp_x0,
+            ldr_x1_x0,
+            add_x0_x0,
+            blr_x1
+        );
+        return expect_u32(matched, 1);
+    }
+
+    proc K::test_aarch64_tlsdesc_relax_pattern_rejects_wrong_register_shape() -> UInt32 {
+        let adrp_x0 = 2415919104;
+        let ldr_x2_x0 = 4181721090;
+        let add_x0_x0 = 2432696320;
+        let blr_x1 = 3594453024;
+        let matched = LinkerReloc::K::aarch64_tlsdesc_relax_pattern_match_words(
+            adrp_x0,
+            ldr_x2_x0,
+            add_x0_x0,
+            blr_x1
+        );
+        return expect_u32(matched, 0);
+    }
+
+    proc K::test_aarch64_tlsdesc_relax_le_words_emit_expected_sequence() -> UInt32 {
+        let tprel = 305419896;
+        let w0 = LinkerReloc::K::aarch64_tlsdesc_relax_le_word_mrs_x0();
+        let w1 = LinkerReloc::K::aarch64_tlsdesc_relax_le_word_movz_x1(tprel);
+        let w2 = LinkerReloc::K::aarch64_tlsdesc_relax_le_word_movk_x1_lsl16(tprel);
+        let w3 = LinkerReloc::K::aarch64_tlsdesc_relax_le_word_add_x0_x0_x1();
+        return expect_u64(w0, 3577466944)
+            * expect_u64(w1, 3532312321)
+            * expect_u64(w2, 4070721153)
+            * expect_u64(w3, 2332098560);
+    }
+
+    proc K::test_aarch64_tlsdesc_relax_le_words_emit_expected_le_bytes() -> UInt32 {
+        let tprel = 305419896;
+        let w0 = LinkerReloc::K::aarch64_tlsdesc_relax_le_word_mrs_x0();
+        let w1 = LinkerReloc::K::aarch64_tlsdesc_relax_le_word_movz_x1(tprel);
+        let w2 = LinkerReloc::K::aarch64_tlsdesc_relax_le_word_movk_x1_lsl16(tprel);
+        let w3 = LinkerReloc::K::aarch64_tlsdesc_relax_le_word_add_x0_x0_x1();
+        return expect_u64(word_le_byte(w0, 0), 64)
+            * expect_u64(word_le_byte(w0, 1), 208)
+            * expect_u64(word_le_byte(w0, 2), 59)
+            * expect_u64(word_le_byte(w0, 3), 213)
+            * expect_u64(word_le_byte(w1, 0), 1)
+            * expect_u64(word_le_byte(w1, 1), 207)
+            * expect_u64(word_le_byte(w1, 2), 138)
+            * expect_u64(word_le_byte(w1, 3), 210)
+            * expect_u64(word_le_byte(w2, 0), 129)
+            * expect_u64(word_le_byte(w2, 1), 70)
+            * expect_u64(word_le_byte(w2, 2), 162)
+            * expect_u64(word_le_byte(w2, 3), 242)
+            * expect_u64(word_le_byte(w3, 0), 0)
+            * expect_u64(word_le_byte(w3, 1), 0)
+            * expect_u64(word_le_byte(w3, 2), 1)
+            * expect_u64(word_le_byte(w3, 3), 139);
+    }
+
     proc K::run_all_tests() -> UInt32 {
         let passed =
             test_sections_align_forward_identity()
@@ -261,7 +336,11 @@ forge LinkerMathTests {
             + test_aarch64_tlsdesc_call_patch_word_rejects_br()
             + test_aarch64_tls_dtpmod_accepts_64bit_value()
             + test_aarch64_tls_tprel_accepts_64bit_value()
-            + test_aarch64_tls_offset_instr_mapping();
+            + test_aarch64_tls_offset_instr_mapping()
+            + test_aarch64_tlsdesc_relax_pattern_matches_canonical_words()
+            + test_aarch64_tlsdesc_relax_pattern_rejects_wrong_register_shape()
+            + test_aarch64_tlsdesc_relax_le_words_emit_expected_sequence()
+            + test_aarch64_tlsdesc_relax_le_words_emit_expected_le_bytes();
         return passed;
     }
 }

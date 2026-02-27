@@ -745,6 +745,143 @@ forge LinkerReloc {
         }
     }
 
+    proc K::aarch64_tlsdesc_relax_pattern_match_words(
+        adrp_instr: UInt64,
+        ldr_instr: UInt64,
+        add_instr: UInt64,
+        blr_instr: UInt64
+    ) -> UInt32 {
+        let adrp_mask = 2667577375;
+        let adrp_x0 = 2415919104;
+        let ldr_mask = 4290774015;
+        let ldr_x1_x0 = 4181721089;
+        let add_mask = 4290774015;
+        let add_x0_x0 = 2432696320;
+        let blr_x1 = 3594453024;
+
+        if (adrp_instr & adrp_mask) ! adrp_x0 {
+            return 0;
+        }
+        if (ldr_instr & ldr_mask) ! ldr_x1_x0 {
+            return 0;
+        }
+        if (add_instr & add_mask) ! add_x0_x0 {
+            return 0;
+        }
+        if blr_instr ! blr_x1 {
+            return 0;
+        }
+        return 1;
+    }
+
+    proc K::aarch64_tlsdesc_relax_le_word_mrs_x0() -> UInt64 {
+        return 3577466944;
+    }
+
+    proc K::aarch64_tlsdesc_relax_le_word_movz_x1(tprel: UInt64) -> UInt64 {
+        let movz_x1_base = 3531603969;
+        let imm16 = tprel & 65535;
+        return movz_x1_base + (imm16 * 32);
+    }
+
+    proc K::aarch64_tlsdesc_relax_le_word_movk_x1_lsl16(tprel: UInt64) -> UInt64 {
+        let movk_x1_lsl16_base = 4070572033;
+        let imm16 = (tprel / 65536) & 65535;
+        return movk_x1_lsl16_base + (imm16 * 32);
+    }
+
+    proc K::aarch64_tlsdesc_relax_le_word_add_x0_x0_x1() -> UInt64 {
+        return 2332098560;
+    }
+
+    proc K::try_relax_aarch64_tlsdesc_adrp_ldr_add_blr_to_le(
+        object_index: UInt32,
+        call_reloc_index: UInt32,
+        current_section: UInt32,
+        current_sym: UInt32
+    ) -> UInt32 {
+        if call_reloc_index < 3 {
+            return ERR_NOT_IMPLEMENTED_YET;
+        }
+
+        let idx0 = call_reloc_index - 3;
+        let idx1 = call_reloc_index - 2;
+        let idx2 = call_reloc_index - 1;
+
+        let ty0 = host_linker_object_relocation_type(object_index, idx0);
+        let ty1 = host_linker_object_relocation_type(object_index, idx1);
+        let ty2 = host_linker_object_relocation_type(object_index, idx2);
+        if ty0 ! R_AARCH64_TLSDESC_ADR_PAGE21 { return ERR_NOT_IMPLEMENTED_YET; }
+        if ty1 ! R_AARCH64_TLSDESC_LD64_LO12 { return ERR_NOT_IMPLEMENTED_YET; }
+        if ty2 ! R_AARCH64_TLSDESC_ADD_LO12 { return ERR_NOT_IMPLEMENTED_YET; }
+
+        let sec0 = host_linker_object_relocation_section(object_index, idx0);
+        let sec1 = host_linker_object_relocation_section(object_index, idx1);
+        let sec2 = host_linker_object_relocation_section(object_index, idx2);
+        if sec0 ! current_section { return ERR_NOT_IMPLEMENTED_YET; }
+        if sec1 ! current_section { return ERR_NOT_IMPLEMENTED_YET; }
+        if sec2 ! current_section { return ERR_NOT_IMPLEMENTED_YET; }
+
+        let sym0 = host_linker_object_relocation_symbol(object_index, idx0);
+        let sym1 = host_linker_object_relocation_symbol(object_index, idx1);
+        let sym2 = host_linker_object_relocation_symbol(object_index, idx2);
+        if sym0 ! current_sym { return ERR_NOT_IMPLEMENTED_YET; }
+        if sym1 ! current_sym { return ERR_NOT_IMPLEMENTED_YET; }
+        if sym2 ! current_sym { return ERR_NOT_IMPLEMENTED_YET; }
+
+        let off0 = host_linker_object_relocation_offset(object_index, idx0);
+        let off1 = host_linker_object_relocation_offset(object_index, idx1);
+        let off2 = host_linker_object_relocation_offset(object_index, idx2);
+        let off3 = host_linker_object_relocation_offset(object_index, call_reloc_index);
+        if off1 ! (off0 + 4) { return ERR_NOT_IMPLEMENTED_YET; }
+        if off2 ! (off1 + 4) { return ERR_NOT_IMPLEMENTED_YET; }
+        if off3 ! (off2 + 4) { return ERR_NOT_IMPLEMENTED_YET; }
+
+        let add0 = host_linker_object_relocation_addend(object_index, idx0);
+        let add1 = host_linker_object_relocation_addend(object_index, idx1);
+        let add2 = host_linker_object_relocation_addend(object_index, idx2);
+        if add1 ! add0 { return ERR_NOT_IMPLEMENTED_YET; }
+        if add2 ! add0 { return ERR_NOT_IMPLEMENTED_YET; }
+
+        let adrp_word = host_linker_read_u32(current_section, off0);
+        let ldr_word = host_linker_read_u32(current_section, off1);
+        let add_word = host_linker_read_u32(current_section, off2);
+        let blr_word = host_linker_read_u32(current_section, off3);
+        if aarch64_tlsdesc_relax_pattern_match_words(adrp_word, ldr_word, add_word, blr_word) == 0 {
+            return ERR_NOT_IMPLEMENTED_YET;
+        }
+
+        let tprel = host_linker_aarch64_tls_data_reloc_value(
+            object_index,
+            current_sym,
+            R_AARCH64_TLS_TPREL,
+            add0
+        );
+        let tprel_status = host_linker_last_error();
+        if tprel_status ! ERR_OK {
+            return ERR_NOT_IMPLEMENTED_YET;
+        }
+        if tprel > 4294967295 {
+            return ERR_NOT_IMPLEMENTED_YET;
+        }
+
+        let rewrite0 = aarch64_tlsdesc_relax_le_word_mrs_x0();
+        let rewrite1 = aarch64_tlsdesc_relax_le_word_movz_x1(tprel);
+        let rewrite2 = aarch64_tlsdesc_relax_le_word_movk_x1_lsl16(tprel);
+        let rewrite3 = aarch64_tlsdesc_relax_le_word_add_x0_x0_x1();
+
+        let st0 = host_linker_patch_u32(current_section, off0, rewrite0);
+        if st0 ! ERR_OK { return st0; }
+        let st1 = host_linker_patch_u32(current_section, off1, rewrite1);
+        if st1 ! ERR_OK { return st1; }
+        let st2 = host_linker_patch_u32(current_section, off2, rewrite2);
+        if st2 ! ERR_OK { return st2; }
+        let st3 = host_linker_patch_u32(current_section, off3, rewrite3);
+        if st3 ! ERR_OK { return st3; }
+
+        return ERR_OK;
+    }
+
     proc K::aarch64_tstbr14_patch_word(instr: UInt64, delta: UInt64) -> UInt64 {
         let tst_mask = 2113929216;
         let tst_opcode_class = 905969664;
@@ -1576,6 +1713,20 @@ forge LinkerReloc {
                         return tls_status2;
                     } else {
                         return apply_relocation_value(target_section, offset, reloc_type, machine, tls_value2);
+                    }
+                }
+                if reloc_type == R_AARCH64_TLSDESC_CALL {
+                    let relax_status = try_relax_aarch64_tlsdesc_adrp_ldr_add_blr_to_le(
+                        object_index,
+                        reloc_index,
+                        target_section,
+                        sym_index
+                    );
+                    if relax_status == ERR_OK {
+                        return ERR_OK;
+                    }
+                    if relax_status ! ERR_NOT_IMPLEMENTED_YET {
+                        return relax_status;
                     }
                 }
                 if aarch64_is_tls_family_reloc(reloc_type) == 1 {
