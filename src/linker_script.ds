@@ -102,7 +102,7 @@ forge LinkerScript {
     }
 
     proc K::lexer_next_token(script: UInt64, pos: UInt32) -> UInt8 {
-        let byte = host_read_u8(script + pos);
+        let byte = host_fs_read_u8(script, pos);
         if byte == 0 {
             return TOKEN_EOF;
         }

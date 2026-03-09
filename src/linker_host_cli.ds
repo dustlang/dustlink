@@ -273,6 +273,10 @@ forge LinkerHostCli {
 
     proc K::is_no_undefined_flag(arg: UInt64) -> UInt32 {
         if LinkerHost::K::str_eq(arg, "--no-undefined") == 1 { return 1; }
+        return 0;
+    }
+
+    proc K::is_error_unresolved_symbols_flag(arg: UInt64) -> UInt32 {
         if LinkerHost::K::str_eq(arg, "--error-unresolved-symbols") == 1 { return 1; }
         return 0;
     }
