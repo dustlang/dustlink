@@ -232,6 +232,10 @@ typedef struct {
     uint64_t  size;
     uint32_t  strtab_section;
     uint8_t   defined;    /* 0 = undefined, 1 = defined */
+    /* Additional fields for global symbol table */
+    uint32_t  object_index;
+    uint32_t  symbol_index;
+    uint64_t  address;
 } ObjectSymbol;
 
 typedef struct {
@@ -1181,11 +1185,6 @@ uint32_t host_linker_archive_progress_get(void) {
     return g_state.archive_progress;
 }
 
-uint32_t host_linker_archive_progress_reset(void) {
-    g_state.archive_progress = 0;
-    return ERR_OK;
-}
-
 /* ========================================================================
  * LAYER 1: Needed shared libraries
  * ======================================================================== */
@@ -1486,6 +1485,10 @@ uint32_t host_linker_ingest_macho_object(uint64_t path) {
     return ERR_NOT_IMPLEMENTED_YET;
 }
 
+/* Forward declaration for host_linker_object_begin */
+static uint32_t host_linker_object_begin(uint64_t path, uint64_t file_size,
+                                          uint16_t elf_type, uint16_t machine);
+
 uint32_t host_linker_ingest_shared_object(uint64_t path) {
     /* Shared object ingest - same as ELF but for ET_DYN */
     uint64_t path_h = path;
@@ -1734,7 +1737,7 @@ uint64_t host_linker_section_runtime_address(uint32_t obj_index, uint32_t sec_in
     if (obj_index >= g_state.object_count) return 0;
     ObjectRecord *obj = &g_state.objects[obj_index];
     if (sec_index >= obj->sec_count) return 0;
-    ObjectSection *sec = &obj->sections[sec_index];
+    (void)obj; /* obj validated but address calculation uses base only for now */
     return g_state.image_base;
 }
 
@@ -1774,33 +1777,6 @@ uint32_t host_linker_patch_u64(uint32_t section_index, uint64_t offset, uint64_t
 }
 
 /* ========================================================================
- * LAYER 1: Required symbols
- * ======================================================================== */
-uint32_t host_linker_require_symbol(uint64_t name) {
-    const char *n = cstring_from_handle(name);
-    if (!n) return ERR_INVALID_FORMAT;
-    uint64_t h = str_hash(n);
-    return u64_vec_push(&g_state.required_symbols, h);
-}
-
-uint32_t host_linker_check_required_symbols(void) {
-    for (uint32_t i = 0; i < g_state.required_symbols.count; i++) {
-        uint64_t h = g_state.required_symbols.items[i];
-        if (h == 0) continue;
-        if (find_global(h) < 0) return ERR_UNDEFINED_SYMBOL;
-    }
-    return ERR_OK;
-}
-
-uint32_t host_linker_required_symbol_count(void) {
-    uint32_t c = 0;
-    for (uint32_t i = 0; i < g_state.required_symbols.count; i++) {
-        if (g_state.required_symbols.items[i] != 0) c++;
-    }
-    return c;
-}
-
-/* ========================================================================
  * TLS synthetic slots (AArch64)
  * ======================================================================== */
 uint32_t host_linker_aarch64_tls_synth_reserve(uint32_t obj_index,
@@ -1816,7 +1792,7 @@ uint32_t host_linker_aarch64_tls_synth_reserve(uint32_t obj_index,
                  || reloc_type == 563 || reloc_type == 564 || reloc_type == 569)
             model = 3; /* TLSDESC */
         else model = 1;
-    } else if (reloc_type == 517 || reloc_type >= 517 && reloc_type <= 538) {
+    } else if (reloc_type >= 517 && reloc_type <= 538) {
         model = 2; /* TLSLD */
     }
 
