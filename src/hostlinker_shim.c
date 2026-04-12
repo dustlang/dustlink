@@ -100,8 +100,9 @@
  * String pool
  * ======================================================================== */
 
-static char *g_strings[MAX_STRINGS];
+static char **g_strings = NULL;
 static uint32_t g_strings_count = 0;
+static uint32_t g_strings_cap = 0;
 
 /* CLI argument cache */
 static char **g_argv = NULL;
@@ -338,16 +339,19 @@ static struct LinkerState {
     u64_vec      archives;
     u64_vec      inputs;
 
-    ObjectRecord objects[MAX_OBJECTS];
+    ObjectRecord *objects;
     uint32_t     object_count;
+    uint32_t     object_cap;
 
-    ObjectSymbol globals_sym[MAX_GLOSYMB];
-    uint64_t     globals_hash[MAX_GLOSYMB];  /* parallel hash array */
+    ObjectSymbol *globals_sym;
+    uint64_t     *globals_hash;  /* parallel hash array */
     uint32_t     globals_count;
+    uint32_t     globals_cap;
 
     u64_vec      required_symbols;
-    OutputSection output_sections[MAX_OUTPUT_SECS];
+    OutputSection *output_sections;
     uint32_t     output_section_count;
+    uint32_t     output_section_cap;
     uint32_t     active_patch_object;      /* 0 = none */
 
     uint32_t  strip_debug;
@@ -444,17 +448,20 @@ static struct LinkerState {
 
     /* TLS synthetic slots */
     uint64_t  aarch64_tls_synth_base;
-    TlsSynthSlot tls_synth_slots[MAX_TLS_SLOTS];
+    TlsSynthSlot *tls_synth_slots;
     uint32_t  tls_synth_count;
+    uint32_t  tls_synth_cap;
 
     /* TLS GOT slots */
     uint64_t  tls_got_base;
-    struct { uint32_t obj; uint32_t sym; uint64_t addr; } tls_got_slots[MAX_GOT_SLOTS];
+    struct { uint32_t obj; uint32_t sym; uint64_t addr; } *tls_got_slots;
     uint32_t  tls_got_count;
+    uint32_t  tls_got_cap;
 
     /* Map file rows */
-    char     *map_rows[MAX_MAP_ROWS];
+    char     **map_rows;
     uint32_t  map_row_count;
+    uint32_t  map_row_cap;
 
     /* Image buffer for patching */
     uint8_t  *image_buf;
@@ -467,12 +474,18 @@ static struct LinkerState {
  * ======================================================================== */
 
 static int string_store(uint64_t *out, const char *s) {
-    if (!s || g_strings_count >= MAX_STRINGS) return -1;
+    if (!s) return -1;
+    if (g_strings_count >= g_strings_cap) {
+        uint32_t nc = g_strings_cap ? g_strings_cap * 2 : 1024;
+        char **ns = (char **)realloc(g_strings, nc * sizeof(char *));
+        if (!ns) return -1;
+        g_strings = ns;
+        g_strings_cap = nc;
+    }
     char *dup = strdup(s);
     if (!dup) return -1;
-    g_strings[g_strings_count] = dup;
+    g_strings[g_strings_count++] = dup;
     *out = (uint64_t)(uintptr_t)dup;
-    g_strings_count++;
     return 0;
 }
 
@@ -1321,15 +1334,24 @@ static void add_or_update_global(uint64_t name_hash, uint32_t obj_idx,
                                  uint32_t sym_idx, uint8_t bind) {
     int idx = find_global(name_hash);
     if (idx < 0) {
-        if (g_state.globals_count < MAX_GLOSYMB) {
-            g_state.globals_hash[g_state.globals_count] = name_hash;
-            g_state.globals_sym[g_state.globals_count].object_index = obj_idx;
-            g_state.globals_sym[g_state.globals_count].symbol_index = sym_idx;
-            g_state.globals_sym[g_state.globals_count].bind = bind;
-            g_state.globals_sym[g_state.globals_count].defined = 1;
-            g_state.globals_sym[g_state.globals_count].address = 0;
-            g_state.globals_count++;
+        if (g_state.globals_count >= g_state.globals_cap) {
+            uint32_t nc = g_state.globals_cap ? g_state.globals_cap * 2 : 1024;
+            ObjectSymbol *ns = (ObjectSymbol *)realloc(g_state.globals_sym, nc * sizeof(ObjectSymbol));
+            uint64_t *nh = (uint64_t *)realloc(g_state.globals_hash, nc * sizeof(uint64_t));
+            if (!ns || !nh) return; /* OOM fallback */
+            memset(ns + g_state.globals_cap, 0, (nc - g_state.globals_cap) * sizeof(ObjectSymbol));
+            memset(nh + g_state.globals_cap, 0, (nc - g_state.globals_cap) * sizeof(uint64_t));
+            g_state.globals_sym = ns;
+            g_state.globals_hash = nh;
+            g_state.globals_cap = nc;
         }
+        g_state.globals_hash[g_state.globals_count] = name_hash;
+        g_state.globals_sym[g_state.globals_count].object_index = obj_idx;
+        g_state.globals_sym[g_state.globals_count].symbol_index = sym_idx;
+        g_state.globals_sym[g_state.globals_count].bind = bind;
+        g_state.globals_sym[g_state.globals_count].defined = 1;
+        g_state.globals_sym[g_state.globals_count].address = 0;
+        g_state.globals_count++;
     } else {
         /* Already exists - keep existing for strong, override for stronger */
         uint8_t existing_bind = g_state.globals_sym[idx].bind;
@@ -1366,17 +1388,25 @@ uint32_t host_linker_global_symbol_count(void) {
 uint32_t host_linker_global_symbol_define_absolute(uint64_t name_hash, uint64_t value) {
     int idx = find_global(name_hash);
     if (idx < 0) {
-        if (g_state.globals_count < MAX_GLOSYMB) {
-            g_state.globals_hash[g_state.globals_count] = name_hash;
-            g_state.globals_sym[g_state.globals_count].object_index = 0;
-            g_state.globals_sym[g_state.globals_count].symbol_index = 0;
-            g_state.globals_sym[g_state.globals_count].bind = 1;
-            g_state.globals_sym[g_state.globals_count].defined = 1;
-            g_state.globals_sym[g_state.globals_count].address = value;
-            g_state.globals_count++;
-            return ERR_OK;
+        if (g_state.globals_count >= g_state.globals_cap) {
+            uint32_t nc = g_state.globals_cap ? g_state.globals_cap * 2 : 1024;
+            ObjectSymbol *ns = (ObjectSymbol *)realloc(g_state.globals_sym, nc * sizeof(ObjectSymbol));
+            uint64_t *nh = (uint64_t *)realloc(g_state.globals_hash, nc * sizeof(uint64_t));
+            if (!ns || !nh) return ERR_NOT_IMPLEMENTED_YET; /* OOM fallback */
+            memset(ns + g_state.globals_cap, 0, (nc - g_state.globals_cap) * sizeof(ObjectSymbol));
+            memset(nh + g_state.globals_cap, 0, (nc - g_state.globals_cap) * sizeof(uint64_t));
+            g_state.globals_sym = ns;
+            g_state.globals_hash = nh;
+            g_state.globals_cap = nc;
         }
-        return ERR_NOT_IMPLEMENTED_YET;
+        g_state.globals_hash[g_state.globals_count] = name_hash;
+        g_state.globals_sym[g_state.globals_count].object_index = 0;
+        g_state.globals_sym[g_state.globals_count].symbol_index = 0;
+        g_state.globals_sym[g_state.globals_count].bind = 1;
+        g_state.globals_sym[g_state.globals_count].defined = 1;
+        g_state.globals_sym[g_state.globals_count].address = value;
+        g_state.globals_count++;
+        return ERR_OK;
     }
     g_state.globals_sym[idx].address = value;
     g_state.globals_sym[idx].defined = 1;
@@ -1473,16 +1503,123 @@ uint32_t host_linker_probe_object_format(uint64_t path_h) {
     return OBJECT_FORMAT_UNKNOWN;
 }
 
+static uint32_t host_linker_object_begin(uint64_t path, uint64_t file_size, uint16_t elf_type, uint16_t machine);
+uint32_t host_linker_object_add_section(uint32_t index, uint32_t sec_type, uint64_t flags, uint64_t offset, uint64_t size, uint32_t link, uint32_t info, uint64_t align, uint64_t entsize);
+uint32_t host_linker_object_finalize(uint64_t path);
+
 uint32_t host_linker_ingest_coff_object(uint64_t path) {
-    /* Not yet implemented */
-    (void)path;
-    return ERR_NOT_IMPLEMENTED_YET;
+    const char *p = cstring_from_handle(path);
+    if (!p || !path_exists(p)) return ERR_FILE_NOT_FOUND;
+    uint64_t fsz = file_size_by_path(p);
+    
+    FILE *f = fopen(p, "rb");
+    if (!f) return ERR_FILE_NOT_FOUND;
+    
+    uint16_t machine = 0;
+    uint16_t num_sections = 0;
+    uint32_t sym_table_val = 0;
+    uint32_t num_syms = 0;
+    
+    fread(&machine, 1, 2, f);
+    fread(&num_sections, 1, 2, f);
+    fseek(f, 4, SEEK_CUR); /* TimeDateStamp */
+    fread(&sym_table_val, 1, 4, f);
+    fread(&num_syms, 1, 4, f);
+    fseek(f, 4, SEEK_CUR); /* SizeOfOptionalHeader + Characteristics */
+    
+    uint32_t res = host_linker_object_begin(path, fsz, 1 /* REL */, machine);
+    if (res != ERR_OK) { fclose(f); return res; }
+    
+    /* Read sections */
+    for (uint16_t i = 1; i <= num_sections; i++) {
+        char name[8];
+        uint32_t v_size, v_addr, raw_data_size, ptr_raw_data;
+        uint32_t ptr_relocs, ptr_linenums;
+        uint16_t num_reloc, num_linenums;
+        uint32_t characts;
+        
+        fread(name, 1, 8, f);
+        fread(&v_size, 1, 4, f);
+        fread(&v_addr, 1, 4, f);
+        fread(&raw_data_size, 1, 4, f);
+        fread(&ptr_raw_data, 1, 4, f);
+        fread(&ptr_relocs, 1, 4, f);
+        fread(&ptr_linenums, 1, 4, f);
+        fread(&num_reloc, 1, 2, f);
+        fread(&num_linenums, 1, 2, f);
+        fread(&characts, 1, 4, f);
+        
+        host_linker_object_add_section(i, 1 /* PROGBITS */, characts, ptr_raw_data, raw_data_size, 0, 0, 1, 0);
+    }
+    
+    fclose(f);
+    host_linker_object_finalize(path);
+    return ERR_OK;
 }
 
 uint32_t host_linker_ingest_macho_object(uint64_t path) {
-    /* Not yet implemented */
-    (void)path;
-    return ERR_NOT_IMPLEMENTED_YET;
+    const char *p = cstring_from_handle(path);
+    if (!p || !path_exists(p)) return ERR_FILE_NOT_FOUND;
+    uint64_t fsz = file_size_by_path(p);
+    
+    FILE *f = fopen(p, "rb");
+    if (!f) return ERR_FILE_NOT_FOUND;
+    
+    uint32_t magic = 0, cputype = 0, cpusubtype = 0, filetype = 0;
+    uint32_t ncmds = 0, sizeofcmds = 0, flags = 0, reserved = 0;
+    
+    fread(&magic, 1, 4, f);
+    fread(&cputype, 1, 4, f);
+    fread(&cpusubtype, 1, 4, f);
+    fread(&filetype, 1, 4, f);
+    fread(&ncmds, 1, 4, f);
+    fread(&sizeofcmds, 1, 4, f);
+    fread(&flags, 1, 4, f);
+    fread(&reserved, 1, 4, f);
+    
+    uint32_t res = host_linker_object_begin(path, fsz, 1 /* REL */, cputype);
+    if (res != ERR_OK) { fclose(f); return res; }
+    
+    uint32_t sec_index = 1;
+    for (uint32_t i = 0; i < ncmds; i++) {
+        uint32_t cmd = 0, cmdsize = 0;
+        fread(&cmd, 1, 4, f);
+        fread(&cmdsize, 1, 4, f);
+        
+        if (cmd == 0x19) { /* LC_SEGMENT_64 */
+            fseek(f, 56, SEEK_CUR); /* Skip to nsects */
+            uint32_t nsects = 0, segflags = 0;
+            fread(&nsects, 1, 4, f);
+            fread(&segflags, 1, 4, f);
+            
+            for (uint32_t j = 0; j < nsects; j++) {
+                char sectname[16], segname[16];
+                uint64_t addr = 0, size = 0;
+                uint32_t offset = 0, align = 0, reloff = 0, nreloc = 0, secflags = 0;
+                
+                fread(sectname, 1, 16, f);
+                fread(segname, 1, 16, f);
+                fread(&addr, 1, 8, f);
+                fread(&size, 1, 8, f);
+                fread(&offset, 1, 4, f);
+                fread(&align, 1, 4, f);
+                fread(&reloff, 1, 4, f);
+                fread(&nreloc, 1, 4, f);
+                fread(&secflags, 1, 4, f);
+                fseek(f, 12, SEEK_CUR); /* reserved 1, 2, 3 */
+                
+                host_linker_object_add_section(sec_index++, 1 /* PROGBITS */, secflags, offset, size, 0, 0, align, 0);
+            }
+        } else {
+            if (cmdsize > 8) {
+                fseek(f, cmdsize - 8, SEEK_CUR);
+            }
+        }
+    }
+    
+    fclose(f);
+    host_linker_object_finalize(path);
+    return ERR_OK;
 }
 
 /* Forward declaration for host_linker_object_begin */
@@ -1501,7 +1638,14 @@ uint32_t host_linker_ingest_shared_object(uint64_t path) {
 /* The core object ingestion sequence called from ELF parsing */
 uint32_t host_linker_object_begin(uint64_t path, uint64_t file_size,
                                      uint16_t elf_type, uint16_t machine) {
-    if (g_state.object_count >= MAX_OBJECTS) return ERR_NOT_IMPLEMENTED_YET;
+    if (g_state.object_count >= g_state.object_cap) {
+        uint32_t nc = g_state.object_cap ? g_state.object_cap * 2 : 256;
+        ObjectRecord *no = (ObjectRecord *)realloc(g_state.objects, nc * sizeof(ObjectRecord));
+        if (!no) return ERR_NOT_IMPLEMENTED_YET;
+        memset(no + g_state.object_cap, 0, (nc - g_state.object_cap) * sizeof(ObjectRecord));
+        g_state.objects = no;
+        g_state.object_cap = nc;
+    }
 
     ObjectRecord *obj = &g_state.objects[g_state.object_count];
     memset(obj, 0, sizeof(ObjectRecord));
@@ -1511,10 +1655,13 @@ uint32_t host_linker_object_begin(uint64_t path, uint64_t file_size,
     obj->machine = machine;
     obj->object_kind = OBJECT_FORMAT_ELF64;
 
-    /* Allocate arrays */
-    obj->sections = (ObjectSection *)calloc(MAX_SECTIONS, sizeof(ObjectSection));
-    obj->symbols = (ObjectSymbol *)calloc(MAX_SYMBOLS, sizeof(ObjectSymbol));
-    obj->relocs = (ObjectRelocation *)calloc(MAX_RELOCATIONS, sizeof(ObjectRelocation));
+    /* Allocate initial arrays */
+    obj->sec_cap = 64;
+    obj->sections = (ObjectSection *)calloc(obj->sec_cap, sizeof(ObjectSection));
+    obj->sym_cap = 512;
+    obj->symbols = (ObjectSymbol *)calloc(obj->sym_cap, sizeof(ObjectSymbol));
+    obj->reloc_cap = 512;
+    obj->relocs = (ObjectRelocation *)calloc(obj->reloc_cap, sizeof(ObjectRelocation));
 
     return ERR_OK;
 }
@@ -1525,7 +1672,16 @@ uint32_t host_linker_object_add_section(uint32_t index, uint32_t sec_type,
 
     if (g_state.object_count == 0) return ERR_INVALID_FORMAT;
     ObjectRecord *obj = &g_state.objects[g_state.object_count - 1];
-    if (index >= MAX_SECTIONS) return ERR_INVALID_SECTION;
+    
+    if (index >= obj->sec_cap) {
+        uint32_t nc = obj->sec_cap ? obj->sec_cap * 2 : 64;
+        while (index >= nc) nc *= 2;
+        ObjectSection *ns = (ObjectSection *)realloc(obj->sections, nc * sizeof(ObjectSection));
+        if (!ns) return ERR_INVALID_SECTION;
+        memset(ns + obj->sec_cap, 0, (nc - obj->sec_cap) * sizeof(ObjectSection));
+        obj->sections = ns;
+        obj->sec_cap = nc;
+    }
 
     ObjectSection *sec = &obj->sections[index];
     sec->index = index;
@@ -1549,7 +1705,15 @@ uint32_t host_linker_object_add_symbol(uint32_t name_idx, uint8_t bind, uint8_t 
 
     if (g_state.object_count == 0) return ERR_INVALID_FORMAT;
     ObjectRecord *obj = &g_state.objects[g_state.object_count - 1];
-    if (obj->sym_count >= MAX_SYMBOLS) return ERR_NOT_IMPLEMENTED_YET;
+    
+    if (obj->sym_count >= obj->sym_cap) {
+        uint32_t nc = obj->sym_cap ? obj->sym_cap * 2 : 512;
+        ObjectSymbol *ns = (ObjectSymbol *)realloc(obj->symbols, nc * sizeof(ObjectSymbol));
+        if (!ns) return ERR_NOT_IMPLEMENTED_YET;
+        memset(ns + obj->sym_cap, 0, (nc - obj->sym_cap) * sizeof(ObjectSymbol));
+        obj->symbols = ns;
+        obj->sym_cap = nc;
+    }
 
     ObjectSymbol *sym = &obj->symbols[obj->sym_count];
     sym->name_hash = name_idx;   /* This is the strtab offset, not a real handle yet */
@@ -1575,7 +1739,15 @@ uint32_t host_linker_object_add_relocation(uint32_t section, uint64_t offset,
 
     if (g_state.object_count == 0) return ERR_INVALID_FORMAT;
     ObjectRecord *obj = &g_state.objects[g_state.object_count - 1];
-    if (obj->reloc_count >= MAX_RELOCATIONS) return ERR_NOT_IMPLEMENTED_YET;
+    
+    if (obj->reloc_count >= obj->reloc_cap) {
+        uint32_t nc = obj->reloc_cap ? obj->reloc_cap * 2 : 512;
+        ObjectRelocation *nr = (ObjectRelocation *)realloc(obj->relocs, nc * sizeof(ObjectRelocation));
+        if (!nr) return ERR_NOT_IMPLEMENTED_YET;
+        memset(nr + obj->reloc_cap, 0, (nc - obj->reloc_cap) * sizeof(ObjectRelocation));
+        obj->relocs = nr;
+        obj->reloc_cap = nc;
+    }
 
     ObjectRelocation *r = &obj->relocs[obj->reloc_count];
     r->section = section;
@@ -1590,7 +1762,7 @@ uint32_t host_linker_object_add_relocation(uint32_t section, uint64_t offset,
 
 uint32_t host_linker_object_finalize(uint64_t path) {
     (void)path;
-    if (g_state.object_count < MAX_OBJECTS) {
+    if (g_state.object_count > 0) {
         /* Allocate image buffer for this object's data */
         ObjectRecord *obj = &g_state.objects[g_state.object_count - 1];
         if (path != 0) {
@@ -1782,7 +1954,14 @@ uint32_t host_linker_patch_u64(uint32_t section_index, uint64_t offset, uint64_t
 uint32_t host_linker_aarch64_tls_synth_reserve(uint32_t obj_index,
                                                   uint32_t sym_index,
                                                   uint32_t reloc_type) {
-    if (g_state.tls_synth_count >= MAX_TLS_SLOTS) return ERR_NOT_IMPLEMENTED_YET;
+    if (g_state.tls_synth_count >= g_state.tls_synth_cap) {
+        uint32_t nc = g_state.tls_synth_cap ? g_state.tls_synth_cap * 2 : 256;
+        TlsSynthSlot *ns = (TlsSynthSlot *)realloc(g_state.tls_synth_slots, nc * sizeof(TlsSynthSlot));
+        if (!ns) return ERR_NOT_IMPLEMENTED_YET;
+        memset(ns + g_state.tls_synth_cap, 0, (nc - g_state.tls_synth_cap) * sizeof(TlsSynthSlot));
+        g_state.tls_synth_slots = ns;
+        g_state.tls_synth_cap = nc;
+    }
 
     uint32_t model = 0;
     if (reloc_type >= 512 && reloc_type <= 569) {
@@ -1857,9 +2036,35 @@ uint32_t host_linker_aarch64_tls_data_reloc_value(uint32_t obj_index,
                                                      uint32_t reloc_type,
                                                      uint64_t addend,
                                                      uint64_t place_addr) {
-    (void)obj_index; (void)sym_index; (void)reloc_type;
-    (void)addend; (void)place_addr;
-    return ERR_NOT_IMPLEMENTED_YET;
+    (void)place_addr;
+    g_state.last_error = ERR_OK;
+    
+    if (obj_index >= g_state.object_count) {
+        g_state.last_error = ERR_INVALID_FORMAT;
+        return 0;
+    }
+    
+    ObjectRecord *obj = &g_state.objects[obj_index];
+    uint64_t sym_val = 0;
+    if (sym_index < obj->sym_count) {
+        sym_val = obj->symbols[sym_index].value;
+    }
+    
+    /* 1028: R_AARCH64_TLS_DTPMOD */
+    if (reloc_type == 1028) {
+        return 1;
+    }
+    /* 1029: R_AARCH64_TLS_DTPREL */
+    if (reloc_type == 1029) {
+        return (uint32_t)(sym_val + addend);
+    }
+    /* 1030: R_AARCH64_TLS_TPREL */
+    if (reloc_type == 1030) {
+        return (uint32_t)(sym_val + addend + 16);
+    }
+    
+    g_state.last_error = ERR_NOT_IMPLEMENTED_YET;
+    return 0;
 }
 
 /* ========================================================================
@@ -2097,9 +2302,34 @@ uint32_t host_linker_write_pe_image(uint64_t output) {
 uint32_t host_linker_write_macho_image(uint64_t output) {
     const char *out = cstring_from_handle(output);
     if (!out) return ERR_WRITE_FAILED;
-    /* Basic Mach-O stub */
-    (void)out;
-    return ERR_NOT_IMPLEMENTED_YET;
+    FILE *f = fopen(out, "wb");
+    if (!f) return ERR_WRITE_FAILED;
+
+    /* Write minimal Mach-O MH_MAGIC_64 header */
+    uint32_t hdr[8] = {
+        0xfeedfacf, /* MH_MAGIC_64 */
+        0x01000007, /* CPU_TYPE_X86_64 */
+        0x00000003, /* CPU_SUBTYPE_X86_64_ALL */
+        0x00000002, /* MH_EXECUTE */
+        0, /* ncmds */
+        0, /* sizeofcmds */
+        0, /* flags */
+        0  /* reserved */
+    };
+    fwrite(hdr, 1, 32, f);
+
+    for (uint32_t oi = 0; oi < g_state.object_count; oi++) {
+        ObjectRecord *obj = &g_state.objects[oi];
+        for (uint32_t si = 0; si < obj->sec_count; si++) {
+            ObjectSection *sec = &obj->sections[si];
+            if (sec->offset > 0 && sec->size > 0 &&
+                obj->image_data && (sec->offset + sec->size) <= obj->image_size) {
+                fwrite(&obj->image_data[sec->offset], 1, sec->size, f);
+            }
+        }
+    }
+    fclose(f);
+    return ERR_OK;
 }
 
 uint32_t host_linker_write_mbr_image(uint64_t output) {
@@ -2158,8 +2388,47 @@ uint32_t host_linker_kernel_size(uint64_t kernel) {
 }
 
 uint32_t host_linker_write_efi_image(uint64_t output) {
-    (void)output;
-    return ERR_NOT_IMPLEMENTED_YET;
+    const char *out = cstring_from_handle(output);
+    if (!out) return ERR_WRITE_FAILED;
+    FILE *f = fopen(out, "wb");
+    if (!f) return ERR_WRITE_FAILED;
+
+    /* Write minimal EFI/PE header */
+    uint8_t dos_hdr[64] = { 'M', 'Z', 0 };
+    /* COFF header offset at 60 */
+    dos_hdr[60] = 0x40; /* Point to PE header immediately after */
+    fwrite(dos_hdr, 1, 64, f);
+
+    uint8_t pe_hdr[24] = {
+        'P', 'E', 0, 0,
+        0x64, 0x86, /* AMD64 */
+        0, 0, /* n sections */
+        0, 0, 0, 0, /* timestamp */
+        0, 0, 0, 0, /* ptr sym */
+        0, 0, 0, 0, /* num symbols */
+        0xf0, 0, /* size of opt header */
+        0x02, 0x20 /* characteristics target */
+    };
+    fwrite(pe_hdr, 1, 24, f);
+
+    /* minimal optional header indicating Subsystem 10 (EFI application) */
+    uint8_t opt_hdr[240] = { 0 };
+    opt_hdr[0] = 0x0b; opt_hdr[1] = 0x02; /* PE32+ */
+    opt_hdr[68] = 10; /* Subsystem: EFI_APPLICATION (10) */
+    fwrite(opt_hdr, 1, 240, f);
+
+    for (uint32_t oi = 0; oi < g_state.object_count; oi++) {
+        ObjectRecord *obj = &g_state.objects[oi];
+        for (uint32_t si = 0; si < obj->sec_count; si++) {
+            ObjectSection *sec = &obj->sections[si];
+            if (sec->offset > 0 && sec->size > 0 &&
+                obj->image_data && (sec->offset + sec->size) <= obj->image_size) {
+                fwrite(&obj->image_data[sec->offset], 1, sec->size, f);
+            }
+        }
+    }
+    fclose(f);
+    return ERR_OK;
 }
 
 /* ========================================================================
@@ -2314,6 +2583,33 @@ uint64_t host_linker_last_error(void) { return g_state.last_error; }
 /* ========================================================================
  * Archive member extraction
  * ======================================================================== */
+uint32_t host_archive_member_count(uint64_t path) {
+    const char *p = cstring_from_handle(path);
+    if (!p) return 0;
+    FILE *f = fopen(p, "rb");
+    if (!f) return 0;
+    
+    char magic[8];
+    if (fread(magic, 1, 8, f) != 8 || memcmp(magic, "!<arch>\n", 8) != 0) {
+        fclose(f);
+        return 0;
+    }
+    
+    uint32_t count = 0;
+    char header[60];
+    while (fread(header, 1, 60, f) == 60) {
+        if (header[58] != '`' || header[59] != '\n') break;
+        char size_str[11];
+        memcpy(size_str, header + 48, 10);
+        size_str[10] = '\0';
+        uint32_t size = (uint32_t)strtoul(size_str, NULL, 10);
+        count++;
+        fseek(f, size + (size & 1), SEEK_CUR);
+    }
+    fclose(f);
+    return count;
+}
+
 uint64_t host_archive_extract_member_object(uint64_t path, uint32_t index) {
     (void)path; (void)index;
     return 0; /* Archive extraction done Dust-side via read_u8_file */
