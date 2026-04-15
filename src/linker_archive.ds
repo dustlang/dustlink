@@ -178,10 +178,10 @@ forge LinkerArchive {
             return ElfFormat::K::ingest_object_file(path);
         } else {
             if object_kind == 2 {
-                return host_linker_ingest_coff_object(path);
+                return CoffFormat::K::ingest_object_file(path);
             } else {
                 if object_kind == 3 {
-                    return host_linker_ingest_macho_object(path);
+                    return MachOFormat::K::ingest_object_file(path);
                 } else {
                     return ERR_INVALID_FORMAT;
                 }

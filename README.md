@@ -164,13 +164,26 @@ These compatibility no-op paths now emit diagnostics, and become hard failures w
 
 ## Build
 
-Check:
+### Standalone build (recommended)
+
+dustlink builds independently of the Dust compiler's Rust runtime shim.
+The host runtime is provided by `src/hostlinker_shim.c` (C).
 
 ```bash
-dust check src/
+# Using the Makefile (requires `dust` compiler in PATH)
+make
+
+# Or manually:
+mkdir -p target
+dust obj src --out target/dustlink_core.o
+cc -Wall -O2 -c src/hostlinker_shim.c -o target/hostlinker_shim.o
+cc -o target/dustlink target/dustlink_core.o target/hostlinker_shim.o -lm
 ```
 
-Build:
+### Via Dust compiler (bootstrap)
+
+When building through the Dust compiler, the C shim is automatically
+compiled and linked — no Rust runtime dependency:
 
 ```bash
 dust build src --out target/dust/dustlink

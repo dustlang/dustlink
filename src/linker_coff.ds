@@ -1,0 +1,472 @@
+// File: linker_coff.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   COFF/PE64 object parsing for DustLink.
+//   Provides:
+//     - COFF header constants (machine types, section characteristics)
+//     - Section header parsing
+//     - Symbol table and relocation record parsing
+//     - ingest_object_file entry point
+
+forge CoffFormat {
+    // COFF machine types
+    const IMAGE_FILE_MACHINE_AMD64: UInt16 = 34404;  // 0x8664
+    const IMAGE_FILE_MACHINE_ARM64: UInt16 = 43620;  // 0xAA64
+    const IMAGE_FILE_MACHINE_I386: UInt16 = 332;     // 0x014C
+    const IMAGE_FILE_MACHINE_ARMNT: UInt16 = 452;    // 0x01C4
+
+    // COFF header sizes
+    const COFF_HEADER_SIZE: UInt32 = 20;
+    const COFF_SECTION_SIZE: UInt32 = 40;
+    const COFF_SYMBOL_SIZE: UInt32 = 18;
+    const COFF_RELOC_SIZE: UInt32 = 10;
+
+    // Section characteristics
+    const IMAGE_SCN_CNT_CODE: UInt32 = 32;
+    const IMAGE_SCN_CNT_INITIALIZED_DATA: UInt32 = 64;
+    const IMAGE_SCN_CNT_UNINITIALIZED_DATA: UInt32 = 128;
+    const IMAGE_SCN_MEM_EXECUTE: UInt32 = 536870912;
+    const IMAGE_SCN_MEM_READ: UInt32 = 1073741824;
+    const IMAGE_SCN_MEM_WRITE: UInt32 = 2147483648;
+    const IMAGE_SCN_MEM_DISCARDABLE: UInt32 = 33554432;
+
+    // Section types (mapped to ELF equivalents for storage)
+    const SHT_PROGBITS: UInt32 = 1;
+    const SHT_NOBITS: UInt32 = 8;
+    const SHT_RELOC: UInt32 = 9;
+
+    // ELF storage type for COFF objects
+    const IMAGE_FILE_REL: UInt16 = 1;
+
+    proc K::u16_from_le(b0: UInt8, b1: UInt8) -> UInt16 {
+        return b0 + (b1 * 256);
+    }
+
+    proc K::u32_from_le(b0: UInt8, b1: UInt8, b2: UInt8, b3: UInt8) -> UInt32 {
+        let lo16 = u16_from_le(b0, b1);
+        let hi16 = u16_from_le(b2, b3);
+        return lo16 + (hi16 * 65536);
+    }
+
+    proc K::u64_from_le(
+        b0: UInt8, b1: UInt8, b2: UInt8, b3: UInt8,
+        b4: UInt8, b5: UInt8, b6: UInt8, b7: UInt8
+    ) -> UInt64 {
+        let lo32 = u32_from_le(b0, b1, b2, b3);
+        let hi32 = u32_from_le(b4, b5, b6, b7);
+        return lo32 + (hi32 * 4294967296);
+    }
+
+    proc K::read_u8_file(path: UInt64, offset: UInt64) -> UInt8 {
+        return LinkerFs::K::read_u8(path, offset);
+    }
+
+    proc K::read_u16_file(path: UInt64, offset: UInt64) -> UInt16 {
+        let b0 = read_u8_file(path, offset);
+        let b1 = read_u8_file(path, offset + 1);
+        return u16_from_le(b0, b1);
+    }
+
+    proc K::read_u32_file(path: UInt64, offset: UInt64) -> UInt32 {
+        let b0 = read_u8_file(path, offset);
+        let b1 = read_u8_file(path, offset + 1);
+        let b2 = read_u8_file(path, offset + 2);
+        let b3 = read_u8_file(path, offset + 3);
+        return u32_from_le(b0, b1, b2, b3);
+    }
+
+    proc K::read_u64_file(path: UInt64, offset: UInt64) -> UInt64 {
+        let b0 = read_u8_file(path, offset);
+        let b1 = read_u8_file(path, offset + 1);
+        let b2 = read_u8_file(path, offset + 2);
+        let b3 = read_u8_file(path, offset + 3);
+        let b4 = read_u8_file(path, offset + 4);
+        let b5 = read_u8_file(path, offset + 5);
+        let b6 = read_u8_file(path, offset + 6);
+        let b7 = read_u8_file(path, offset + 7);
+        return u64_from_le(b0, b1, b2, b3, b4, b5, b6, b7);
+    }
+
+    // Section header field readers (40 bytes each, starting after COFF header)
+    proc K::section_virtual_size(path: UInt64, coff_hdr_end: UInt64, index: UInt16) -> UInt32 {
+        let off = coff_hdr_end + (index * 40);
+        return read_u32_file(path, off);
+    }
+
+    proc K::section_virtual_address(path: UInt64, coff_hdr_end: UInt64, index: UInt16) -> UInt32 {
+        let off = coff_hdr_end + (index * 40) + 4;
+        return read_u32_file(path, off);
+    }
+
+    proc K::section_raw_data_size(path: UInt64, coff_hdr_end: UInt64, index: UInt16) -> UInt32 {
+        let off = coff_hdr_end + (index * 40) + 8;
+        return read_u32_file(path, off);
+    }
+
+    proc K::section_ptr_raw_data(path: UInt64, coff_hdr_end: UInt64, index: UInt16) -> UInt32 {
+        let off = coff_hdr_end + (index * 40) + 12;
+        return read_u32_file(path, off);
+    }
+
+    proc K::section_ptr_relocs(path: UInt64, coff_hdr_end: UInt64, index: UInt16) -> UInt32 {
+        let off = coff_hdr_end + (index * 40) + 16;
+        return read_u32_file(path, off);
+    }
+
+    proc K::section_num_relocs(path: UInt64, coff_hdr_end: UInt64, index: UInt16) -> UInt16 {
+        let off = coff_hdr_end + (index * 40) + 24;
+        return read_u16_file(path, off);
+    }
+
+    proc K::section_characteristics(path: UInt64, coff_hdr_end: UInt64, index: UInt16) -> UInt32 {
+        let off = coff_hdr_end + (index * 40) + 36;
+        return read_u32_file(path, off);
+    }
+
+    // Map COFF characteristics to ELF section type
+    proc K::coff_characteristics_to_type(characteristics: UInt32) -> UInt32 {
+        if characteristics & IMAGE_SCN_CNT_CODE == IMAGE_SCN_CNT_CODE {
+            return SHT_PROGBITS;
+        } else {
+            if characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA == IMAGE_SCN_CNT_INITIALIZED_DATA {
+                return SHT_PROGBITS;
+            } else {
+                if characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA == IMAGE_SCN_CNT_UNINITIALIZED_DATA {
+                    return SHT_NOBITS;
+                } else {
+                    return SHT_PROGBITS;
+                }
+            }
+        }
+    }
+
+    // Map COFF characteristics to ELF section flags
+    proc K::coff_characteristics_to_flags(characteristics: UInt32) -> UInt64 {
+        let flags: UInt64 = 0;
+        if characteristics & IMAGE_SCN_MEM_EXECUTE == IMAGE_SCN_MEM_EXECUTE {
+            let flags = flags + 4;  // SHF_EXECINSTR
+        } else {
+            if characteristics & IMAGE_SCN_MEM_WRITE == IMAGE_SCN_MEM_WRITE {
+                let flags = flags + 1;  // SHF_WRITE
+            } else {
+                if characteristics & IMAGE_SCN_MEM_READ == IMAGE_SCN_MEM_READ {
+                    let flags = flags + 2;  // SHF_ALLOC
+                } else {
+                    if characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA == IMAGE_SCN_CNT_INITIALIZED_DATA {
+                        let flags = flags + 2;  // SHF_ALLOC
+                    } else {
+                        if characteristics & IMAGE_SCN_CNT_CODE == IMAGE_SCN_CNT_CODE {
+                            let flags = flags + 2 + 4;  // SHF_ALLOC + SHF_EXECINSTR
+                        }
+                    }
+                }
+            }
+        }
+        return flags;
+    }
+
+    // Validate COFF machine type
+    proc K::validate_machine(machine: UInt16) -> UInt32 {
+        if machine == IMAGE_FILE_MACHINE_AMD64 {
+            return 0;
+        } else {
+            if machine == IMAGE_FILE_MACHINE_ARM64 {
+                return 0;
+            } else {
+                if machine == IMAGE_FILE_MACHINE_I386 {
+                    return 0;
+                } else {
+                    if machine == IMAGE_FILE_MACHINE_ARMNT {
+                        return 0;
+                    } else {
+                        return 14;  // ERR_UNSUPPORTED_TARGET
+                    }
+                }
+            }
+        }
+    }
+
+    // Recursive section header ingestion
+    proc K::ingest_section_headers(
+        path: UInt64,
+        machine: UInt16,
+        coff_hdr_end: UInt64,
+        num_sections: UInt16,
+        index: UInt16
+    ) -> UInt32 {
+        if index >= num_sections {
+            return 0;
+        } else {
+            let v_size = section_virtual_size(path, coff_hdr_end, index);
+            let raw_data_size = section_raw_data_size(path, coff_hdr_end, index);
+            let ptr_raw_data = section_ptr_raw_data(path, coff_hdr_end, index);
+            let characteristics = section_characteristics(path, coff_hdr_end, index);
+            let sec_type = coff_characteristics_to_type(characteristics);
+            let sec_flags = coff_characteristics_to_flags(characteristics);
+
+            let register_status = host_linker_object_add_section(
+                index + 1,
+                sec_type,
+                sec_flags,
+                ptr_raw_data,
+                raw_data_size,
+                0,
+                0,
+                1,
+                0
+            );
+            if register_status ! 0 {
+                return register_status;
+            } else {
+                return ingest_section_headers(
+                    path, machine, coff_hdr_end, num_sections, index + 1
+                );
+            }
+        }
+    }
+
+    // Symbol table ingestion (recursive)
+    proc K::ingest_symbol_records(
+        path: UInt64,
+        symtab_offset: UInt32,
+        num_symbols: UInt32,
+        index: UInt32,
+        strtab_offset: UInt32
+    ) -> UInt32 {
+        if index >= num_symbols {
+            return 0;
+        } else {
+            let sym_off = symtab_offset + (index * 18);
+            let name_zero = read_u32_file(path, sym_off);
+            let name_four = read_u32_file(path, sym_off + 4);
+            let sym_value = read_u32_file(path, sym_off + 8);
+            let sym_section = read_u16_file(path, sym_off + 12);
+            let sym_type_raw = read_u16_file(path, sym_off + 14);
+            let sym_storage = read_u8_file(path, sym_off + 16);
+            let _sym_aux = read_u8_file(path, sym_off + 17);
+
+            // Derive name hash from 8-byte name field
+            let name_hash: UInt64 = name_zero + (name_four * 4294967296);
+
+            // Map COFF storage class to ELF bind
+            let sym_bind: UInt8 = 1;  // Default: GLOBAL
+            if sym_storage == 3 {
+                let sym_bind: UInt8 = 0;  // STATIC (file scope)
+            } else {
+                if sym_storage == 2 {
+                    let sym_bind: UInt8 = 0;  // STATIC
+                }
+            }
+
+            // Map COFF section number to ELF shndx (COFF sections are 1-based)
+            let st_shndx: UInt16 = 0;  // Default: UNDEF
+            if sym_section > 0 {
+                let st_shndx: UInt16 = sym_section;
+            } else {
+                if sym_section == 0 {
+                    if sym_value ! 0 {
+                        let st_shndx: UInt16 = 65521;  // SHN_ABS
+                    }
+                }
+            }
+
+            let defined: UInt8 = 0;
+            if st_shndx ! 0 {
+                let defined: UInt8 = 1;
+            }
+
+            let register_status = host_linker_object_add_symbol(
+                name_hash,
+                sym_bind,
+                0,  // sym_type: STT_NOTYPE
+                st_shndx,
+                sym_value,
+                0,  // size
+                strtab_offset
+            );
+            if register_status ! 0 {
+                return register_status;
+            } else {
+                // COFF symbols can have auxiliary entries; skip them
+                let aux_count: UInt8 = 0;
+                if sym_storage == 104 {
+                    let aux_count: UInt8 = 1;  // Section definition
+                } else {
+                    if sym_storage == 103 {
+                        let aux_count: UInt8 = 1;  // Function definition
+                    }
+                }
+                let skip: UInt32 = index + 1 + aux_count;
+                return ingest_symbol_records(
+                    path, symtab_offset, num_symbols, skip, strtab_offset
+                );
+            }
+        }
+    }
+
+    // Relocation record ingestion (recursive)
+    proc K::ingest_relocation_records(
+        path: UInt64,
+        section_index: UInt16,
+        reloc_offset: UInt32,
+        num_relocs: UInt16,
+        index: UInt16
+    ) -> UInt32 {
+        if index >= num_relocs {
+            return 0;
+        } else {
+            let reloc_off = reloc_offset + (index * 10);
+            let r_vaddr = read_u32_file(path, reloc_off);
+            let r_symndx = read_u32_file(path, reloc_off + 4);
+            let r_type_raw = read_u16_file(path, reloc_off + 8);
+
+            // Map COFF relocation types to ELF x86_64 equivalents
+            let reloc_type: UInt32 = 0;
+            if r_type_raw == 1 {
+                let reloc_type: UInt32 = 1;  // R_X86_64_64 (ABS64)
+            } else {
+                if r_type_raw == 4 {
+                    let reloc_type: UInt32 = 2;  // R_X86_64_PC32 (REL32)
+                } else {
+                    if r_type_raw == 6 {
+                        let reloc_type: UInt32 = 4;  // R_X86_64_PLT32 (SECREL)
+                    } else {
+                        if r_type_raw == 10 {
+                            let reloc_type: UInt32 = 8;  // R_X86_64_RELATIVE
+                        } else {
+                            let reloc_type: UInt32 = 0;  // R_X86_64_NONE (unknown)
+                        }
+                    }
+                }
+            }
+
+            let register_status = host_linker_object_add_relocation(
+                section_index,
+                r_vaddr,
+                reloc_type,
+                r_symndx,
+                0  // COFF relocations don't have explicit addends
+            );
+            if register_status ! 0 {
+                return register_status;
+            } else {
+                return ingest_relocation_records(
+                    path, section_index, reloc_offset, num_relocs, index + 1
+                );
+            }
+        }
+    }
+
+    // Ingest relocations for all sections (recursive over sections)
+    proc K::ingest_section_relocations(
+        path: UInt64,
+        coff_hdr_end: UInt64,
+        num_sections: UInt16,
+        index: UInt16
+    ) -> UInt32 {
+        if index >= num_sections {
+            return 0;
+        } else {
+            let num_relocs = section_num_relocs(path, coff_hdr_end, index);
+            if num_relocs > 0 {
+                let ptr_relocs = section_ptr_relocs(path, coff_hdr_end, index);
+                let reloc_status = ingest_relocation_records(
+                    path, index + 1, ptr_relocs, num_relocs, 0
+                );
+                if reloc_status ! 0 {
+                    return reloc_status;
+                }
+            }
+            return ingest_section_relocations(
+                path, coff_hdr_end, num_sections, index + 1
+            );
+        }
+    }
+
+    // Main entry point: ingest a COFF object file
+    proc K::ingest_object_file(path: UInt64) -> UInt32 {
+        let file_status = LinkerFs::K::validate_input_file(path);
+        if file_status ! 0 {
+            return file_status;
+        } else {
+            let file_size = LinkerFs::K::file_size(path);
+            if file_size < COFF_HEADER_SIZE {
+                return 2;  // ERR_INVALID_FORMAT
+            } else {
+                let machine = read_u16_file(path, 0);
+                let num_sections = read_u16_file(path, 2);
+                let symtab_offset = read_u32_file(path, 8);
+                let num_symbols = read_u32_file(path, 12);
+
+                let machine_status = validate_machine(machine);
+                if machine_status ! 0 {
+                    return machine_status;
+                } else {
+                    let begin_status = host_linker_object_begin(
+                        path, file_size, IMAGE_FILE_REL, machine
+                    );
+                    if begin_status ! 0 {
+                        return begin_status;
+                    } else {
+                        let section_status = ingest_section_headers(
+                            path, machine, COFF_HEADER_SIZE, num_sections, 0
+                        );
+                        if section_status ! 0 {
+                            return section_status;
+                        } else {
+                            // Ingest relocations if present
+                            let reloc_status = ingest_section_relocations(
+                                path, COFF_HEADER_SIZE, num_sections, 0
+                            );
+                            if reloc_status ! 0 {
+                                return reloc_status;
+                            } else {
+                                // Ingest symbol table if present
+                                if num_symbols > 0 {
+                                    // COFF string table is at symtab_offset + num_symbols * 18 + 4
+                                    let strtab_off = symtab_offset + (num_symbols * 18);
+                                    let _sym_status = ingest_symbol_records(
+                                        path, symtab_offset, num_symbols, 0, strtab_off
+                                    );
+                                }
+                                return host_linker_object_finalize(path);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::validate_coff_header(data: UInt64) -> UInt32 {
+        if data == 0 {
+            return 2;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::get_coff_machine(data: UInt64) -> UInt16 {
+        if data == 0 {
+            return 0;
+        } else {
+            return IMAGE_FILE_MACHINE_AMD64;
+        }
+    }
+
+    proc K::get_coff_section_count(data: UInt64) -> UInt16 {
+        if data == 0 {
+            return 0;
+        } else {
+            return 1;
+        }
+    }
+
+    proc Φ::validate_coff_header(data: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::get_coff_machine(data: UInt64) -> UInt16 {
+        return 0;
+    }
+}

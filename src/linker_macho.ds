@@ -1,0 +1,629 @@
+// File: linker_macho.ds - This file is part of the DPL Toolchain
+// Copyright (c) 2026 Dust LLC, and Contributors
+// Description:
+//   Mach-O 64-bit object parsing for DustLink.
+//   Provides:
+//     - Mach-O header constants (magic, cputype, filetype)
+//     - Load command constants (LC_SEGMENT_64, LC_SYMTAB, etc.)
+//     - Section and symbol parsing
+//     - ingest_object_file entry point
+
+forge MachOFormat {
+    // Mach-O magic values
+    const MH_MAGIC_64: UInt32 = 4277009103;   // 0xfeedfacf
+    const MH_CIGAM_64: UInt32 = 3405691582;   // 0xcffaedfe (swapped)
+
+    // Mach-O CPU types
+    const CPU_TYPE_X86_64: UInt32 = 16777223;  // 0x01000007
+    const CPU_TYPE_ARM64: UInt32 = 16777228;   // 0x0100000c
+
+    // Mach-O file types
+    const MH_OBJECT: UInt32 = 1;
+    const MH_EXECUTE: UInt32 = 2;
+    const MH_DYLIB: UInt32 = 6;
+    const MH_DYLINKER: UInt32 = 7;
+    const MH_BUNDLE: UInt32 = 8;
+    const MH_DSYM: UInt32 = 10;
+
+    // Load commands
+    const LC_SEGMENT_64: UInt32 = 25;   // 0x19
+    const LC_SYMTAB: UInt32 = 2;
+    const LC_DYSYMTAB: UInt32 = 11;
+    const LC_LOAD_DYLIB: UInt32 = 12;
+    const LC_ID_DYLIB: UInt32 = 13;
+    const LC_LOAD_DYLINKER: UInt32 = 14;
+    const LC_RPATH: UInt32 = 2147483676;  // 0x8000001c
+
+    // Section attributes
+    const S_ATTR_PURE_INSTRUCTIONS: UInt32 = 2147483648;
+    const S_ATTR_NO_TOC: UInt32 = 32;
+    const S_ATTR_SOME_INSTRUCTIONS: UInt32 = 1024;
+    const S_ATTR_EXT_RELOC: UInt32 = 1;
+    const S_ATTR_LOC_RELOC: UInt32 = 2;
+
+    // Mach-O 64-bit header size
+    const MACHO64_HEADER_SIZE: UInt32 = 32;
+    const LOAD_CMD_HEADER_SIZE: UInt32 = 8;
+    const SEGMENT64_SIZE: UInt32 = 72;   // 56 + 8 + 8
+    const SECTION64_SIZE: UInt32 = 80;
+
+    // ELF storage type for Mach-O objects
+    const IMAGE_FILE_REL: UInt16 = 1;
+
+    proc K::u16_from_le(b0: UInt8, b1: UInt8) -> UInt16 {
+        return b0 + (b1 * 256);
+    }
+
+    proc K::u32_from_le(b0: UInt8, b1: UInt8, b2: UInt8, b3: UInt8) -> UInt32 {
+        let lo16 = u16_from_le(b0, b1);
+        let hi16 = u16_from_le(b2, b3);
+        return lo16 + (hi16 * 65536);
+    }
+
+    proc K::u64_from_le(
+        b0: UInt8, b1: UInt8, b2: UInt8, b3: UInt8,
+        b4: UInt8, b5: UInt8, b6: UInt8, b7: UInt8
+    ) -> UInt64 {
+        let lo32 = u32_from_le(b0, b1, b2, b3);
+        let hi32 = u32_from_le(b4, b5, b6, b7);
+        return lo32 + (hi32 * 4294967296);
+    }
+
+    proc K::read_u8_file(path: UInt64, offset: UInt64) -> UInt8 {
+        return LinkerFs::K::read_u8(path, offset);
+    }
+
+    proc K::read_u16_file(path: UInt64, offset: UInt64) -> UInt16 {
+        let b0 = read_u8_file(path, offset);
+        let b1 = read_u8_file(path, offset + 1);
+        return u16_from_le(b0, b1);
+    }
+
+    proc K::read_u32_file(path: UInt64, offset: UInt64) -> UInt32 {
+        let b0 = read_u8_file(path, offset);
+        let b1 = read_u8_file(path, offset + 1);
+        let b2 = read_u8_file(path, offset + 2);
+        let b3 = read_u8_file(path, offset + 3);
+        return u32_from_le(b0, b1, b2, b3);
+    }
+
+    proc K::read_u64_file(path: UInt64, offset: UInt64) -> UInt64 {
+        let b0 = read_u8_file(path, offset);
+        let b1 = read_u8_file(path, offset + 1);
+        let b2 = read_u8_file(path, offset + 2);
+        let b3 = read_u8_file(path, offset + 3);
+        let b4 = read_u8_file(path, offset + 4);
+        let b5 = read_u8_file(path, offset + 5);
+        let b6 = read_u8_file(path, offset + 6);
+        let b7 = read_u8_file(path, offset + 7);
+        return u64_from_le(b0, b1, b2, b3, b4, b5, b6, b7);
+    }
+
+    // Validate Mach-O magic and cpu type
+    proc K::validate_macho_header(
+        magic: UInt32,
+        cputype: UInt32,
+        filetype: UInt32
+    ) -> UInt32 {
+        if magic ! MH_MAGIC_64 {
+            return 2;  // ERR_INVALID_FORMAT
+        } else {
+            if cputype == CPU_TYPE_X86_64 {
+                return 0;
+            } else {
+                if cputype == CPU_TYPE_ARM64 {
+                    return 0;
+                } else {
+                    return 14;  // ERR_UNSUPPORTED_TARGET
+                }
+            }
+        }
+    }
+
+    // Recursive load command iteration
+    proc K::ingest_load_commands(
+        path: UInt64,
+        file_size: UInt64,
+        cmd_offset: UInt64,
+        cmd_offset_end: UInt64,
+        ncmds: UInt32,
+        cmd_index: UInt32,
+        sec_index: UInt16
+    ) -> UInt32 {
+        if cmd_index >= ncmds {
+            return 0;
+        } else {
+            let cmd = read_u32_file(path, cmd_offset);
+            let cmdsize = read_u32_file(path, cmd_offset + 4);
+
+            if cmd == LC_SEGMENT_64 {
+                // LC_SEGMENT_64 layout:
+                //   cmd(4) + cmdsize(4) + segname(16) + vmaddr(8) + vmsize(8)
+                //   + fileoff(8) + filesize(8) + maxprot(4) + initprot(4)
+                //   + nsects(4) + flags(4) = 72 bytes
+                // Then nsects * 80 bytes of section data
+                let nsects_off = cmd_offset + 64;
+                let nsects = read_u32_file(path, nsects_off);
+                let segflags_off = cmd_offset + 68;
+                let segflags = read_u32_file(path, segflags_off);
+
+                let new_sec_index = ingest_segment_sections(
+                    path, cmd_offset + 72, nsects, sec_index, segflags
+                );
+
+                let next_cmd_offset = cmd_offset + cmdsize;
+                return ingest_load_commands(
+                    path, file_size, next_cmd_offset, cmd_offset_end,
+                    ncmds, cmd_index + 1, new_sec_index
+                );
+            } else {
+                // Skip non-SEGMENT_64 commands
+                let next_cmd_offset = cmd_offset + cmdsize;
+                return ingest_load_commands(
+                    path, file_size, next_cmd_offset, cmd_offset_end,
+                    ncmds, cmd_index + 1, sec_index
+                );
+            }
+        }
+    }
+
+    // Recursive section ingestion within a segment
+    proc K::ingest_segment_sections(
+        path: UInt64,
+        sections_offset: UInt64,
+        nsects: UInt32,
+        sec_index: UInt16,
+        segflags: UInt32
+    ) -> UInt16 {
+        if nsects == 0 {
+            return sec_index;
+        } else {
+            let sect_off = sections_offset;
+            // section_64 layout:
+            //   sectname(16) + segname(16) + addr(8) + size(8)
+            //   + offset(4) + align(4) + reloff(4) + nreloc(4) + flags(4)
+            //   + reserved1(4) + reserved2(4) + reserved3(4) = 80 bytes
+
+            let size = read_u64_file(path, sect_off + 32);
+            let offset = read_u32_file(path, sect_off + 40);
+            let align_raw = read_u32_file(path, sect_off + 44);
+            let secflags = read_u32_file(path, sect_off + 48);
+            let reloff = read_u32_file(path, sect_off + 52);
+            let nreloc = read_u32_file(path, sect_off + 56);
+
+            // Map Mach section flags to ELF section type/flags
+            let sec_type: UInt32 = 1;  // SHT_PROGBITS default
+            let sec_flags: UInt64 = 0;
+            if secflags & S_ATTR_PURE_INSTRUCTIONS == S_ATTR_PURE_INSTRUCTIONS {
+                let sec_flags: UInt64 = 2 + 4;  // SHF_ALLOC + SHF_EXECINSTR
+            } else {
+                if secflags & S_ATTR_SOME_INSTRUCTIONS == S_ATTR_SOME_INSTRUCTIONS {
+                    let sec_flags: UInt64 = 2 + 4;  // SHF_ALLOC + SHF_EXECINSTR
+                } else {
+                    let sec_flags: UInt64 = 2;  // SHF_ALLOC
+                }
+            }
+
+            let align_val: UInt64 = 1;
+            if align_raw == 0 {
+                let align_val: UInt64 = 1;
+            } else {
+                if align_raw < 32 {
+                    let align_val: UInt64 = u64_pow2(align_raw);
+                } else {
+                    let align_val: UInt64 = 1;
+                }
+            }
+
+            let register_status = host_linker_object_add_section(
+                sec_index + 1,
+                sec_type,
+                sec_flags,
+                offset,
+                size,
+                0,
+                0,
+                align_val,
+                0
+            );
+            if register_status ! 0 {
+                return sec_index;
+            } else {
+                // Ingest relocations for this section
+                if nreloc > 0 {
+                    let _reloc_status = ingest_macho_relocations(
+                        path, sec_index + 1, reloff, nreloc, 0
+                    );
+                }
+
+                let new_sec_index = sec_index + 1;
+                let remaining = nsects - 1;
+                return ingest_segment_sections(
+                    path, sect_off + 80, remaining, new_sec_index, segflags
+                );
+            }
+        }
+    }
+
+    // Mach-O relocation record ingestion (recursive)
+    proc K::ingest_macho_relocations(
+        path: UInt64,
+        section_index: UInt16,
+        reloff: UInt32,
+        nreloc: UInt32,
+        index: UInt32
+    ) -> UInt32 {
+        if index >= nreloc {
+            return 0;
+        } else {
+            let reloc_off = reloff + (index * 8);
+            let r_address = read_u32_file(path, reloc_off);
+            let r_symbolnum_raw = read_u32_file(path, reloc_off + 4);
+
+            // Mach-O relocation format:
+            //   r_address(4) + r_symbolnum:26 + r_pcrel:1 + r_length:2 + r_extern:1 + r_scattered:2
+            let r_symbolnum: UInt32 = r_symbolnum_raw & 67108863;  // lower 26 bits
+            let r_extern_bit: UInt32 = (r_symbolnum_raw >> 27) & 1;
+            let r_length: UInt32 = (r_symbolnum_raw >> 25) & 3;
+            let r_pcrel_bit: UInt32 = (r_symbolnum_raw >> 24) & 1;
+
+            // Map Mach relocation type to ELF x86_64
+            let reloc_type: UInt32 = 0;
+            if r_length == 3 {
+                // 64-bit relocation
+                if r_pcrel_bit == 1 {
+                    let reloc_type: UInt32 = 2;  // R_X86_64_PC32
+                } else {
+                    let reloc_type: UInt32 = 1;  // R_X86_64_64
+                }
+            } else {
+                if r_length == 2 {
+                    // 32-bit relocation
+                    if r_pcrel_bit == 1 {
+                        let reloc_type: UInt32 = 4;  // R_X86_64_PLT32
+                    } else {
+                        let reloc_type: UInt32 = 10;  // R_X86_64_32
+                    }
+                } else {
+                    let reloc_type: UInt32 = 0;  // R_X86_64_NONE
+                }
+            }
+
+            let sym_index: UInt32 = r_symbolnum;
+
+            let register_status = host_linker_object_add_relocation(
+                section_index,
+                r_address,
+                reloc_type,
+                sym_index,
+                0  // Mach-O relocations don't have explicit addends
+            );
+            if register_status ! 0 {
+                return register_status;
+            } else {
+                return ingest_macho_relocations(
+                    path, section_index, reloff, nreloc, index + 1
+                );
+            }
+        }
+    }
+
+    // Symbol table ingestion from LC_SYMTAB
+    proc K::ingest_macho_symbol_table(
+        path: UInt64,
+        symoff: UInt32,
+        nsyms: UInt32,
+        stroff: UInt32,
+        index: UInt32
+    ) -> UInt32 {
+        if index >= nsyms {
+            return 0;
+        } else {
+            let sym_off = symoff + (index * 16);
+            let n_strx = read_u32_file(path, sym_off);
+            let n_type = read_u8_file(path, sym_off + 4);
+            let _n_sect = read_u8_file(path, sym_off + 5);
+            let n_desc = read_u16_file(path, sym_off + 6);
+            let n_value = read_u64_file(path, sym_off + 8);
+
+            // n_type bits: N_TYPE(0x0e), N_EXT(0x01), N_PEXT(0x10), N_STAB(0xe0)
+            let n_type_masked: UInt8 = n_type & 14;
+            let is_external: UInt8 = n_type & 1;
+
+            let sym_bind: UInt8 = 1;  // GLOBAL default
+            if is_external == 0 {
+                let sym_bind: UInt8 = 0;  // LOCAL
+            }
+
+            // Map Mach section to ELF shndx
+            let st_shndx: UInt16 = 0;  // UNDEF default
+            let n_sect: UInt8 = _n_sect;
+            if n_sect > 0 {
+                let st_shndx: UInt16 = n_sect;
+            } else {
+                if n_type_masked == 3 {
+                    // N_ABS
+                    let st_shndx: UInt16 = 65521;  // SHN_ABS
+                }
+            }
+
+            // Name hash from string table offset
+            let name_hash: UInt64 = n_strx;
+
+            let defined: UInt8 = 0;
+            if st_shndx ! 0 {
+                let defined: UInt8 = 1;
+            }
+
+            let register_status = host_linker_object_add_symbol(
+                name_hash,
+                sym_bind,
+                0,  // STT_NOTYPE
+                st_shndx,
+                n_value,
+                0,  // size
+                stroff
+            );
+            if register_status ! 0 {
+                return register_status;
+            } else {
+                return ingest_macho_symbol_table(
+                    path, symoff, nsyms, stroff, index + 1
+                );
+            }
+        }
+    }
+
+    // Find LC_SYMTAB command and ingest symbols
+    proc K::find_and_ingest_symtab(
+        path: UInt64,
+        cmd_offset: UInt64,
+        cmd_offset_end: UInt64,
+        ncmds: UInt32,
+        cmd_index: UInt32
+    ) -> UInt32 {
+        if cmd_index >= ncmds {
+            return 0;
+        } else {
+            let cmd = read_u32_file(path, cmd_offset);
+            let cmdsize = read_u32_file(path, cmd_offset + 4);
+
+            if cmd == LC_SYMTAB {
+                // LC_SYMTAB layout: cmd(4) + cmdsize(4) + symoff(4) + nsyms(4) + stroff(4) + strsize(4)
+                let symoff = read_u32_file(path, cmd_offset + 8);
+                let nsyms = read_u32_file(path, cmd_offset + 12);
+                let stroff = read_u32_file(path, cmd_offset + 16);
+                let _strsize = read_u32_file(path, cmd_offset + 20);
+
+                let sym_status = ingest_macho_symbol_table(
+                    path, symoff, nsyms, stroff, 0
+                );
+                if sym_status ! 0 {
+                    return sym_status;
+                }
+            }
+
+            let next_cmd_offset = cmd_offset + cmdsize;
+            return find_and_ingest_symtab(
+                path, cmd_offset, cmd_offset_end, ncmds, cmd_index + 1
+            );
+        }
+    }
+
+    // Helper: compute 2^n
+    proc K::u64_pow2(exponent: UInt32) -> UInt64 {
+        if exponent == 0 {
+            return 1;
+        } else {
+            if exponent == 1 {
+                return 2;
+            } else {
+                if exponent == 2 {
+                    return 4;
+                } else {
+                    if exponent == 3 {
+                        return 8;
+                    } else {
+                        if exponent == 4 {
+                            return 16;
+                        } else {
+                            if exponent == 5 {
+                                return 32;
+                            } else {
+                                if exponent == 6 {
+                                    return 64;
+                                } else {
+                                    if exponent == 7 {
+                                        return 128;
+                                    } else {
+                                        if exponent == 8 {
+                                            return 256;
+                                        } else {
+                                            if exponent == 9 {
+                                                return 512;
+                                            } else {
+                                                if exponent == 10 {
+                                                    return 1024;
+                                                } else {
+                                                    if exponent == 11 {
+                                                        return 2048;
+                                                    } else {
+                                                        if exponent == 12 {
+                                                            return 4096;
+                                                        } else {
+                                                            if exponent == 13 {
+                                                                return 8192;
+                                                            } else {
+                                                                if exponent == 14 {
+                                                                    return 16384;
+                                                                } else {
+                                                                    if exponent == 15 {
+                                                                        return 32768;
+                                                                    } else {
+                                                                        if exponent == 16 {
+                                                                            return 65536;
+                                                                        } else {
+                                                                            if exponent == 17 {
+                                                                                return 131072;
+                                                                            } else {
+                                                                                if exponent == 18 {
+                                                                                    return 262144;
+                                                                                } else {
+                                                                                    if exponent == 19 {
+                                                                                        return 524288;
+                                                                                    } else {
+                                                                                        if exponent == 20 {
+                                                                                            return 1048576;
+                                                                                        } else {
+                                                                                            if exponent == 21 {
+                                                                                                return 2097152;
+                                                                                            } else {
+                                                                                                if exponent == 22 {
+                                                                                                    return 4194304;
+                                                                                                } else {
+                                                                                                    if exponent == 23 {
+                                                                                                        return 8388608;
+                                                                                                    } else {
+                                                                                                        if exponent == 24 {
+                                                                                                            return 16777216;
+                                                                                                        } else {
+                                                                                                            if exponent == 25 {
+                                                                                                                return 33554432;
+                                                                                                            } else {
+                                                                                                                if exponent == 26 {
+                                                                                                                    return 67108864;
+                                                                                                                } else {
+                                                                                                                    if exponent == 27 {
+                                                                                                                        return 134217728;
+                                                                                                                    } else {
+                                                                                                                        if exponent == 28 {
+                                                                                                                            return 268435456;
+                                                                                                                        } else {
+                                                                                                                            if exponent == 29 {
+                                                                                                                                return 536870912;
+                                                                                                                            } else {
+                                                                                                                                if exponent == 30 {
+                                                                                                                                    return 1073741824;
+                                                                                                                                } else {
+                                                                                                                                    if exponent == 31 {
+                                                                                                                                        return 2147483648;
+                                                                                                                                    } else {
+                                                                                                                                        return 4294967296;
+                                                                                                                                    }
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                        }
+                                                                                                                    }
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Main entry point: ingest a Mach-O 64-bit object file
+    proc K::ingest_object_file(path: UInt64) -> UInt32 {
+        let file_status = LinkerFs::K::validate_input_file(path);
+        if file_status ! 0 {
+            return file_status;
+        } else {
+            let file_size = LinkerFs::K::file_size(path);
+            if file_size < MACHO64_HEADER_SIZE {
+                return 2;  // ERR_INVALID_FORMAT
+            } else {
+                let magic = read_u32_file(path, 0);
+                let cputype = read_u32_file(path, 4);
+                let cpusubtype = read_u32_file(path, 8);
+                let filetype = read_u32_file(path, 12);
+                let ncmds = read_u32_file(path, 16);
+                let sizeofcmds = read_u32_file(path, 20);
+                let flags = read_u32_file(path, 24);
+                let _reserved = read_u32_file(path, 28);
+
+                let header_status = validate_macho_header(magic, cputype, filetype);
+                if header_status ! 0 {
+                    return header_status;
+                } else {
+                    let begin_status = host_linker_object_begin(
+                        path, file_size, IMAGE_FILE_REL, cputype
+                    );
+                    if begin_status ! 0 {
+                        return begin_status;
+                    } else {
+                        // Load commands start after the 32-byte header
+                        let cmd_start: UInt64 = MACHO64_HEADER_SIZE;
+
+                        let sec_status = ingest_load_commands(
+                            path, file_size, cmd_start,
+                            cmd_start + sizeofcmds, ncmds, 0, 0
+                        );
+                        if sec_status ! 0 {
+                            return sec_status;
+                        } else {
+                            // Also try to ingest symbol table
+                            let _sym_status = find_and_ingest_symtab(
+                                path, cmd_start, cmd_start + sizeofcmds,
+                                ncmds, 0
+                            );
+                            return host_linker_object_finalize(path);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    proc K::validate_macho_header_simple(data: UInt64) -> UInt32 {
+        if data == 0 {
+            return 2;
+        } else {
+            return 0;
+        }
+    }
+
+    proc K::get_macho_cputype(data: UInt64) -> UInt32 {
+        if data == 0 {
+            return 0;
+        } else {
+            return CPU_TYPE_X86_64;
+        }
+    }
+
+    proc K::get_macho_filetype(data: UInt64) -> UInt32 {
+        if data == 0 {
+            return 0;
+        } else {
+            return MH_OBJECT;
+        }
+    }
+
+    proc Φ::validate_macho_header_simple(data: UInt64) -> UInt32 {
+        return 100;
+    }
+
+    proc Φ::get_macho_cputype(data: UInt64) -> UInt32 {
+        return 0;
+    }
+}

@@ -1202,12 +1202,17 @@ uint32_t host_linker_archive_progress_get(void) {
  * LAYER 1: Needed shared libraries
  * ======================================================================== */
 
-uint32_t host_linker_note_needed_library(uint64_t name, uint32_t is_shared) {
+uint32_t host_linker_note_needed_library(uint64_t name, uint64_t path, uint32_t retained) {
     uint64_t h = 0;
     if (string_store(&h, cstring_from_handle(name)) == 0) {
-        return u64_vec_push(&g_state.needed_shared_libs, h);
+        uint64_t ph = 0;
+        if (path != 0) {
+            string_store(&ph, cstring_from_handle(path));
+        }
+        (void)ph;
+        u64_vec_push(&g_state.needed_shared_libs, h);
     }
-    (void)is_shared;
+    g_state.last_shared_object_retained = retained ? 1 : 0;
     return ERR_OK;
 }
 
@@ -1503,9 +1508,12 @@ uint32_t host_linker_probe_object_format(uint64_t path_h) {
     return OBJECT_FORMAT_UNKNOWN;
 }
 
-static uint32_t host_linker_object_begin(uint64_t path, uint64_t file_size, uint16_t elf_type, uint16_t machine);
+uint32_t host_linker_object_begin(uint64_t path, uint64_t file_size, uint16_t elf_type, uint16_t machine);
 uint32_t host_linker_object_add_section(uint32_t index, uint32_t sec_type, uint64_t flags, uint64_t offset, uint64_t size, uint32_t link, uint32_t info, uint64_t align, uint64_t entsize);
 uint32_t host_linker_object_finalize(uint64_t path);
+uint32_t host_linker_probe_object_format(uint64_t path);
+uint64_t host_archive_extract_member_object(uint64_t path, uint32_t index);
+uint32_t host_archive_member_object_kind(uint64_t path, uint32_t index);
 
 uint32_t host_linker_ingest_coff_object(uint64_t path) {
     const char *p = cstring_from_handle(path);
@@ -1622,10 +1630,6 @@ uint32_t host_linker_ingest_macho_object(uint64_t path) {
     return ERR_OK;
 }
 
-/* Forward declaration for host_linker_object_begin */
-static uint32_t host_linker_object_begin(uint64_t path, uint64_t file_size,
-                                          uint16_t elf_type, uint16_t machine);
-
 uint32_t host_linker_ingest_shared_object(uint64_t path) {
     /* Shared object ingest - same as ELF but for ET_DYN */
     uint64_t path_h = path;
@@ -1700,12 +1704,12 @@ uint32_t host_linker_object_add_section(uint32_t index, uint32_t sec_type,
     return ERR_OK;
 }
 
-uint32_t host_linker_object_add_symbol(uint32_t name_idx, uint8_t bind, uint8_t sym_type,
-    uint16_t shndx, uint64_t value, uint64_t size, uint32_t strtab_section) {
+uint32_t host_linker_object_add_symbol(uint64_t name_hash, uint8_t bind, uint8_t sym_type,
+    uint32_t shndx, uint64_t value, uint32_t size, uint32_t flags) {
 
     if (g_state.object_count == 0) return ERR_INVALID_FORMAT;
     ObjectRecord *obj = &g_state.objects[g_state.object_count - 1];
-    
+
     if (obj->sym_count >= obj->sym_cap) {
         uint32_t nc = obj->sym_cap ? obj->sym_cap * 2 : 512;
         ObjectSymbol *ns = (ObjectSymbol *)realloc(obj->symbols, nc * sizeof(ObjectSymbol));
@@ -1716,19 +1720,15 @@ uint32_t host_linker_object_add_symbol(uint32_t name_idx, uint8_t bind, uint8_t 
     }
 
     ObjectSymbol *sym = &obj->symbols[obj->sym_count];
-    sym->name_hash = name_idx;   /* This is the strtab offset, not a real handle yet */
+    sym->name_hash = name_hash;
     sym->bind = bind;
     sym->sym_type = sym_type;
-    sym->shndx = shndx;
+    sym->shndx = (uint16_t)shndx;
     sym->value = value;
     sym->size = size;
-    sym->strtab_section = strtab_section;
+    sym->strtab_section = 0;
     sym->defined = (shndx != SHN_UNDEF) ? 1 : 0;
-
-    /* If we can resolve the name now, do basic global registration */
-    /* Note: name_idx here is section-relative offset into strtab, not a CString handle.
-       The host_linker_object_symbol_name_hash must resolve it properly.
-       For now, store the offset and compute hash on demand. */
+    (void)flags;
 
     obj->sym_count++;
     return ERR_OK;
@@ -1890,13 +1890,30 @@ uint32_t host_linker_total_relocation_count(void) {
  * ======================================================================== */
 uint32_t host_linker_ingest_cli_inputs(void) {
     /* Iterates inputs registered via host_linker_register_input and
-       attempts ingestion for ELF/COFF/Mach-O format */
+       dispatches to the appropriate format-specific ingest function */
     for (uint32_t i = 0; i < g_state.inputs.count; i++) {
         uint64_t path_h = g_state.inputs.items[i];
         uint32_t fmt = host_linker_probe_object_format(path_h);
         if (fmt == OBJECT_FORMAT_ELF64) {
-            /* ELF object - will be ingested via ingest_object_file called
-               from Dust-side ELF parsing code */
+            /* ELF objects are parsed Dust-side via host_fs_read_u8 +
+               host_linker_object_begin/add_section/add_symbol/add_relocation/object_finalize.
+               Just register the object here. */
+            const char *p = cstring_from_handle(path_h);
+            if (p && path_exists(p)) {
+                uint64_t fsz = file_size_by_path(p);
+                /* Read ELF machine type at offset 18 (little-endian u16) */
+                uint8_t b0 = read_u8_at_path(p, 18);
+                uint8_t b1 = read_u8_at_path(p, 19);
+                uint16_t machine = (uint16_t)b0 | ((uint16_t)b1 << 8);
+                uint16_t elf_type = read_u16_le_path(p, 16);
+                host_linker_object_begin(path_h, fsz, elf_type, machine);
+                /* Dust-side parsing will call add_section, add_symbol, etc. */
+                host_linker_object_finalize(path_h);
+            }
+        } else if (fmt == OBJECT_FORMAT_COFF64) {
+            host_linker_ingest_coff_object(path_h);
+        } else if (fmt == OBJECT_FORMAT_MACHO64) {
+            host_linker_ingest_macho_object(path_h);
         }
     }
     return ERR_OK;
@@ -2357,8 +2374,8 @@ uint32_t host_linker_write_mbr_image(uint64_t output) {
     return ERR_OK;
 }
 
-uint32_t host_linker_write_mbr_boot_image(uint64_t output, uint64_t kernel,
-                                             uint32_t kernel_size) {
+uint64_t host_linker_write_mbr_boot_image(uint64_t output, uint64_t kernel,
+                                             uint64_t kernel_size) {
     const char *out = cstring_from_handle(output);
     const char *kern = cstring_from_handle(kernel);
     if (!out || !kern) return ERR_WRITE_FAILED;
@@ -2372,19 +2389,21 @@ uint32_t host_linker_write_mbr_boot_image(uint64_t output, uint64_t kernel,
         /* Read and write kernel data */
         uint8_t buf[4096];
         size_t rd;
-        while ((rd = fread(buf, 1, sizeof(buf), kf)) > 0) {
+        size_t written = 0;
+        while ((rd = fread(buf, 1, sizeof(buf), kf)) > 0 && written < (size_t)kernel_size) {
             fwrite(buf, 1, rd, f);
+            written += rd;
         }
         fclose(kf);
     }
     fclose(f);
-    return ERR_OK;
+    return (uint64_t)512 + kernel_size;
 }
 
-uint32_t host_linker_kernel_size(uint64_t kernel) {
+uint64_t host_linker_kernel_size(uint64_t kernel) {
     const char *k = cstring_from_handle(kernel);
     if (!k) return 0;
-    return (uint32_t)file_size_by_path(k);
+    return file_size_by_path(k);
 }
 
 uint32_t host_linker_write_efi_image(uint64_t output) {
@@ -2543,15 +2562,15 @@ uint32_t host_linker_emit_unresolved_warning(uint32_t unresolved, uint32_t weak_
 /* ========================================================================
  * Versioned shared library finding
  * ======================================================================== */
-uint64_t host_linker_find_versioned_shared_in_path(uint64_t path_h, uint64_t lib_name) {
+uint64_t host_linker_find_versioned_shared_in_path(uint64_t path_h, uint64_t lib_name, uint32_t target) {
     const char *dir = cstring_from_handle(path_h);
     const char *name = cstring_from_handle(lib_name);
     if (!dir || !name) return 0;
+    (void)target;
 
     /* Scan directory for versioned shared libraries matching lib_name */
-    /* Simple implementation: try common versioned library names */
     char buf[1024];
-    /* Try dir/libname.so, dir/libname.so.1, etc */
+    /* Try dir/libname.so */
     snprintf(buf, sizeof(buf), "%s/lib%s.so", dir, name);
     if (path_exists(buf)) {
         uint64_t h = 0;
@@ -2571,6 +2590,15 @@ uint64_t host_linker_find_versioned_shared_in_path(uint64_t path_h, uint64_t lib
         uint64_t h = 0;
         string_store(&h, buf);
         return h;
+    }
+    /* Try dir/libname.so.1, libname.so.2, etc */
+    for (int v = 1; v <= 9; v++) {
+        snprintf(buf, sizeof(buf), "%s/lib%s.so.%d", dir, name, v);
+        if (path_exists(buf)) {
+            uint64_t h = 0;
+            string_store(&h, buf);
+            return h;
+        }
     }
     return 0;
 }
@@ -2611,33 +2639,100 @@ uint32_t host_archive_member_count(uint64_t path) {
 }
 
 uint64_t host_archive_extract_member_object(uint64_t path, uint32_t index) {
-    (void)path; (void)index;
-    return 0; /* Archive extraction done Dust-side via read_u8_file */
+    const char *p = cstring_from_handle(path);
+    if (!p) return 0;
+    FILE *f = fopen(p, "rb");
+    if (!f) return 0;
+
+    /* Skip magic */
+    char magic[8];
+    if (fread(magic, 1, 8, f) != 8) { fclose(f); return 0; }
+
+    /* Skip to the requested member */
+    char header[60];
+    for (uint32_t i = 0; i <= index; i++) {
+        if (fread(header, 1, 60, f) != 60) { fclose(f); return 0; }
+        if (header[58] != '`' || header[59] != '\n') { fclose(f); return 0; }
+        char size_str[11];
+        memcpy(size_str, header + 48, 10);
+        size_str[10] = '\0';
+        uint32_t size = (uint32_t)strtoul(size_str, NULL, 10);
+        if (i == index) {
+            /* Extract to temp file */
+            char tmp[512];
+            snprintf(tmp, sizeof(tmp), "/tmp/dustlink_archive_member_%u_%u.o", (uint32_t)(uintptr_t)p, index);
+            FILE *out = fopen(tmp, "wb");
+            if (!out) { fclose(f); return 0; }
+            uint8_t buf[4096];
+            uint32_t remaining = size;
+            while (remaining > 0) {
+                uint32_t rd = remaining > sizeof(buf) ? sizeof(buf) : remaining;
+                size_t n = fread(buf, 1, rd, f);
+                if (n == 0) break;
+                fwrite(buf, 1, n, out);
+                remaining -= (uint32_t)n;
+            }
+            fclose(out);
+            /* Skip padding byte if odd */
+            if (size & 1) fseek(f, 1, SEEK_CUR);
+            fclose(f);
+            uint64_t h = 0;
+            string_store(&h, tmp);
+            return h;
+        }
+        /* Skip member data */
+        fseek(f, size + (size & 1), SEEK_CUR);
+    }
+    fclose(f);
+    return 0;
 }
 
 uint32_t host_archive_member_is_elf(uint64_t path, uint32_t index) {
-    (void)path; (void)index;
-    return 0;
+    uint32_t kind = host_archive_member_object_kind(path, index);
+    return (kind == OBJECT_FORMAT_ELF64) ? 1 : 0;
 }
 
 uint32_t host_archive_member_object_kind(uint64_t path, uint32_t index) {
-    (void)path; (void)index;
-    return OBJECT_FORMAT_UNKNOWN;
+    uint64_t obj_path = host_archive_extract_member_object(path, index);
+    if (obj_path == 0) return OBJECT_FORMAT_UNKNOWN;
+    uint32_t kind = host_linker_probe_object_format(obj_path);
+    /* Clean up temp file */
+    const char *tmp = cstring_from_handle(obj_path);
+    if (tmp) unlink(tmp);
+    return kind;
 }
 
 uint32_t host_archive_member_matches_unresolved(uint64_t path, uint32_t index) {
-    (void)path; (void)index;
-    return 0;
+    /* Extract member and check if it provides any unresolved symbols */
+    uint64_t obj_path = host_archive_extract_member_object(path, index);
+    if (obj_path == 0) return 0;
+    uint32_t kind = host_linker_probe_object_format(obj_path);
+    const char *tmp = cstring_from_handle(obj_path);
+    if (tmp) unlink(tmp);
+    if (kind != OBJECT_FORMAT_ELF64) return 0;
+    /* Full check would require parsing the symbol table; for now,
+       return 1 to indicate "maybe" and let Dust-side logic decide.
+       A proper implementation extracts symbols and cross-references
+       with g_state unresolved set. */
+    return 1;
+}
+
+static uint64_t encode_archive_key(uint64_t path, uint32_t index) {
+    /* Simple encoding: use path handle as high bits, index as low bits */
+    return (path << 16) | (uint64_t)index;
 }
 
 uint32_t host_archive_member_is_loaded(uint64_t path, uint32_t index) {
-    (void)path; (void)index;
+    uint64_t key = encode_archive_key(path, index);
+    for (uint32_t i = 0; i < g_state.loaded_archive_keys.count; i++) {
+        if (g_state.loaded_archive_keys.items[i] == key) return 1;
+    }
     return 0;
 }
 
 uint32_t host_archive_member_mark_loaded(uint64_t path, uint32_t index) {
-    (void)path; (void)index;
-    return ERR_OK;
+    uint64_t key = encode_archive_key(path, index);
+    return u64_vec_push(&g_state.loaded_archive_keys, key);
 }
 
 /* ========================================================================
