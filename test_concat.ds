@@ -1,0 +1,14 @@
+// Concatenated test
+forge Test1 {
+  proc helper() -> UInt32 {
+    return 42;
+  }
+}
+
+forge Test2 {
+  const FOO: UInt32 = 1;
+}
+
+proc K::main() -> UInt32 {
+  return Test1::helper();
+}

@@ -231,7 +231,7 @@ forge MachOFormat {
             } else {
                 // Ingest relocations for this section
                 if nreloc > 0 {
-                    let _reloc_status = ingest_macho_relocations(
+                    let reloc_status = ingest_macho_relocations(
                         path, sec_index + 1, reloff, nreloc, 0
                     );
                 }
@@ -263,12 +263,12 @@ forge MachOFormat {
             // Mach-O relocation format:
             //   r_address(4) + r_symbolnum:26 + r_pcrel:1 + r_length:2 + r_extern:1 + r_scattered:2
             let r_symbolnum: UInt32 = r_symbolnum_raw & 67108863;  // lower 26 bits
-            let r_extern_bit: UInt32 = (r_symbolnum_raw >> 27) & 1;
-            let r_length: UInt32 = (r_symbolnum_raw >> 25) & 3;
-            let r_pcrel_bit: UInt32 = (r_symbolnum_raw >> 24) & 1;
+            let r_extern_bit = (r_symbolnum_raw / 134217728) & 1;
+            let r_length = (r_symbolnum_raw / 33554432) & 3;
+            let r_pcrel_bit = (r_symbolnum_raw / 16777216) & 1;
 
             // Map Mach relocation type to ELF x86_64
-            let reloc_type: UInt32 = 0;
+            let reloc_type = 0;
             if r_length == 3 {
                 // 64-bit relocation
                 if r_pcrel_bit == 1 {
@@ -289,7 +289,7 @@ forge MachOFormat {
                 }
             }
 
-            let sym_index: UInt32 = r_symbolnum;
+            let sym_index = r_symbolnum;
 
             let register_status = host_linker_object_add_relocation(
                 section_index,
@@ -322,7 +322,7 @@ forge MachOFormat {
             let sym_off = symoff + (index * 16);
             let n_strx = read_u32_file(path, sym_off);
             let n_type = read_u8_file(path, sym_off + 4);
-            let _n_sect = read_u8_file(path, sym_off + 5);
+            let n_sect = read_u8_file(path, sym_off + 5);
             let n_desc = read_u16_file(path, sym_off + 6);
             let n_value = read_u64_file(path, sym_off + 8);
 
@@ -337,7 +337,7 @@ forge MachOFormat {
 
             // Map Mach section to ELF shndx
             let st_shndx: UInt16 = 0;  // UNDEF default
-            let n_sect: UInt8 = _n_sect;
+            let n_sect_val: UInt8 = n_sect;
             if n_sect > 0 {
                 let st_shndx: UInt16 = n_sect;
             } else {
@@ -393,7 +393,7 @@ forge MachOFormat {
                 let symoff = read_u32_file(path, cmd_offset + 8);
                 let nsyms = read_u32_file(path, cmd_offset + 12);
                 let stroff = read_u32_file(path, cmd_offset + 16);
-                let _strsize = read_u32_file(path, cmd_offset + 20);
+                let strsize = read_u32_file(path, cmd_offset + 20);
 
                 let sym_status = ingest_macho_symbol_table(
                     path, symoff, nsyms, stroff, 0
@@ -560,7 +560,7 @@ forge MachOFormat {
                 let ncmds = read_u32_file(path, 16);
                 let sizeofcmds = read_u32_file(path, 20);
                 let flags = read_u32_file(path, 24);
-                let _reserved = read_u32_file(path, 28);
+                let reserved = read_u32_file(path, 28);
 
                 let header_status = validate_macho_header(magic, cputype, filetype);
                 if header_status ! 0 {
@@ -583,7 +583,7 @@ forge MachOFormat {
                             return sec_status;
                         } else {
                             // Also try to ingest symbol table
-                            let _sym_status = find_and_ingest_symtab(
+                            let sym_status = find_and_ingest_symtab(
                                 path, cmd_start, cmd_start + sizeofcmds,
                                 ncmds, 0
                             );

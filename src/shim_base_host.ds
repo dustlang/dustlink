@@ -1,0 +1,23 @@
+forge ShimBase {
+  // Base layer: fundamental host runtime
+}
+
+// Core runtime functions
+type Handle = UInt64;
+type Error = UInt32;
+
+proc K::host_args_count() -> UInt32 {
+  return 0;
+}
+
+proc K::host_arg_at(idx: UInt32) -> Handle {
+  return 0;
+}
+
+proc K::host_print_line(text: Handle) -> UInt32 {
+  return 0;
+}
+
+proc K::K::main() -> UInt32 {
+  return 0;
+}

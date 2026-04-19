@@ -243,7 +243,7 @@ forge CoffFormat {
             let sym_section = read_u16_file(path, sym_off + 12);
             let sym_type_raw = read_u16_file(path, sym_off + 14);
             let sym_storage = read_u8_file(path, sym_off + 16);
-            let _sym_aux = read_u8_file(path, sym_off + 17);
+            let sym_aux = read_u8_file(path, sym_off + 17);
 
             // Derive name hash from 8-byte name field
             let name_hash: UInt64 = name_zero + (name_four * 4294967296);
@@ -296,7 +296,7 @@ forge CoffFormat {
                         let aux_count: UInt8 = 1;  // Function definition
                     }
                 }
-                let skip: UInt32 = index + 1 + aux_count;
+                let skip = index + 1 + aux_count;
                 return ingest_symbol_records(
                     path, symtab_offset, num_symbols, skip, strtab_offset
                 );
@@ -321,7 +321,7 @@ forge CoffFormat {
             let r_type_raw = read_u16_file(path, reloc_off + 8);
 
             // Map COFF relocation types to ELF x86_64 equivalents
-            let reloc_type: UInt32 = 0;
+            let reloc_type = 0;
             if r_type_raw == 1 {
                 let reloc_type: UInt32 = 1;  // R_X86_64_64 (ABS64)
             } else {
@@ -425,7 +425,7 @@ forge CoffFormat {
                                 if num_symbols > 0 {
                                     // COFF string table is at symtab_offset + num_symbols * 18 + 4
                                     let strtab_off = symtab_offset + (num_symbols * 18);
-                                    let _sym_status = ingest_symbol_records(
+                                    let sym_status = ingest_symbol_records(
                                         path, symtab_offset, num_symbols, 0, strtab_off
                                     );
                                 }

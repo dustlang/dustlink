@@ -17,8 +17,10 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
 
 /* ========================================================================
  * Constants
@@ -765,6 +767,157 @@ uint32_t host_fs_append_line(uint64_t path, uint64_t line) {
     const char *l = cstring_from_handle(line);
     if (!p || !l) return ERR_WRITE_FAILED;
     return append_line_to_path(p, l) == 0 ? ERR_OK : ERR_WRITE_FAILED;
+}
+
+/* ========================================================================
+ * LAYER 0: CLI Arguments (extended)
+ * ======================================================================== */
+
+void host_args_get(uint64_t argv_ptr, uint64_t argv_buf_ptr) {
+    init_args();
+    uint64_t* argv_array = (uint64_t*)(uintptr_t)argv_ptr;
+    char* buf = (char*)(uintptr_t)argv_buf_ptr;
+    for (uint32_t i = 0; i < g_argc; i++) {
+        argv_array[i] = (uint64_t)(uintptr_t)buf;
+        size_t len = strlen(g_argv[i]);
+        memcpy(buf, g_argv[i], len);
+        buf[len] = '\0';
+        buf += len + 1;
+    }
+}
+
+void host_args_sizes_get(uint64_t argc_out, uint64_t argv_buf_size_out) {
+    uint32_t* argc_ptr = (uint32_t*)(uintptr_t)argc_out;
+    uint64_t* size_ptr = (uint64_t*)(uintptr_t)argv_buf_size_out;
+    *argc_ptr = g_argc;
+    size_t total = 0;
+    for (uint32_t i = 0; i < g_argc; i++) total += strlen(g_argv[i]) + 1;
+    *size_ptr = total;
+}
+
+/* ========================================================================
+ * LAYER 0: Environment Variables
+ * ======================================================================== */
+
+uint64_t host_env_get(uint64_t name_handle) {
+    const char* name = cstring_from_handle(name_handle);
+    if (!name) return 0;
+    const char* value = getenv(name);
+    return value ? (uint64_t)(uintptr_t)value : 0;
+}
+
+void host_env_set(uint64_t name_handle, uint64_t value_handle) {
+    const char* name = cstring_from_handle(name_handle);
+    const char* value = cstring_from_handle(value_handle);
+    if (!name) return;
+    if (value) setenv(name, value, 1);
+    else unsetenv(name);
+}
+
+/* ========================================================================
+ * LAYER 0: File Operations (posix)
+ * ======================================================================== */
+
+static int g_open_fds[256];
+static int g_fd_count = 0;
+
+int64_t host_file_open(uint64_t pathname_handle, uint32_t flags, uint32_t mode) {
+    const char* pathname = cstring_from_handle(pathname_handle);
+    if (!pathname) return -1;
+    int c_flags = 0;
+    if (flags & 2) c_flags |= O_RDWR;
+    else if (flags & 1) c_flags |= O_WRONLY;
+    else c_flags |= O_RDONLY;
+    if (flags & 64) c_flags |= O_CREAT;
+    if (flags & 512) c_flags |= O_TRUNC;
+    int fd = open(pathname, c_flags, mode);
+    if (fd >= 0 && g_fd_count < 256) g_open_fds[g_fd_count++] = fd;
+    return fd;
+}
+
+int64_t host_file_close(uint32_t fd) {
+    for (int i = 0; i < g_fd_count; i++) {
+        if (g_open_fds[i] == (int)fd) {
+            g_open_fds[i] = g_open_fds[--g_fd_count];
+            break;
+        }
+    }
+    return close((int)fd) == 0 ? 0 : -1;
+}
+
+int64_t host_file_read(uint32_t fd, uint64_t buf_handle, uint64_t count) {
+    void* buf = (void*)(uintptr_t)buf_handle;
+    if (!buf) return -1;
+    ssize_t result = read((int)fd, buf, (size_t)count);
+    return result >= 0 ? result : -1;
+}
+
+int64_t host_file_write(uint32_t fd, uint64_t buf_handle, uint64_t count) {
+    const void* buf = (const void*)(uintptr_t)buf_handle;
+    if (!buf) return -1;
+    ssize_t result = write((int)fd, buf, (size_t)count);
+    return result >= 0 ? result : -1;
+}
+
+int64_t host_file_seek(uint32_t fd, int64_t offset, uint32_t whence) {
+    int c_whence;
+    if (whence == 0) c_whence = SEEK_SET;
+    else if (whence == 1) c_whence = SEEK_CUR;
+    else c_whence = SEEK_END;
+    off_t result = lseek((int)fd, (off_t)offset, c_whence);
+    return result >= 0 ? (int64_t)result : -1;
+}
+
+int64_t host_file_tell(uint32_t fd) {
+    off_t pos = lseek((int)fd, 0, SEEK_CUR);
+    return pos >= 0 ? (int64_t)pos : -1;
+}
+
+/* ========================================================================
+ * LAYER 0: Memory Mapping
+ * ======================================================================== */
+
+int64_t host_mmap(uint64_t addr, uint64_t length, uint32_t prot, uint32_t flags, int64_t fd, int64_t offset) {
+    int c_prot = 0;
+    if (prot & 1) c_prot |= PROT_READ;
+    if (prot & 2) c_prot |= PROT_WRITE;
+    if (prot & 4) c_prot |= PROT_EXEC;
+    int c_flags = 0;
+    if (flags & 2) c_flags |= MAP_PRIVATE;
+    if (flags & 32) c_flags |= MAP_ANONYMOUS;
+    void* result = mmap((void*)(uintptr_t)addr, (size_t)length, c_prot, c_flags, (int)fd, (off_t)offset);
+    return result == MAP_FAILED ? -1 : (int64_t)(uintptr_t)result;
+}
+
+int32_t host_munmap(uint64_t addr, uint64_t length) {
+    return munmap((void*)(uintptr_t)addr, (size_t)length) == 0 ? 0 : -1;
+}
+
+/* ========================================================================
+ * LAYER 0: Logging
+ * ======================================================================== */
+
+void host_write_stdout(uint64_t s_handle) {
+    const char* s = cstring_from_handle(s_handle);
+    if (s) { fputs(s, stdout); fflush(stdout); }
+}
+
+void host_write_stderr(uint64_t s_handle) {
+    const char* s = cstring_from_handle(s_handle);
+    if (s) { fputs(s, stderr); fflush(stderr); }
+}
+
+/* ========================================================================
+ * LAYER 0: Memory Allocation
+ * ======================================================================== */
+
+uint64_t host_alloc(uint64_t size) {
+    void* ptr = malloc((size_t)size);
+    return ptr ? (uint64_t)(uintptr_t)ptr : 0;
+}
+
+void host_free(uint64_t ptr_handle) {
+    if (ptr_handle) free((void*)(uintptr_t)ptr_handle);
 }
 
 /* ========================================================================

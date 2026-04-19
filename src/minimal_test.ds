@@ -1,0 +1,6 @@
+// Minimal forge test
+forge Minimal {
+const ZERO: UInt32 = 0;
+
+proc K::test() -> UInt32 { return ZERO; }
+}

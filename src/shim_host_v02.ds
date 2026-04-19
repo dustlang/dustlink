@@ -1,0 +1,115 @@
+forge ShimHost {
+const O_RDONLY: UInt32 = 0;
+const O_RDWR: UInt32 = 2;
+const O_CREAT: UInt32 = 64;
+const O_TRUNC: UInt32 = 512;
+const O_WRONLY: UInt32 = 1;
+const PROT_READ: UInt32 = 1;
+const PROT_WRITE: UInt32 = 2;
+const PROT_EXEC: UInt32 = 4;
+const MAP_PRIVATE: UInt32 = 2;
+const MAP_ANONYMOUS: UInt32 = 32;
+const SEEK_SET: UInt32 = 0;
+const SEEK_CUR: UInt32 = 1;
+const SEEK_END: UInt32 = 2;
+const STDIN_FILENO: UInt32 = 0;
+const STDOUT_FILENO: UInt32 = 1;
+const STDERR_FILENO: UInt32 = 2;
+const EXIT_SUCCESS: UInt32 = 0;
+const EXIT_FAILURE: UInt32 = 1;
+proc K::host_args_count() -> UInt32 { return 0; }
+proc K::host_arg_at(index: UInt32) -> UInt64 { return 0; }
+proc K::host_args_get(argv_ptr: UInt64, argv_buf_ptr: UInt64) { }
+proc K::host_args_sizes_get(argc_out: UInt64, argv_buf_size_out: UInt64) { }
+proc K::host_env_get(name: UInt64) -> UInt64 { return 0; }
+proc K::host_env_set(name: UInt64, value: UInt64) { }
+proc K::host_path_exists(path: UInt64) -> UInt32 { return 0; }
+proc K::host_path_is_file(path: UInt64) -> UInt32 { return 0; }
+proc K::host_file_open(pathname: UInt64, flags: UInt32, mode: UInt32) -> Int64 { return 0; }
+proc K::host_file_close(fd: UInt32) -> Int64 { return 0; }
+proc K::host_file_read(fd: UInt32, buf: UInt64, count: UInt64) -> Int64 { return 0; }
+proc K::host_file_write(fd: UInt32, buf: UInt64, count: UInt64) -> Int64 { return 0; }
+proc K::host_file_seek(fd: UInt32, offset: Int64, whence: UInt32) -> Int64 { return 0; }
+proc K::host_file_tell(fd: UInt32) -> Int64 { return 0; }
+proc K::host_mmap(addr: UInt64, length: UInt64, prot: UInt32, flags: UInt32, fd: Int64, offset: Int64) -> Int64 { return 0; }
+proc K::host_munmap(addr: UInt64, length: UInt64) -> Int32 { return 0; }
+proc K::host_write_stdout(s: UInt64) { }
+proc K::host_write_stderr(s: UInt64) { }
+proc K::host_alloc(size: UInt64) -> UInt64 { return 0; }
+proc K::host_free(ptr: UInt64) { }
+proc K::host_object_begin(path: UInt64, file_size: UInt64, file_format: UInt16, machine: UInt16) -> UInt32 { return 0; }
+proc K::host_object_add_section(index: UInt32, section_type: UInt32, flags: UInt64, file_offset: UInt32, file_size: UInt32, align: UInt32, link: UInt32, info: UInt32, entry_size: UInt32) -> UInt32 { return 0; }
+proc K::host_object_add_symbol(name_hash: UInt64, sym_bind: UInt8, symbol_type: UInt8, shndx: UInt16, value: UInt64, size: UInt64, strtab_offset: UInt32) -> UInt32 { return 0; }
+proc K::host_object_add_relocation(section: UInt16, offset: UInt64, reloc_type: UInt32, symbol: UInt32, addend: UInt64) -> UInt32 { return 0; }
+proc K::host_object_finalize(path: UInt64) -> UInt32 { return 0; }
+proc K::host_linker_object_find_section(name_ptr: UInt64) -> Int32 { return 0; }
+proc K::host_symbol_find(name_ptr: UInt64, sym_sym_bind: UInt32, symbol_type: UInt32) -> Int32 { return 0; }
+proc K::host_symbol_find_in_object(obj: UInt32, name_ptr: UInt64, sym_sym_bind: UInt32, symbol_type: UInt32) -> Int32 { return 0; }
+proc K::host_symbol_at(index: UInt32) -> UInt32 { return 0; }
+proc K::host_symbol_count() -> UInt32 { return 0; }
+proc K::host_symbol_by_name(name_ptr: UInt64) -> UInt32 { return 0; }
+proc K::host_symbol_name(symbol_index: UInt32) -> UInt64 { return 0; }
+proc K::host_symbol_bind(symbol_index: UInt32) -> UInt32 { return 0; }
+proc K::host_symbol_type(symbol_index: UInt32) -> UInt32 { return 0; }
+proc K::host_symbol_shndx(symbol_index: UInt32) -> UInt32 { return 0; }
+proc K::host_symbol_value(symbol_index: UInt32) -> UInt64 { return 0; }
+proc K::host_symbol_size(symbol_index: UInt32) -> UInt64 { return 0; }
+proc K::host_relocation_apply_section(section: UInt32) { }
+proc K::host_relocation_apply_object(obj: UInt32) { }
+proc K::host_relocation_count() -> UInt32 { return 0; }
+proc K::host_relocation_at(index: UInt32) -> UInt32 { return 0; }
+proc K::host_relocation_section(index: UInt32) -> UInt32 { return 0; }
+proc K::host_relocation_offset(index: UInt32) -> UInt64 { return 0; }
+proc K::host_relocation_type(index: UInt32) -> UInt32 { return 0; }
+proc K::host_relocation_symbol(index: UInt32) -> UInt32 { return 0; }
+proc K::host_relocation_addend(index: UInt32) -> UInt64 { return 0; }
+proc K::host_section_count() -> UInt32 { return 0; }
+proc K::host_section_at(index: UInt32) -> UInt32 { return 0; }
+proc K::host_section_name(index: UInt32) -> UInt64 { return 0; }
+proc K::host_section_type(index: UInt32) -> UInt32 { return 0; }
+proc K::host_section_flags(index: UInt32) -> UInt64 { return 0; }
+proc K::host_section_offset(index: UInt32) -> UInt64 { return 0; }
+proc K::host_section_size(index: UInt32) -> UInt64 { return 0; }
+proc K::host_section_link(index: UInt32) -> UInt32 { return 0; }
+proc K::host_section_info(index: UInt32) -> UInt32 { return 0; }
+proc K::host_section_addr(index: UInt32) -> UInt64 { return 0; }
+proc K::host_section_entsize(index: UInt32) -> UInt64 { return 0; }
+proc K::host_section_find(name_ptr: UInt64) -> Int32 { return 0; }
+proc K::host_section_symbol_index(section_index: UInt32, symbol_index: UInt32) -> UInt32 { return 0; }
+proc K::host_section_symbol_name(section_index: UInt32, symbol_index: UInt32) -> UInt64 { return 0; }
+proc K::host_section_relocation_index(section_index: UInt32, reloc_index: UInt32) -> UInt32 { return 0; }
+proc K::host_section_relocation_offset(section_index: UInt32, reloc_index: UInt32) -> UInt64 { return 0; }
+proc K::host_section_relocation_type(section_index: UInt32, reloc_index: UInt32) -> UInt32 { return 0; }
+proc K::host_section_relocation_symbol(section_index: UInt32, reloc_index: UInt32) -> UInt32 { return 0; }
+proc K::host_section_relocation_addend(section_index: UInt32, reloc_index: UInt32) -> UInt64 { return 0; }
+proc K::host_object_count() -> UInt32 { return 0; }
+proc K::host_object_at(index: UInt32) -> UInt32 { return 0; }
+proc K::host_object_path(obj_index: UInt32) -> UInt64 { return 0; }
+proc K::host_object_file_format(obj_index: UInt32) -> UInt32 { return 0; }
+proc K::host_object_machine(obj_index: UInt32) -> UInt32 { return 0; }
+proc K::host_archive_member_count(archive_path: UInt64) -> UInt32 { return 0; }
+proc K::host_archive_member_name(archive_path: UInt64, member_index: UInt32) -> UInt64 { return 0; }
+proc K::host_archive_member_is_64bit(archive_path: UInt64, member_index: UInt32) -> UInt32 { return 0; }
+proc K::host_archive_member_is_32bit(archive_path: UInt64, member_index: UInt32) -> UInt32 { return 0; }
+proc K::host_archive_member_is_bigendian(archive_path: UInt64, member_index: UInt32) -> UInt32 { return 0; }
+proc K::host_archive_member_is_littleendian(archive_path: UInt64, member_index: UInt32) -> UInt32 { return 0; }
+proc K::host_archive_member_file_format(archive_path: UInt64, member_index: UInt32) -> UInt32 { return 0; }
+proc K::host_archive_read_member(archive_path: UInt64, member_index: UInt32, buffer_out: UInt64, size_out: UInt64) -> UInt32 { return 0; }
+proc K::host_linker_object_add_section(index: UInt32, section_type: UInt32, flags: UInt64, file_offset: UInt32, file_size: UInt32, align: UInt32, link: UInt32, info: UInt32, entry_size: UInt32) -> UInt32 { return 0; }
+proc K::host_linker_object_add_symbol(name_hash: UInt64, sym_bind: UInt8, symbol_type: UInt8, shndx: UInt16, value: UInt64, size: UInt64, strtab_offset: UInt32) -> UInt32 { return 0; }
+proc K::host_linker_object_add_relocation(section: UInt16, offset: UInt64, reloc_type: UInt32, symbol: UInt32, addend: UInt64) -> UInt32 { return 0; }
+proc K::host_validate_input_file(path: UInt64) -> UInt32 { return 0; }
+proc K::host_input_file_size(path: UInt64) -> UInt64 { return 0; }
+proc K::host_output_begin(path: UInt64, file_format: UInt32) { }
+proc K::host_output_write(buffer: UInt64, size: UInt64) { }
+proc K::host_output_end() { }
+proc K::host_output_image_set_type(type_val: UInt32) { }
+proc K::host_output_image_set_arch(arch_val: UInt32) { }
+proc K::host_output_set_entry(entry_val: UInt64) { }
+proc K::host_output_image_set_flags(flags_val: UInt32) { }
+proc K::host_output_set_build_id(build_id_ptr: UInt64, build_id_len: UInt32) { }
+proc K::host_output_set_section_interpolation(interpolation_type: UInt32) { }
+proc K::host_output_emit() { }
+proc K::host_error_string(code: UInt32) -> UInt64 { return 0; }
+proc K::host_error_code_max() -> UInt32 { return 100; }
+}

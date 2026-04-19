@@ -1,0 +1,33 @@
+// Host runtime shim layer
+// Provides host_* functions that Dust linker modules call
+
+forge ShimHost {
+  // Host runtime implementation
+}
+
+// Core Layer 0: CLI and basic I/O
+proc K::host_args_count() -> UInt32 {
+  return 0;
+}
+
+proc K::host_arg_at(idx: UInt32) -> UInt64 {
+  // Return handle to argument string
+  return 0;
+}
+
+proc K::host_print_line(text: UInt64) -> UInt32 {
+  return 0;
+}
+
+// Layer 0: Path operations
+proc K::host_path_exists(path: UInt64) -> UInt32 {
+  return 0;
+}
+
+proc K::host_path_is_file(path: UInt64) -> UInt32 {
+  return 0;
+}
+
+proc K::main() -> UInt32 {
+  return 0;
+}

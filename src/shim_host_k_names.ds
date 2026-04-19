@@ -1,0 +1,39 @@
+forge HostLinkerShim {
+// Constants from standard C library
+const O_RDONLY: UInt32 = 0;
+const O_RDWR: UInt32 = 2;
+const O_CREAT: UInt32 = 64;
+const O_TRUNC: UInt32 = 512;
+const O_WRONLY: UInt32 = 1;
+const PROT_READ: UInt32 = 1;
+const PROT_WRITE: UInt32 = 2;
+const MAP_PRIVATE: UInt32 = 2;
+const MAP_ANONYMOUS: UInt32 = 32;
+const SEEK_SET: UInt32 = 0;
+const SEEK_CUR: UInt32 = 1;
+const SEEK_END: UInt32 = 2;
+const STDIN: UInt32 = 0;
+const STDOUT: UInt32 = 1;
+const STDERR: UInt32 = 2;
+const EXIT_SUCCESS: UInt32 = 0;
+const EXIT_FAILURE: UInt32 = 1;
+
+proc K::host_args_count() -> UInt32 {
+return 0;
+}
+
+// Original C: host_args_get
+proc K::host_args_get(argv_ptr: UInt64, argv_buf_ptr: UInt64) -> UInt32 {
+return 0;
+}
+
+// Original C: host_arg_at
+proc K::host_arg_at(index: UInt32) -> UInt64 {
+return 0;
+}
+
+// Original C: host_args_sizes_get
+proc K::host_args_sizes_get(argc_out: UInt64, argv_buf_size_out: UInt64) -> UInt32 {
+return 0;
+}
+}
